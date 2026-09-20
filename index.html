@@ -1,974 +1,2676 @@
-<!--
-CAPIVARA RÁDIO ADM — FUNDOS ONLINE
-COLE ESTE BLOCO NO index.html DO ADM,
-IMEDIATAMENTE ANTES DE </body>
--->
+<!doctype html>
+<html lang="pt-BR">
+<head>
 
-<style id="capFundosOnlineV52Css">
-#capFundosOnlineV52{
-  margin-top:16px;
-}
-#capFundosOnlineV52 .cap-bg-head{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
-  flex-wrap:wrap;
-  margin-bottom:14px;
-}
-#capFundosOnlineV52 .cap-bg-head h3{
-  margin:0;
-}
-#capFundosOnlineV52 .cap-bg-row{
-  display:grid;
-  grid-template-columns:42px minmax(0,1fr) auto;
-  gap:10px;
-  align-items:center;
-  padding:12px 0;
-  border-top:1px solid var(--line);
-}
-#capFundosOnlineV52 .cap-bg-row:first-child{
-  border-top:0;
-}
-#capFundosOnlineV52 .cap-bg-icon{
-  font-size:24px;
-  text-align:center;
-}
-#capFundosOnlineV52 .cap-bg-name{
-  font-weight:900;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-#capFundosOnlineV52 .cap-bg-meta{
-  color:var(--muted);
-  font-size:12px;
-  margin-top:3px;
-}
-#capFundosOnlineV52 .cap-bg-actions{
-  display:flex;
-  gap:7px;
-  flex-wrap:wrap;
-}
-#capFundosOnlineV52 .cap-bg-empty{
-  padding:30px 15px;
-  text-align:center;
-  color:var(--muted);
-}
-#capFundosOnlineV52 .cap-bg-status{
-  margin-top:10px;
-  color:#bff7d2;
-  font-size:13px;
-  font-weight:800;
-}
-@media(max-width:700px){
-  #capFundosOnlineV52 .cap-bg-row{
-    grid-template-columns:36px 1fr;
+<script id="capivaraAdminAuthV38">
+(function(){
+  const SERVER='https://capivara-radio-server.onrender.com';
+  const STORAGE='capivara_admin_password_v38';
+  const nativeFetch=window.fetch.bind(window);
+
+  function getPassword(){
+    let p=sessionStorage.getItem(STORAGE)||'';
+    if(!p){
+      p=window.prompt('Senha do Administrador:')||'';
+      if(p) sessionStorage.setItem(STORAGE,p);
+    }
+    return p;
   }
-  #capFundosOnlineV52 .cap-bg-actions{
-    grid-column:2;
+
+  window.capivaraAdminLogout=function(){
+    sessionStorage.removeItem(STORAGE);
+    location.reload();
+  };
+
+  window.fetch=async function(input,options={}){
+    const url=typeof input==='string' ? input : (input && input.url)||'';
+    const isAdmin=url.startsWith(SERVER) && url.includes('/api/admin/');
+    if(!isAdmin) return nativeFetch(input,options);
+
+    const password=getPassword();
+    if(!password) throw new Error('Senha do administrador não informada.');
+
+    const headers=new Headers(options.headers||{});
+    headers.set('X-Admin-Password',password);
+    if(options.body && !headers.has('Content-Type')) headers.set('Content-Type','application/json');
+
+    let response=await nativeFetch(input,{...options,headers});
+
+    if(response.status===401){
+      sessionStorage.removeItem(STORAGE);
+      const novo=window.prompt('Senha incorreta. Digite a senha do Administrador:')||'';
+      if(!novo) return response;
+      sessionStorage.setItem(STORAGE,novo);
+
+      const retryHeaders=new Headers(options.headers||{});
+      retryHeaders.set('X-Admin-Password',novo);
+      if(options.body && !retryHeaders.has('Content-Type')) retryHeaders.set('Content-Type','application/json');
+      response=await nativeFetch(input,{...options,headers:retryHeaders});
+    }
+    return response;
+  };
+
+  async function validate(){
+    const password=getPassword();
+    if(!password) return;
+    try{
+      const r=await nativeFetch(SERVER+'/api/admin/login',{
+        method:'POST',
+        headers:{'X-Admin-Password':password}
+      });
+      if(r.status===401){
+        sessionStorage.removeItem(STORAGE);
+        alert('Senha do Administrador incorreta.');
+        location.reload();
+      }
+    }catch(e){
+      console.warn('Falha ao validar login do ADM:',e);
+    }
   }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',validate,{once:true});
+  }else validate();
+})();
+</script>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Capivara Rádio • Administrador</title>
+
+<style>
+:root{
+ --bg:#07110d;
+ --panel:#0d1b15;
+ --panel2:#12241c;
+ --line:#234233;
+ --txt:#f5fbf7;
+ --muted:#92aa9d;
+ --green:#42e07f;
+ --green2:#20b963;
+ --gold:#ffc857;
+ --red:#ff6868
+}
+*{box-sizing:border-box}
+body{
+ margin:0;
+ font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Arial;
+ background:linear-gradient(135deg,#06100c,#0a1812 55%,#07110d);
+ color:var(--txt)
+}
+button,input,select,textarea{font:inherit}
+.app{
+ display:grid;
+ grid-template-columns:260px 1fr;
+ min-height:100vh
+}
+aside{
+ padding:24px 16px;
+ border-right:1px solid var(--line);
+ background:#08130f;
+ position:sticky;
+ top:0;
+ height:100vh
+}
+.logo{
+ font-weight:900;
+ font-size:22px;
+ margin:4px 10px 28px
+}
+.logo b{color:var(--green)}
+nav button{
+ width:100%;
+ text-align:left;
+ border:0;
+ background:transparent;
+ color:#b9c9c0;
+ padding:13px 14px;
+ border-radius:12px;
+ margin:3px 0;
+ cursor:pointer;
+ font-weight:700
+}
+nav button:hover,
+nav button.active{
+ background:#153023;
+ color:#fff
+}
+.dot{
+ display:inline-block;
+ width:8px;
+ height:8px;
+ background:var(--green);
+ border-radius:50%;
+ margin-right:8px
+}
+main{
+ padding:30px;
+ max-width:1500px;
+ width:100%
+}
+.top{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ margin-bottom:24px
+}
+.top h1{margin:0;font-size:28px}
+.sub{color:var(--muted);font-size:14px}
+.btn{
+ border:0;
+ border-radius:12px;
+ padding:11px 16px;
+ font-weight:800;
+ cursor:pointer;
+ background:var(--green);
+ color:#04200e
+}
+.btn.secondary{
+ background:#183327;
+ color:#dff7e7
+}
+.btn.danger{
+ background:#3a1c1c;
+ color:#ffb8b8
+}
+.btn.gold{
+ background:var(--gold);
+ color:#2b2100
+}
+.grid{
+ display:grid;
+ grid-template-columns:repeat(4,1fr);
+ gap:14px
+}
+.card{
+ background:rgba(14,29,22,.92);
+ border:1px solid var(--line);
+ border-radius:18px;
+ padding:18px;
+ box-shadow:0 12px 30px #0003
+}
+.metric strong{
+ display:block;
+ font-size:30px;
+ margin-top:8px
+}
+.metric span{color:var(--muted)}
+.section{display:none}
+.section.active{display:block}
+.toolbar{
+ display:flex;
+ gap:10px;
+ flex-wrap:wrap;
+ margin-bottom:15px
+}
+.toolbar input,
+.toolbar select,
+.field input,
+.field select,
+.field textarea{
+ background:#091710;
+ color:#fff;
+ border:1px solid #2c4b3a;
+ border-radius:11px;
+ padding:11px 12px;
+ outline:none
+}
+.toolbar input{min-width:280px}
+table{
+ width:100%;
+ border-collapse:collapse
+}
+th,td{
+ padding:13px 10px;
+ border-bottom:1px solid #203b2e;
+ text-align:left;
+ font-size:14px
+}
+th{color:#8da99a}
+.badge{
+ display:inline-block;
+ padding:5px 9px;
+ border-radius:999px;
+ background:#163c27;
+ color:#7cf0a7;
+ font-size:12px;
+ font-weight:800
+}
+.badge.off{
+ background:#3a2323;
+ color:#ffabab
+}
+.ramos{
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:13px
+}
+.ramo{
+ cursor:pointer;
+ transition:.15s
+}
+.ramo:hover{
+ transform:translateY(-2px);
+ border-color:#3f7558
+}
+.ramo h3{margin:0 0 8px}
+.ramo p{
+ margin:0;
+ color:var(--muted);
+ font-size:13px
+}
+.cols{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:16px
+}
+.field{
+ display:flex;
+ flex-direction:column;
+ gap:6px;
+ margin:10px 0
+}
+.field label{
+ color:#a9bdb2;
+ font-size:13px;
+ font-weight:700
+}
+.slot{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ padding:12px;
+ background:#0a1711;
+ border:1px solid #244535;
+ border-radius:12px;
+ margin:8px 0
+}
+.slot small{color:var(--muted)}
+.products{
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:8px
+}
+.product{
+ padding:10px;
+ border-radius:10px;
+ background:#10251b;
+ border:1px solid #2a4938
+}
+.player{
+ max-width:720px;
+ margin:auto
+}
+.player .hero{
+ text-align:center;
+ padding:20px
+}
+.chips{
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:9px
+}
+.chip{
+ background:#153326;
+ border:1px solid #31533f;
+ padding:13px;
+ border-radius:12px;
+ text-align:center;
+ font-weight:800
+}
+.price{
+ font-size:24px;
+ text-align:center;
+ width:100%
+}
+.notice{
+ padding:12px 14px;
+ border-radius:12px;
+ background:#13291e;
+ border:1px solid #28533b;
+ color:#bff7d2;
+ margin-bottom:14px
+}
+.modal{
+ position:fixed;
+ inset:0;
+ background:#000a;
+ display:none;
+ align-items:center;
+ justify-content:center;
+ padding:20px
+}
+.modal.show{display:flex}
+.modal .card{
+ width:min(650px,100%);
+ max-height:90vh;
+ overflow:auto
+}
+hr{
+ border:0;
+ border-top:1px solid var(--line);
+ margin:18px 0
+}
+
+.audio-manager{
+ display:none;
+ margin-top:16px;
+ padding:16px;
+ border:1px solid #29453a;
+ border-radius:14px;
+ background:#10251e
+}
+.audio-manager h3{margin:0 0 6px}
+.audio-manager .hint{
+ opacity:.72;
+ font-size:12px;
+ margin-bottom:12px
+}
+.audio-slot{
+ display:grid;
+ grid-template-columns:1.1fr 1.7fr .7fr auto;
+ gap:8px;
+ align-items:center;
+ padding:10px 0;
+ border-top:1px solid #29453a
+}
+.audio-slot:first-of-type{border-top:0}
+.audio-slot input,
+.audio-slot select{
+ width:100%;
+ box-sizing:border-box
+}
+.audio-slot audio{
+ width:100%;
+ height:34px
+}
+.audio-actions{
+ display:flex;
+ gap:6px;
+ flex-wrap:wrap
+}
+.audio-actions button{white-space:nowrap}
+
+.ramo-audio-row{
+ border:1px solid #24503d;
+ border-radius:12px;
+ padding:10px;
+ margin:9px 0;
+ background:#0b2118
+}
+.ramo-audio-row textarea{
+ width:100%;
+ min-height:66px;
+ resize:vertical;
+ box-sizing:border-box
+}
+
+.vig-section{
+ border:1px solid #24503d;
+ border-radius:14px;
+ margin:12px 0;
+ overflow:hidden;
+ background:#0b2118
+}
+.vig-head{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:12px;
+ padding:12px 14px;
+ background:#102b20
+}
+.vig-list{padding:8px 12px}
+.vig-item{
+ padding:10px 0;
+ border-top:1px solid #234638
+}
+.vig-item:first-child{border-top:0}
+
+.theme-grid-v11{
+ display:grid;
+ grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+ gap:9px;
+ margin:12px 0 18px
+}
+.theme-card-v11{
+ border:1px solid #dce7df;
+ background:#fff;
+ border-radius:13px;
+ padding:12px;
+ text-align:left;
+ cursor:pointer;
+ color:#173b29
+}
+.theme-card-v11 b{display:block}
+.theme-card-v11 span{
+ font-size:12px;
+ color:#6d7d74
+}
+.theme-card-v11.active{
+ outline:2px solid #198754;
+ background:#eef9f2
+}
+.theme-select-v11{
+ padding:10px;
+ border:1px solid #d5dfd8;
+ border-radius:10px;
+ background:white;
+ max-width:210px
+}
+
+.vig-simple-v28{
+ padding:0 0 18px!important
+}
+.vig-compose-v28{
+ padding:12px;
+ background:#0d3023;
+ border:1px solid #24543f;
+ border-radius:14px;
+ margin-bottom:12px
+}
+.vig-compose-v28 textarea{
+ display:block;
+ width:100%;
+ min-height:82px;
+ box-sizing:border-box;
+ resize:vertical;
+ border:1px solid #b9c8c0;
+ border-radius:10px;
+ background:#fff;
+ color:#14251d;
+ padding:12px;
+ font-size:16px
+}
+.vig-generate-v28{
+ display:block;
+ width:100%;
+ margin-top:9px;
+ background:#35df7f!important;
+ color:#062414!important;
+ font-weight:900!important;
+ padding:13px!important
+}
+
+@media(max-width:950px){
+ .app{grid-template-columns:1fr}
+ aside{
+  height:auto;
+  position:static
+ }
+ .grid,.ramos,.cols{
+  grid-template-columns:1fr 1fr
+ }
+ nav{
+  display:flex;
+  overflow:auto
+ }
+ nav button{white-space:nowrap}
+ main{padding:18px}
+}
+
+@media(max-width:600px){
+ .grid,.ramos,.cols,.products,.chips{
+  grid-template-columns:1fr
+ }
+ .toolbar input{
+  min-width:0;
+  width:100%
+ }
 }
 </style>
 
-<script id="capFundosOnlineV52">
-(function(){
-
-const SERVER =
-  'https://capivara-radio-server.onrender.com';
-
-let fundosV52 = [];
-let fundoTocandoV52 = null;
-
-/* =========================================================
-   SENHA DO ADM
-========================================================= */
-
-function adminPasswordV52(){
-
-  return (
-    sessionStorage.getItem(
-      'capivara_admin_password_v38'
-    ) ||
-    sessionStorage.getItem(
-      'capivara_admin_password'
-    ) ||
-    ''
-  );
-}
-
-/* =========================================================
-   API
-========================================================= */
-
-async function apiV52(path,options={}){
-
-  const headers =
-    new Headers(
-      options.headers || {}
-    );
-
-  const password =
-    adminPasswordV52();
-
-  if(password){
-    headers.set(
-      'X-Admin-Password',
-      password
-    );
-  }
-
-  const response =
-    await fetch(
-      SERVER + path,
-      {
-        ...options,
-        headers
-      }
-    );
-
-  const type =
-    response.headers
-      .get('content-type') || '';
-
-  let data = null;
-
-  if(
-    type.includes(
-      'application/json'
-    )
-  ){
-    try{
-      data =
-        await response.json();
-    }catch(e){
-      data = {};
-    }
-  }else{
-    try{
-      data =
-        await response.text();
-    }catch(e){
-      data = '';
-    }
-  }
-
-  if(!response.ok){
-
-    const msg =
-      data?.error ||
-      data?.message ||
-      (
-        typeof data === 'string'
-          ? data
-          : ''
-      ) ||
-      (
-        'Erro HTTP ' +
-        response.status
-      );
-
-    throw new Error(msg);
-  }
-
-  return data;
-}
-
-/* =========================================================
-   HELPERS
-========================================================= */
-
-function escV52(value){
-
-  return String(
-    value || ''
-  )
-  .replace(/&/g,'&amp;')
-  .replace(/</g,'&lt;')
-  .replace(/>/g,'&gt;')
-  .replace(/"/g,'&quot;');
-}
-
-function sizeV52(bytes){
-
-  const n =
-    Number(bytes || 0);
-
-  if(!n){
-    return '';
-  }
-
-  if(n < 1024){
-    return n + ' B';
-  }
-
-  if(n < 1048576){
-    return (
-      (n / 1024)
-        .toFixed(0) +
-      ' KB'
-    );
-  }
-
-  return (
-    (n / 1048576)
-      .toFixed(1) +
-    ' MB'
-  );
-}
-
-/* =========================================================
-   LOCALIZAR ABA DE FUNDOS
-========================================================= */
-
-function backgroundsHostV52(){
-
-  return (
-    document.getElementById(
-      'acBackgroundsV9'
-    ) ||
-    document.querySelector(
-      '[data-acervo="backgrounds"]'
-    )
-  );
-}
-
-/* =========================================================
-   CRIAR INTERFACE
-========================================================= */
-
-function ensureBackgroundUiV52(){
-
-  const host =
-    backgroundsHostV52();
-
-  if(!host){
-    return null;
-  }
-
-  /*
-    Esconde somente a interface antiga
-    de fundos. Não mexe em músicas
-    nem playlists.
-  */
-
-  const oldList =
-    document.getElementById(
-      'backgroundListV9'
-    );
-
-  if(oldList){
-    oldList.style.display =
-      'none';
-  }
-
-  const oldInputs =
-    host.querySelectorAll(
-      'input[type="file"]'
-    );
-
-  oldInputs.forEach(input=>{
-
-    const label =
-      input.closest('label');
-
-    if(label){
-      label.style.display =
-        'none';
-    }
-  });
-
-  let box =
-    document.getElementById(
-      'capFundosOnlineV52'
-    );
-
-  if(box){
-    return box;
-  }
-
-  box =
-    document.createElement(
-      'div'
-    );
-
-  box.id =
-    'capFundosOnlineV52';
-
-  box.innerHTML = `
-    <div class="cap-bg-head">
-
-      <div>
-        <h3>
-          🎙️ Fundos de Locução
-        </h3>
-
-        <div class="sub">
-          Áudios usados em volume baixo atrás dos anúncios.
-        </div>
-      </div>
-
-      <label
-        class="btn"
-        style="cursor:pointer"
-      >
-        + ADICIONAR FUNDOS
-
-        <input
-          id="capBgUploadV52"
-          type="file"
-          accept="audio/*"
-          multiple
-          hidden
-        >
-      </label>
-
-    </div>
-
-    <div
-      id="capBgListV52"
-    ></div>
-
-    <div
-      id="capBgStatusV52"
-      class="cap-bg-status"
-    ></div>
-  `;
-
-  host.appendChild(box);
-
-  const upload =
-    document.getElementById(
-      'capBgUploadV52'
-    );
-
-  if(upload){
-
-    upload.addEventListener(
-      'change',
-      async function(){
-
-        const files =
-          [
-            ...(
-              this.files ||
-              []
-            )
-          ];
-
-        if(!files.length){
-          return;
-        }
-
-        await uploadBackgroundsV52(
-          files
-        );
-
-        this.value = '';
-      }
-    );
-  }
-
-  return box;
-}
-
-/* =========================================================
-   CARREGAR FUNDOS ONLINE
-========================================================= */
-
-async function loadBackgroundsV52(){
-
-  ensureBackgroundUiV52();
-
-  const status =
-    document.getElementById(
-      'capBgStatusV52'
-    );
-
-  if(status){
-    status.textContent =
-      'Carregando fundos...';
-  }
-
-  try{
-
-    const response =
-      await fetch(
-        SERVER +
-        '/api/media?kind=background',
-        {
-          headers:{
-            Accept:
-              'application/json'
-          }
-        }
-      );
-
-    let data = {};
-
-    try{
-      data =
-        await response.json();
-    }catch(e){}
-
-    if(!response.ok){
-      throw new Error(
-        data?.error ||
-        data?.message ||
-        (
-          'Erro HTTP ' +
-          response.status
-        )
-      );
-    }
-
-    const list =
-      Array.isArray(data)
-        ? data
-        : (
-            Array.isArray(
-              data?.media
-            )
-              ? data.media
-              : []
-          );
-
-    fundosV52 =
-      list.filter(item=>{
-
-        const kind =
-          String(
-            item?.kind ||
-            ''
-          ).toLowerCase();
-
-        return (
-          kind ===
-          'background'
-        );
-      });
-
-    renderBackgroundsV52();
-
-  }catch(error){
-
-    console.error(
-      'Fundos online:',
-      error
-    );
-
-    if(status){
-      status.textContent =
-        '❌ Não foi possível carregar os fundos.';
-    }
-
-    const list =
-      document.getElementById(
-        'capBgListV52'
-      );
-
-    if(list){
-      list.innerHTML = `
-        <div class="cap-bg-empty">
-          Não foi possível carregar os fundos online.
-        </div>
-      `;
-    }
-  }
-}
-
-/* =========================================================
-   RENDER
-========================================================= */
-
-function renderBackgroundsV52(){
-
-  ensureBackgroundUiV52();
-
-  const list =
-    document.getElementById(
-      'capBgListV52'
-    );
-
-  const status =
-    document.getElementById(
-      'capBgStatusV52'
-    );
-
-  if(!list){
-    return;
-  }
-
-  const counter =
-    document.getElementById(
-      'bgCountV9'
-    );
-
-  if(counter){
-    counter.textContent =
-      fundosV52.length;
-  }
-
-  if(!fundosV52.length){
-
-    list.innerHTML = `
-      <div class="cap-bg-empty">
-        Nenhum fundo de locução salvo.
-        <br>
-        <b>
-          Use “+ ADICIONAR FUNDOS”.
-        </b>
-      </div>
-    `;
-
-    if(status){
-      status.textContent =
-        '0 fundos online';
-    }
-
-    return;
-  }
-
-  list.innerHTML =
-    fundosV52
-      .map(item=>{
-
-        const meta =
-          [
-            sizeV52(
-              item.sizeBytes ||
-              item.size_bytes ||
-              item.size
-            ),
-            'ONLINE'
-          ]
-          .filter(Boolean)
-          .join(' • ');
-
-        return `
-          <div
-            class="cap-bg-row"
-          >
-
-            <div
-              class="cap-bg-icon"
-            >
-              🎙️
-            </div>
-
-            <div>
-              <div
-                class="cap-bg-name"
-              >
-                ${escV52(
-                  item.name ||
-                  'Fundo de locução'
-                )}
-              </div>
-
-              <div
-                class="cap-bg-meta"
-              >
-                ${escV52(meta)}
-              </div>
-            </div>
-
-            <div
-              class="cap-bg-actions"
-            >
-
-              <button
-                type="button"
-                class="btn secondary"
-                onclick="capPlayBackgroundV52('${String(
-                  item.id
-                ).replace(/'/g,"\\'")}')"
-              >
-                ▶ Ouvir
-              </button>
-
-              <button
-                type="button"
-                class="btn danger"
-                onclick="capDeleteBackgroundV52('${String(
-                  item.id
-                ).replace(/'/g,"\\'")}')"
-              >
-                🗑 Excluir
-              </button>
-
-            </div>
-
-          </div>
-        `;
-      })
-      .join('');
-
-  if(status){
-
-    status.textContent =
-      '🟢 ' +
-      fundosV52.length +
-      ' fundo' +
-      (
-        fundosV52.length === 1
-          ? ''
-          : 's'
-      ) +
-      ' online';
-  }
-}
-
-/* =========================================================
-   UPLOAD
-========================================================= */
-
-async function uploadBackgroundsV52(
-  files
-){
-
-  ensureBackgroundUiV52();
-
-  const status =
-    document.getElementById(
-      'capBgStatusV52'
-    );
-
-  for(
-    let i = 0;
-    i < files.length;
-    i++
-  ){
-
-    const file =
-      files[i];
-
-    if(status){
-
-      status.textContent =
-        'Enviando ' +
-        (i + 1) +
-        ' de ' +
-        files.length +
-        ' • ' +
-        file.name;
-    }
-
-    try{
-
-      const url =
-        SERVER +
-        '/api/admin/media' +
-        '?kind=background' +
-        '&name=' +
-        encodeURIComponent(
-          file.name
-        );
-
-      const headers =
-        new Headers();
-
-      const password =
-        adminPasswordV52();
-
-      if(password){
-
-        headers.set(
-          'X-Admin-Password',
-          password
-        );
-      }
-
-      headers.set(
-        'Content-Type',
-        file.type ||
-        'audio/mpeg'
-      );
-
-      headers.set(
-        'X-Media-Kind',
-        'background'
-      );
-
-      headers.set(
-        'X-File-Name',
-        encodeURIComponent(
-          file.name
-        )
-      );
-
-      const response =
-        await fetch(
-          url,
-          {
-            method:'POST',
-            headers,
-            body:file
-          }
-        );
-
-      let data = {};
-
-      try{
-        data =
-          await response.json();
-      }catch(e){}
-
-      if(!response.ok){
-
-        throw new Error(
-          data?.error ||
-          data?.message ||
-          (
-            'Erro HTTP ' +
-            response.status
-          )
-        );
-      }
-
-    }catch(error){
-
-      console.error(
-        'Upload fundo:',
-        error
-      );
-
-      alert(
-        'Não foi possível salvar "' +
-        file.name +
-        '".\n\n' +
-        (
-          error.message ||
-          error
-        )
-      );
-    }
-  }
-
-  if(status){
-
-    status.textContent =
-      '✅ Upload concluído.';
-  }
-
-  await loadBackgroundsV52();
-}
-
-/* =========================================================
-   OUVIR
-========================================================= */
-
-window.capPlayBackgroundV52 =
-  function(id){
-
-    try{
-
-      if(fundoTocandoV52){
-
-        fundoTocandoV52.pause();
-
-        fundoTocandoV52.currentTime =
-          0;
-      }
-
-    }catch(e){}
-
-    fundoTocandoV52 =
-      new Audio(
-        SERVER +
-        '/api/media/' +
-        encodeURIComponent(id)
-      );
-
-    fundoTocandoV52
-      .play()
-      .catch(error=>{
-
-        console.error(
-          'Ouvir fundo:',
-          error
-        );
-
-        alert(
-          'Não foi possível tocar este fundo.'
-        );
-      });
-  };
-
-/* =========================================================
-   EXCLUIR
-========================================================= */
-
-window.capDeleteBackgroundV52 =
-  async function(id){
-
-    if(
-      !confirm(
-        'Excluir este fundo de locução?'
-      )
-    ){
-      return;
-    }
-
-    const status =
-      document.getElementById(
-        'capBgStatusV52'
-      );
-
-    if(status){
-      status.textContent =
-        'Excluindo fundo...';
-    }
-
-    try{
-
-      await apiV52(
-        '/api/admin/media/' +
-        encodeURIComponent(id),
-        {
-          method:'DELETE'
-        }
-      );
-
-      await loadBackgroundsV52();
-
-    }catch(error){
-
-      console.error(
-        'Excluir fundo:',
-        error
-      );
-
-      alert(
-        'Não foi possível excluir.\n\n' +
-        (
-          error.message ||
-          error
-        )
-      );
-
-      if(status){
-        status.textContent =
-          '❌ Erro ao excluir.';
-      }
-    }
-  };
-
-/* =========================================================
-   SUBSTITUI FUNÇÕES ANTIGAS DE FUNDO
-========================================================= */
-
-window.addBackgroundV9 =
-  async function(files){
-
-    const arr =
-      [
-        ...(
-          files ||
-          []
-        )
-      ];
-
-    if(!arr.length){
-      return;
-    }
-
-    await uploadBackgroundsV52(
-      arr
-    );
-  };
-
-window.deleteBgV9 =
-  async function(id){
-
-    await window
-      .capDeleteBackgroundV52(
-        id
-      );
-  };
-
-/* =========================================================
-   ABA FUNDOS
-========================================================= */
-
-if(
-  typeof window.showAcTabV9 ===
-  'function'
-){
-
-  const oldShowAcTabV52 =
-    window.showAcTabV9;
-
-  window.showAcTabV9 =
-    function(tab){
-
-      oldShowAcTabV52(tab);
-
-      if(
-        tab ===
-        'backgrounds'
-      ){
-
-        ensureBackgroundUiV52();
-
-        loadBackgroundsV52();
-      }
-    };
-}
-
-/* =========================================================
-   INIT
-========================================================= */
-
-function initV52(){
-
-  ensureBackgroundUiV52();
-
-  loadBackgroundsV52();
-}
-
-if(
-  document.readyState ===
-  'loading'
-){
-
-  document.addEventListener(
-    'DOMContentLoaded',
-    initV52,
-    {
-      once:true
-    }
-  );
-
-}else{
-
-  initV52();
-}
-
-/* =========================================================
-   ATUALIZAÇÃO
-========================================================= */
-
-setInterval(
-  ()=>{
-
-    const host =
-      backgroundsHostV52();
-
-    if(
-      host &&
-      host.style.display !==
-      'none'
-    ){
-      loadBackgroundsV52();
-    }
-
-  },
-  60000
-);
-
-window.capLoadBackgroundsV52 =
-  loadBackgroundsV52;
-
+</head>
+
+<body>
+
+<div class="app">
+
+<aside>
+ <div class="logo">
+  CAPIVARA <b>RÁDIO</b>
+  <div class="sub">ADMINISTRADOR</div>
+ </div>
+
+ <nav>
+  <button class="active" data-go="painel">▦ Painel</button>
+  <button data-go="clientes">🏪 Clientes</button>
+  <button data-go="player">▶ Player do Cliente</button>
+  <button data-go="ramos">🧩 Ramos e Pacotes</button>
+  <button data-go="acervo">♫ Acervo da Rádio</button>
+  <button data-go="sistema">⚙ Configuração Geral</button>
+ </nav>
+</aside>
+
+<main>
+
+<section id="painel" class="section active">
+
+ <div class="top">
+  <div>
+   <h1>Painel</h1>
+   <div class="sub">Visão rápida da operação</div>
+  </div>
+
+  <button class="btn" onclick="openClient()">
+   + Novo cliente
+  </button>
+ </div>
+
+ <div class="grid">
+
+  <div class="card metric">
+   <span>Clientes</span>
+   <strong id="mClients">1</strong>
+  </div>
+
+  <div class="card metric">
+   <span>Ativos</span>
+   <strong id="mActive">1</strong>
+  </div>
+
+  <div class="card metric">
+   <span>Ramos prontos</span>
+   <strong id="mRamos">23</strong>
+  </div>
+
+  <div class="card metric">
+   <span>Status das APIs</span>
+   <strong style="font-size:20px;color:var(--green)">
+    ● Configurável
+   </strong>
+  </div>
+
+ </div>
+
+ <div class="card" style="margin-top:16px">
+  <h3>Operação simples</h3>
+  <p class="sub">
+   Cadastre a loja → escolha o ramo → o cliente herda automaticamente
+   produtos, vinhetas e regras daquele pacote → use “Player do Cliente”
+   quando precisar operar por ele.
+  </p>
+ </div>
+
+</section>
+
+<section id="clientes" class="section">
+
+ <div class="top">
+  <div>
+   <h1>Clientes</h1>
+   <div class="sub">Cadastro, código e pacote de cada loja</div>
+  </div>
+
+  <button class="btn" onclick="openClient()">
+   + Novo cliente
+  </button>
+ </div>
+
+ <div class="card">
+
+  <div class="toolbar">
+
+   <input
+    id="searchClient"
+    placeholder="Buscar loja ou código..."
+    oninput="renderClients()"
+   >
+
+   <select
+    id="statusFilter"
+    onchange="renderClients()"
+   >
+    <option>Todos</option>
+    <option>Ativos</option>
+    <option>Bloqueados</option>
+   </select>
+
+  </div>
+
+  <table>
+   <thead>
+    <tr>
+     <th>Loja</th>
+     <th>Ramo</th>
+     <th>Código</th>
+     <th>Status</th>
+     <th>Ações</th>
+    </tr>
+   </thead>
+
+   <tbody id="clientRows"></tbody>
+  </table>
+
+ </div>
+
+</section>
+
+<section id="player" class="section">
+
+ <div class="top">
+  <div>
+   <h1>Player do Cliente</h1>
+   <div class="sub">
+    Opere a rádio quando o cliente pedir ajuda
+   </div>
+  </div>
+ </div>
+
+ <div class="toolbar">
+
+  <select
+   id="playerClient"
+   onchange="renderPlayer()"
+  ></select>
+
+  <span class="badge">
+   <span class="dot"></span>
+   Suporte administrando
+  </span>
+
+ </div>
+
+ <div class="card player">
+
+  <div class="hero">
+   <div class="sub">Criar anúncio para</div>
+   <h2 id="playerStore">Açougue Uberaba</h2>
+  </div>
+
+  <div
+   class="chips"
+   id="playerProducts"
+  ></div>
+
+  <div class="field">
+   <label>Preço (opcional)</label>
+
+   <input
+    class="price"
+    inputmode="numeric"
+    placeholder="0,00"
+   >
+  </div>
+
+  <button
+   class="btn"
+   style="width:100%;font-size:17px"
+  >
+   ✨ CRIAR ANÚNCIO
+  </button>
+
+  <hr>
+
+  <button
+   class="btn gold"
+   style="width:100%"
+  >
+   🔥 TOP DO DIA
+  </button>
+
+ </div>
+
+</section>
+
+<section id="ramos" class="section">
+
+ <div class="top">
+  <div>
+   <h1>Ramos e Pacotes</h1>
+   <div class="sub">
+    Um pacote pronto para cada tipo de comércio
+   </div>
+  </div>
+
+  <button
+   class="btn"
+   onclick="addRamo()"
+  >
+   + Criar ramo
+  </button>
+ </div>
+
+ <div
+  class="ramos"
+  id="ramoGrid"
+ ></div>
+
+</section>
+<section id="acervo" class="section">
+<div class="top">
+ <div>
+  <h1>Acervo da Rádio</h1>
+  <div class="sub">
+   Acervo organizado em 10 temas. Cada tema já funciona como uma programação musical.
+  </div>
+ </div>
+
+ <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+  <select id="uploadThemeV11" class="theme-select-v11"></select>
+
+  <label class="btn" style="cursor:pointer">
+   + ADICIONAR MÚSICAS
+   <input
+    id="musicUploadV9"
+    hidden
+    type="file"
+    accept="audio/*"
+    multiple
+    onchange="addMusicV9(this.files)"
+   >
+  </label>
+ </div>
+</div>
+
+<div class="grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
+
+ <div class="card metric">
+  <span>Músicas no acervo</span>
+  <strong id="musicCountV9">0</strong>
+ </div>
+
+ <div class="card metric">
+  <span>Temas musicais</span>
+  <strong id="playlistCountV9">10</strong>
+ </div>
+
+ <div class="card metric">
+  <span>Fundos de locução</span>
+  <strong id="bgCountV9">0</strong>
+ </div>
+
+</div>
+
+<div class="card">
+
+ <div class="toolbar" style="justify-content:space-between">
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+
+   <button
+    class="btn secondary acTabV9"
+    onclick="showAcTabV9('music')"
+   >
+    🎵 MÚSICAS DO ACERVO
+   </button>
+
+   <button
+    class="btn secondary acTabV9"
+    onclick="showAcTabV9('backgrounds')"
+   >
+    🎙️ FUNDOS DE LOCUÇÃO
+   </button>
+
+  </div>
+ </div>
+
+ <div id="acMusicV9">
+
+  <div
+   id="themeCardsV11"
+   class="theme-grid-v11"
+  ></div>
+
+  <div class="toolbar">
+
+   <input
+    id="musicSearchV9"
+    placeholder="Buscar música..."
+    oninput="renderAcervoV9()"
+   >
+
+   <button
+    class="btn secondary"
+    onclick="selectAllMusicV9()"
+   >
+    Selecionar todas
+   </button>
+
+   <button
+    class="btn danger"
+    onclick="deleteSelectedMusicV9()"
+   >
+    🗑 Excluir selecionadas
+   </button>
+
+  </div>
+
+  <div id="musicListV9"></div>
+
+ </div>
+
+ <div id="acPlaylistsV9" style="display:none">
+
+  <div class="toolbar">
+   <button
+    class="btn"
+    onclick="newPlaylistV9()"
+   >
+    + CRIAR PLAYLIST
+   </button>
+  </div>
+
+  <div id="playlistListV9"></div>
+
+ </div>
+
+ <div id="acBackgroundsV9" style="display:none">
+
+  <div class="notice">
+   Instrumentais usados em volume baixo atrás das locuções.
+   Ficam separados das músicas da programação.
+  </div>
+
+  <label
+   class="btn"
+   style="display:inline-block;cursor:pointer;margin-bottom:12px"
+  >
+   + ADICIONAR FUNDOS
+
+   <input
+    hidden
+    type="file"
+    accept="audio/*"
+    multiple
+    onchange="addBackgroundV9(this.files)"
+   >
+  </label>
+
+  <div id="backgroundListV9"></div>
+
+ </div>
+
+</div>
+</section>
+
+
+<section id="sistema" class="section">
+
+<div class="top">
+ <div>
+  <h1>Configuração Geral</h1>
+  <div class="sub">
+   Área técnica — não aparece para o cliente
+  </div>
+ </div>
+</div>
+
+<div class="cols">
+
+<div
+ class="card"
+ style="grid-column:1/-1"
+ id="capKeysV34"
+>
+
+<h3>🔐 Central de chaves e vozes</h3>
+
+<p class="muted">
+ 3 chaves de texto, 3 chaves de voz e 4 IDs oficiais.
+ Marque quais chaves ficam ativas.
+</p>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+
+<div>
+
+ <h3>🤖 Chaves de texto</h3>
+
+ <div class="field">
+  <label>
+   Chave 1
+   <span>
+    <input
+     id="textKeyOn1"
+     type="checkbox"
+     checked
+    >
+    Ligada
+   </span>
+  </label>
+
+  <input
+   id="textKey1"
+   type="password"
+   placeholder="Gemini API Key 1"
+  >
+ </div>
+
+ <div class="field">
+  <label>
+   Chave 2
+   <span>
+    <input
+     id="textKeyOn2"
+     type="checkbox"
+    >
+    Ligada
+   </span>
+  </label>
+
+  <input
+   id="textKey2"
+   type="password"
+   placeholder="Gemini API Key 2"
+  >
+ </div>
+
+ <div class="field">
+  <label>
+   Chave 3
+   <span>
+    <input
+     id="textKeyOn3"
+     type="checkbox"
+    >
+    Ligada
+   </span>
+  </label>
+
+  <input
+   id="textKey3"
+   type="password"
+   placeholder="Gemini API Key 3"
+  >
+ </div>
+
+ <small class="muted">
+  Se uma ativa falhar, o servidor poderá tentar a próxima ativa.
+ </small>
+
+</div>
+
+<div>
+
+ <h3>🎙️ Chaves de voz</h3>
+
+ <div class="field">
+  <label>
+   Chave 1
+   <span>
+    <input
+     id="voiceKeyOn1"
+     type="checkbox"
+     checked
+    >
+    Ligada
+   </span>
+  </label>
+
+  <input
+   id="voiceKey1"
+   type="password"
+   placeholder="ElevenLabs API Key 1"
+  >
+ </div>
+
+ <div class="field">
+  <label>
+   Chave 2
+   <span>
+    <input
+     id="voiceKeyOn2"
+     type="checkbox"
+    >
+    Ligada
+   </span>
+  </label>
+
+  <input
+   id="voiceKey2"
+   type="password"
+   placeholder="ElevenLabs API Key 2"
+  >
+ </div>
+
+ <div class="field">
+  <label>
+   Chave 3
+   <span>
+    <input
+     id="voiceKeyOn3"
+     type="checkbox"
+    >
+    Ligada
+   </span>
+  </label>
+
+  <input
+   id="voiceKey3"
+   type="password"
+   placeholder="ElevenLabs API Key 3"
+  >
+ </div>
+
+ <small class="muted">
+  Somente as chaves marcadas como ligadas entram na rotação.
+ </small>
+
+</div>
+
+</div>
+
+<hr>
+
+<h3>🎚️ 4 IDs de voz</h3>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+
+ <div class="field">
+  <label>Anúncios — Homem</label>
+  <input
+   id="voiceAdMaleV34"
+   placeholder="Voice ID"
+  >
+ </div>
+
+ <div class="field">
+  <label>Anúncios — Mulher</label>
+  <input
+   id="voiceAdFemaleV34"
+   placeholder="Voice ID"
+  >
+ </div>
+
+ <div class="field">
+  <label>Vinhetas — Homem</label>
+  <input
+   id="voiceJingleMaleV34"
+   placeholder="Voice ID"
+  >
+ </div>
+
+ <div class="field">
+  <label>Vinhetas — Mulher</label>
+  <input
+   id="voiceJingleFemaleV34"
+   placeholder="Voice ID"
+  >
+ </div>
+
+</div>
+
+<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px">
+
+ <button
+  class="btn"
+  type="button"
+  id="saveCentralV34"
+  onclick="capSaveCentralV34()"
+ >
+  💾 SALVAR E TESTAR
+ </button>
+
+ <span
+  id="centralStatusV34"
+  class="badge"
+ >
+  Aguardando
+ </span>
+
+</div>
+
+</div>
+
+<div
+ class="card"
+ style="grid-column:1/-1"
+>
+
+<h3>🧪 Resultado do teste</h3>
+
+<div
+ id="apiTestResult"
+ class="notice"
+ style="white-space:pre-wrap;min-height:54px"
+>
+ Clique em SALVAR E TESTAR.
+ O ADM salva no servidor e faz teste real do Gemini e da ElevenLabs,
+ usando o mesmo caminho do Player.
+</div>
+
+<button
+ class="btn secondary"
+ id="copyApiError"
+ onclick="copyApiTest()"
+ style="display:none;margin-top:10px"
+>
+ 📋 COPIAR ERRO
+</button>
+
+</div>
+
+<div class="card">
+
+<h3>📻 Padrões de programação</h3>
+
+<div class="field">
+ <label>Anúncios por bloco — padrão</label>
+ <input
+  id="defaultAdsPerBlock"
+  value="3"
+  type="number"
+  min="1"
+  step="1"
+  inputmode="numeric"
+ >
+</div>
+
+<div class="field">
+ <label>Limite por dia</label>
+ <input
+  id="dailyLimit"
+  value="15"
+  type="number"
+  min="1"
+  step="1"
+  inputmode="numeric"
+ >
+</div>
+
+<div class="field">
+ <label>Limite por semana</label>
+ <input
+  id="weeklyLimit"
+  value="75"
+  type="number"
+  min="1"
+  step="1"
+  inputmode="numeric"
+ >
+</div>
+
+<div class="notice">
+ Quantidade livre: digite qualquer número de anúncios por bloco.
+</div>
+
+</div>
+
+<div class="card">
+
+<h3>🔥 TOP do Dia</h3>
+
+<div class="field">
+ <label>Máximo por dia</label>
+
+ <input
+  id="topDailyLimit"
+  value="1"
+  type="number"
+  min="0"
+  step="1"
+  inputmode="numeric"
+ >
+</div>
+
+<div class="slot">
+ <div id="topLimitLabel">
+  Conta no limite diário configurado
+ </div>
+ <span class="badge">SIM</span>
+</div>
+
+<p class="sub">
+ Fluxo: música termina → vinheta TOP entrada →
+ anúncio TOP → vinheta TOP saída → próxima música.
+</p>
+
+</div>
+
+</div>
+</section>
+
+</main>
+</div>
+
+
+<div
+ class="modal"
+ id="clientModal"
+>
+<div class="card">
+
+<div class="top">
+ <h2>Novo cliente</h2>
+
+ <button
+  class="btn secondary"
+  onclick="closeClient()"
+ >
+  ✕
+ </button>
+</div>
+
+<div class="field">
+ <label>Nome fantasia</label>
+
+ <input
+  id="newName"
+  placeholder="Ex.: Açougue Uberaba"
+ >
+</div>
+
+<div class="field">
+ <label>Ramo</label>
+ <select id="newRamo"></select>
+</div>
+
+<div class="field">
+
+ <label>Código de acesso</label>
+
+ <div style="display:flex;gap:8px">
+
+  <input
+   id="newCode"
+   readonly
+   style="flex:1"
+  >
+
+  <button
+   class="btn secondary"
+   onclick="genCode()"
+  >
+   Gerar
+  </button>
+
+ </div>
+
+</div>
+
+<button
+ class="btn"
+ style="width:100%"
+ onclick="saveClient()"
+>
+ CADASTRAR CLIENTE
+</button>
+
+</div>
+</div>
+
+
+<div
+ class="modal"
+ id="ramoModal"
+>
+
+<div class="card">
+
+<div class="top">
+
+ <div>
+  <h2 id="ramoTitle">Ramo</h2>
+
+  <div class="sub">
+   Produtos, vinhetas e programação padrão deste ramo
+  </div>
+ </div>
+
+ <button
+  class="btn secondary"
+  onclick="closeRamo()"
+ >
+  ✕
+ </button>
+
+</div>
+
+<div>
+
+ <h3>🛒 15 produtos padrão</h3>
+
+ <div
+  class="products"
+  id="ramoProducts"
+ ></div>
+
+</div>
+
+<hr>
+
+<div>
+
+ <h3 id="ramoAudioHeading">
+  🎧 Áudios do Ramo
+ </h3>
+
+ <div class="sub">
+  Crie quantas vinhetas quiser.
+  Elas ficam numeradas e armazenadas por categoria.
+ </div>
+
+ <div id="ramoVignettesV7"></div>
+
+</div>
+
+<hr>
+
+<div class="cols">
+
+ <div class="field">
+
+  <label>Playlist padrão do ramo</label>
+
+  <select id="ramoPlaylist">
+   <option>Playlist geral</option>
+   <option>Playlist própria do ramo</option>
+  </select>
+
+ </div>
+
+ <div class="field">
+
+  <label>
+   Anúncios por bloco — padrão do ramo
+  </label>
+
+  <input
+   id="ramoAdsPerBlock"
+   type="number"
+   min="1"
+   step="1"
+   value="3"
+   inputmode="numeric"
+  >
+
+ </div>
+
+</div>
+
+<button
+ class="btn"
+ style="width:100%"
+ onclick="saveRamoPackage()"
+>
+ SALVAR RAMO E PACOTE
+</button>
+
+</div>
+</div>
+
+
+<script>
+
+const ramoNames=[
+ 'Açougue',
+ 'Supermercado',
+ 'Farmácia',
+ 'Padaria',
+ 'Hortifruti',
+ 'Pet Shop',
+ 'Pizzaria',
+ 'Lanchonete',
+ 'Restaurante',
+ 'Hotel / Pousada',
+ 'Roupas',
+ 'Calçados',
+ 'Material de Construção',
+ 'Autopeças',
+ 'Oficina / Auto Center',
+ 'Posto / Conveniência',
+ 'Cosméticos / Perfumaria',
+ 'Ótica',
+ 'Papelaria',
+ 'Móveis / Eletro',
+ 'Agropecuária / Rações',
+ 'Distribuidora de Bebidas',
+ 'Utilidades / Variedades'
+];
+
+const productCatalogs={
+
+'Açougue':[
+ 'Picanha',
+ 'Alcatra',
+ 'Contrafilé',
+ 'Patinho',
+ 'Acém',
+ 'Costela',
+ 'Frango',
+ 'Linguiça',
+ 'Pernil',
+ 'Carne Moída',
+ 'Maminha',
+ 'Cupim',
+ 'Coxão Mole',
+ 'Coxão Duro',
+ 'Fraldinha'
+],
+
+'Supermercado':[
+ 'Arroz',
+ 'Feijão',
+ 'Açúcar',
+ 'Café',
+ 'Óleo',
+ 'Leite',
+ 'Macarrão',
+ 'Farinha de Trigo',
+ 'Carne',
+ 'Frango',
+ 'Ovos',
+ 'Papel Higiênico',
+ 'Sabão em Pó',
+ 'Refrigerante',
+ 'Cerveja'
+],
+
+'Farmácia':[
+ 'Fraldas',
+ 'Lenços Umedecidos',
+ 'Shampoo',
+ 'Condicionador',
+ 'Sabonete',
+ 'Desodorante',
+ 'Protetor Solar',
+ 'Hidratante',
+ 'Creme Dental',
+ 'Escova Dental',
+ 'Absorvente',
+ 'Preservativo',
+ 'Vitaminas',
+ 'Repelente',
+ 'Algodão'
+],
+
+'Padaria':[
+ 'Pão Francês',
+ 'Pão de Queijo',
+ 'Pão Doce',
+ 'Bolo',
+ 'Rosca',
+ 'Sonho',
+ 'Croissant',
+ 'Salgados',
+ 'Coxinha',
+ 'Empada',
+ 'Presunto',
+ 'Muçarela',
+ 'Leite',
+ 'Café',
+ 'Refrigerante'
+],
+
+'Hortifruti':[
+ 'Banana',
+ 'Maçã',
+ 'Laranja',
+ 'Mamão',
+ 'Limão',
+ 'Abacaxi',
+ 'Manga',
+ 'Uva',
+ 'Tomate',
+ 'Batata',
+ 'Cebola',
+ 'Cenoura',
+ 'Alface',
+ 'Couve',
+ 'Ovos'
+],
+
+'Pet Shop':[
+ 'Ração para Cães',
+ 'Ração para Gatos',
+ 'Petiscos',
+ 'Areia para Gatos',
+ 'Shampoo Pet',
+ 'Antipulgas',
+ 'Brinquedos',
+ 'Coleiras',
+ 'Guias',
+ 'Camas',
+ 'Tapete Higiênico',
+ 'Comedouros',
+ 'Sachês',
+ 'Ossinhos',
+ 'Banho e Tosa'
+],
+
+'Pizzaria':[
+ 'Pizza Calabresa',
+ 'Pizza Muçarela',
+ 'Pizza Portuguesa',
+ 'Pizza Frango com Catupiry',
+ 'Pizza Marguerita',
+ 'Pizza Quatro Queijos',
+ 'Pizza Bacon',
+ 'Pizza Carne Seca',
+ 'Pizza Chocolate',
+ 'Pizza Doce',
+ 'Pizza Família',
+ 'Combo Pizza + Refrigerante',
+ 'Refrigerante',
+ 'Borda Recheada',
+ 'Delivery'
+],
+
+'Lanchonete':[
+ 'X-Burguer',
+ 'X-Salada',
+ 'X-Bacon',
+ 'X-Tudo',
+ 'Hambúrguer Artesanal',
+ 'Cachorro-Quente',
+ 'Misto Quente',
+ 'Batata Frita',
+ 'Salgados',
+ 'Coxinha',
+ 'Pastel',
+ 'Açaí',
+ 'Suco',
+ 'Refrigerante',
+ 'Combo'
+],
+
+'Restaurante':[
+ 'Prato Feito',
+ 'Self-Service',
+ 'Marmitex',
+ 'Almoço Executivo',
+ 'Feijoada',
+ 'Churrasco',
+ 'Frango',
+ 'Peixe',
+ 'Massas',
+ 'Saladas',
+ 'Sobremesa',
+ 'Suco',
+ 'Refrigerante',
+ 'Delivery',
+ 'Combo do Dia'
+],
+
+'Hotel / Pousada':[
+ 'Diária',
+ 'Suíte',
+ 'Quarto Casal',
+ 'Quarto Família',
+ 'Café da Manhã',
+ 'Pacote de Fim de Semana',
+ 'Pacote Romântico',
+ 'Feriado',
+ 'Piscina',
+ 'Restaurante',
+ 'Estacionamento',
+ 'Wi-Fi',
+ 'Day Use',
+ 'Evento',
+ 'Reserva Antecipada'
+],
+
+'Roupas':[
+ 'Camiseta',
+ 'Camisa',
+ 'Calça Jeans',
+ 'Bermuda',
+ 'Vestido',
+ 'Blusa',
+ 'Short',
+ 'Saia',
+ 'Conjunto',
+ 'Jaqueta',
+ 'Moletom',
+ 'Roupa Infantil',
+ 'Moda Íntima',
+ 'Pijama',
+ 'Promoção da Coleção'
+],
+     if(!v.audioKey)return alert('Esta vinheta ainda não tem áudio. Gere ou selecione um arquivo de áudio.');
+   const blob=await idbGet(v.audioKey); if(!blob)return alert('Áudio não encontrado.');
+   const a=new Audio(URL.createObjectURL(blob));a.play();
+ };
+ window.generateVigV7=async function(cat,i){
+   const all=ensure(currentRamo),v=all[currentRamo][cat][i];
+   if(!v.text.trim())return alert('Digite a frase primeiro.');
+   if(typeof window.generateElevenLabsAudio==='function'){
+     try{
+       const result=await window.generateElevenLabsAudio(v.text,v.voice,currentRamo,cat);
+       if(result instanceof Blob){
+         const key='vig|'+currentRamo+'|'+cat+'|'+Date.now();await idbPut(key,result);
+         v.audioKey=key;v.audioName='Vinheta '+String(i+1).padStart(2,'0')+'.mp3';save(all);render();
+       }
+     }catch(e){
+       const msg=String(e&&e.message||e);try{navigator.clipboard.writeText(msg)}catch(_){}
+       alert(msg+'\n\nErro pronto para copiar.');
+     }
+   }else generateVinhetaAudioV16(this);
+ };
+ window.openRamo=function(r){
+   currentRamo=r;
+   document.getElementById('ramoTitle').textContent='📦 '+r+' — RAMO E PACOTE';
+   document.getElementById('ramoProducts').innerHTML=productsFor(r).map((p,i)=>`<div class="product">${i+1}. ${p}</div>`).join('');
+   render();
+   const old=JSON.parse(localStorage.getItem('capivara_ramo_packages_v6')||'{}')[r]||{};
+   document.getElementById('ramoPlaylist').value=old.playlist||'Playlist geral';
+   document.getElementById('ramoAdsPerBlock').value=old.adsPerBlock||({Leve:2,'Médio':3,'Frenético':5}[old.mode]||3);
+   document.getElementById('ramoModal').classList.add('show');
+ };
+ window.saveRamoPackage=function(){
+   const old=JSON.parse(localStorage.getItem('capivara_ramo_packages_v6')||'{}');old[currentRamo]=old[currentRamo]||{};
+   old[currentRamo].playlist=document.getElementById('ramoPlaylist').value;old[currentRamo].adsPerBlock=Math.max(1,parseInt(document.getElementById('ramoAdsPerBlock').value||'3',10));
+   localStorage.setItem('capivara_ramo_packages_v6',JSON.stringify(old));alert('Ramo e pacote salvos.');closeRamo();
+ };
 })();
 </script>
+
+<script>
+(function(){
+ const META='capivara_acervo_v9', PLS='capivara_playlists_v9', BGM='capivara_backgrounds_v9';
+ const jget=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch(e){return d}};
+ const jset=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+ const esc9=x=>String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+ const uid9=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+ let tab9='music', playing9=null, selected9=new Set();
+
+ function db9(){
+  return new Promise((ok,no)=>{
+   const r=indexedDB.open('CapivaraAcervoV9',1);
+   r.onupgradeneeded=()=>{let d=r.result;if(!d.objectStoreNames.contains('files'))d.createObjectStore('files')};
+   r.onsuccess=()=>ok(r.result); r.onerror=()=>no(r.error);
+  });
+ }
+ async function put9(id,blob){let d=await db9();return new Promise((ok,no)=>{let t=d.transaction('files','readwrite');t.objectStore('files').put(blob,id);t.oncomplete=ok;t.onerror=()=>no(t.error)})}
+ async function get9(id){let d=await db9();return new Promise((ok,no)=>{let r=d.transaction('files').objectStore('files').get(id);r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)})}
+ async function del9(id){let d=await db9();return new Promise((ok,no)=>{let t=d.transaction('files','readwrite');t.objectStore('files').delete(id);t.oncomplete=ok;t.onerror=()=>no(t.error)})}
+ function size9(n){if(n<1048576)return (n/1024).toFixed(0)+' KB';return (n/1048576).toFixed(1)+' MB'}
+
+ window.showAcTabV9=function(t){
+  tab9=t;
+  document.getElementById('acMusicV9').style.display=t==='music'?'block':'none';
+  document.getElementById('acPlaylistsV9').style.display=t==='playlists'?'block':'none';
+  document.getElementById('acBackgroundsV9').style.display=t==='backgrounds'?'block':'none';
+  renderAcervoV9()
+ }
+
+ const THEMES_V11=[
+  "Jazz & Lounge",
+  "Sertanejo",
+  "MPB & Brasilidades",
+  "Flashback",
+  "Dance & Pop",
+  "Moderno / Hits",
+  "Rock & Clássicos",
+  "Instrumental & Ambiente",
+  "Leve & Relax",
+  "Popular & Animada"
+ ];
+
+ function initThemesV11(){
+  const sel=document.getElementById('uploadThemeV11');
+  if(sel&&!sel.options.length)sel.innerHTML=THEMES_V11.map(t=>`<option>${t}</option>`).join('');
+ }
+
+ window.addMusicV9=async function(files){
+  let meta=jget(META,[]), theme=document.getElementById('uploadThemeV11')?.value||THEMES_V11[0];
+  for(const f of [...files]){
+   const id=uid9(); await put9('music:'+id,f);
+   meta.push({id,name:f.name.replace(/\.[^.]+$/,''),fileName:f.name,size:f.size,added:new Date().toLocaleDateString('pt-BR'),theme});
+  }
+  jset(META,meta);
+  document.getElementById('musicUploadV9').value='';
+  renderAcervoV9();
+ }
+
+ window.addBackgroundV9=async function(files){
+  let bg=jget(BGM,[]);
+  for(const f of [...files]){
+   const id=uid9();
+   await put9('bg:'+id,f);
+   bg.push({id,name:f.name.replace(/\.[^.]+$/,''),fileName:f.name,size:f.size})
+  }
+  jset(BGM,bg);
+  renderAcervoV9();
+ }
+
+ window.playFileV9=async function(kind,id){
+  const blob=await get9(kind+':'+id);
+  if(!blob)return alert('Arquivo não encontrado neste computador.');
+  if(playing9){playing9.pause();playing9=null}
+  const u=URL.createObjectURL(blob);
+  playing9=new Audio(u);
+  playing9.onended=()=>URL.revokeObjectURL(u);
+  playing9.play();
+ }
+
+ window.toggleMusicV9=function(id,on){
+  on?selected9.add(id):selected9.delete(id)
+ }
+
+ window.selectAllMusicV9=function(){
+  jget(META,[]).forEach(x=>selected9.add(x.id));
+  renderAcervoV9()
+ }
+
+ window.deleteSelectedMusicV9=async function(){
+  if(!selected9.size)return alert('Selecione pelo menos uma música.');
+  let pls=jget(PLS,[]), used=pls.filter(p=>p.musicIds.some(id=>selected9.has(id)));
+  if(used.length&&!confirm('Algumas músicas estão em playlists. Excluir mesmo assim?'))return;
+  for(const id of selected9)await del9('music:'+id);
+  jset(META,jget(META,[]).filter(x=>!selected9.has(x.id)));
+  pls.forEach(p=>p.musicIds=p.musicIds.filter(id=>!selected9.has(id)));
+  jset(PLS,pls);
+  selected9.clear();
+  renderAcervoV9();
+ }
+
+ window.deleteMusicV9=async function(id){
+  selected9=new Set([id]);
+  await deleteSelectedMusicV9();
+ }
+
+ window.deleteBgV9=async function(id){
+  if(!confirm('Excluir este fundo de locução?'))return;
+  await del9('bg:'+id);
+  jset(BGM,jget(BGM,[]).filter(x=>x.id!==id));
+  renderAcervoV9()
+ }
+
+ window.newPlaylistV9=function(){
+  const name=prompt('Nome da nova playlist:','Nova Playlist');
+  if(!name||!name.trim())return;
+  const pls=jget(PLS,[]);
+  pls.push({
+   id:uid9(),
+   name:name.trim(),
+   destination:'Geral',
+   ramo:'',
+   client:'',
+   musicIds:[],
+   active:true
+  });
+  jset(PLS,pls);
+  renderAcervoV9();
+  editPlaylistV9(pls[pls.length-1].id);
+ }
+
+ window.editPlaylistV9=function(id){
+  let pls=jget(PLS,[]),p=pls.find(x=>x.id===id);
+  if(!p)return;
+  const mus=jget(META,[]);
+  const dest=prompt('Destino: digite GERAL, RAMO ou CLIENTE',p.destination.toUpperCase());
+  if(dest===null)return;
+  const d=dest.trim().toUpperCase();
+
+  if(d==='RAMO'){
+   let r=prompt('Digite exatamente o ramo:\\n'+ramoNames.join(' | '),p.ramo||'Farmácia');
+   if(!r)return;
+   p.destination='Ramo';
+   p.ramo=r;
+   p.client=''
+  }
+  else if(d==='CLIENTE'){
+   let c=prompt('Digite o nome do cliente:',p.client||'');
+   if(!c)return;
+   p.destination='Cliente';
+   p.client=c;
+   p.ramo=''
+  }
+  else {
+   p.destination='Geral';
+   p.ramo='';
+   p.client=''
+  }
+
+  const current=new Set(p.musicIds);
+  const names=mus.map((m,i)=>`${i+1}. ${current.has(m.id)?'✓ ':''}${m.name}`).join('\\n');
+
+  let choice=prompt(
+   'MÚSICAS DO ACERVO\\nDigite números separados por vírgula.\\nEx.: 1,2,5\\n\\n'+names,
+   mus.map((m,i)=>current.has(m.id)?i+1:null).filter(Boolean).join(',')
+  );
+
+  if(choice!==null){
+   p.musicIds=choice.split(',')
+    .map(x=>parseInt(x.trim(),10)-1)
+    .filter(i=>i>=0&&i<mus.length)
+    .map(i=>mus[i].id);
+  }
+
+  jset(PLS,pls);
+  renderAcervoV9();
+ }
+
+ window.duplicatePlaylistV9=function(id){
+  let pls=jget(PLS,[]),p=pls.find(x=>x.id===id);
+  if(!p)return;
+  pls.push({...p,id:uid9(),name:p.name+' — Cópia',active:false});
+  jset(PLS,pls);
+  renderAcervoV9()
+ }
+
+ window.deletePlaylistV9=function(id){
+  if(!confirm('Excluir esta playlist? As músicas continuarão no Acervo.'))return;
+  jset(PLS,jget(PLS,[]).filter(x=>x.id!==id));
+  renderAcervoV9()
+ }
+
+ window.togglePlaylistV9=function(id){
+  let pls=jget(PLS,[]),p=pls.find(x=>x.id===id);
+  if(p)p.active=!p.active;
+  jset(PLS,pls);
+  renderAcervoV9()
+ }
+
+ window.testPlaylistV9=async function(id){
+  let p=jget(PLS,[]).find(x=>x.id===id);
+  if(!p||!p.musicIds.length)return alert('Essa playlist ainda não tem músicas.');
+  playFileV9('music',p.musicIds[0])
+ }
+
+ window.renderAcervoV9=function(){
+  const mus=jget(META,[]),pls=jget(PLS,[]),bg=jget(BGM,[]);
+  const mc=document.getElementById('musicCountV9');
+  if(!mc)return;
+
+  mc.textContent=mus.length;
+  document.getElementById('playlistCountV9').textContent=THEMES_V11.length;
+  document.getElementById('bgCountV9').textContent=bg.length;
+
+  const q=(document.getElementById('musicSearchV9')?.value||'').toLowerCase();
+  const activeTheme=window.activeThemeV11||'TODOS';
+
+  const filtered=mus.filter(m=>
+   m.name.toLowerCase().includes(q)&&
+   (activeTheme==='TODOS'||(m.theme||THEMES_V11[0])===activeTheme)
+  );
+
+  const cards=document.getElementById('themeCardsV11');
+
+  if(cards)cards.innerHTML=['TODOS',...THEMES_V11].map(t=>{
+   const n=t==='TODOS'
+    ?mus.length
+    :mus.filter(m=>(m.theme||THEMES_V11[0])===t).length;
+
+   return `<button class="theme-card-v11 ${activeTheme===t?'active':''}" onclick="window.activeThemeV11='${t.replace("'","&#39;")}';renderAcervoV9()"><b>${t==='TODOS'?'🎵 Todo o Acervo':t}</b><span>${n} música${n===1?'':'s'}</span></button>`
+  }).join('');
+
+  document.getElementById('musicListV9').innerHTML=filtered.length
+   ?filtered.map(m=>{
+    const use=pls.filter(p=>p.musicIds.includes(m.id)).map(p=>p.name);
+
+    return `<div class="ac-row-v9">
+      <input type="checkbox" ${selected9.has(m.id)?'checked':''} onchange="toggleMusicV9('${m.id}',this.checked)">
+      <div>
+       <div class="ac-name-v9">🎵 ${esc9(m.name)}</div>
+       <div class="ac-meta-v9">${size9(m.size)} • Tema: <b>${esc9(m.theme||THEMES_V11[0])}</b></div>
+      </div>
+      <div class="ac-actions-v9">
+       <select class="theme-select-v11" onchange="changeMusicThemeV11('${m.id}',this.value)">
+        ${THEMES_V11.map(t=>`<option ${t===(m.theme||THEMES_V11[0])?'selected':''}>${t}</option>`).join('')}
+       </select>
+       <button class="btn secondary" onclick="playFileV9('music','${m.id}')">▶ Ouvir</button>
+       <button class="btn danger" onclick="deleteMusicV9('${m.id}')">🗑</button>
+      </div>
+     </div>`
+   }).join('')
+   :`<div class="ac-empty-v9">
+      Nenhuma música no acervo.<br>
+      <b>Use “+ ADICIONAR MÚSICAS” para buscar no seu PC.</b>
+     </div>`;
+
+  document.getElementById('playlistListV9').innerHTML=pls.length
+   ?pls.map(p=>{
+    let dest=p.destination==='Ramo'
+     ?'🏪 '+p.ramo
+     :p.destination==='Cliente'
+      ?'👤 '+p.client
+      :'🌐 Geral';
+
+    return `<div class="pl-card-v9">
+      <div class="pl-top-v9">
+       <div>
+        <b style="font-size:17px">📻 ${esc9(p.name)}</b>
+        <div class="pl-tags-v9">
+         <span class="badge">${esc9(dest)}</span>
+         <span class="badge">${p.musicIds.length} músicas</span>
+         <span class="badge ${p.active?'':'off'}">${p.active?'ATIVA':'PAUSADA'}</span>
+        </div>
+       </div>
+       <div class="ac-actions-v9">
+        <button class="btn secondary" onclick="testPlaylistV9('${p.id}')">▶ Testar</button>
+        <button class="btn secondary" onclick="editPlaylistV9('${p.id}')">✏ Editar / Direcionar</button>
+        <button class="btn secondary" onclick="duplicatePlaylistV9('${p.id}')">⧉ Duplicar</button>
+        <button class="btn secondary" onclick="togglePlaylistV9('${p.id}')">${p.active?'⏸ Pausar':'▶ Ativar'}</button>
+        <button class="btn danger" onclick="deletePlaylistV9('${p.id}')">🗑 Excluir</button>
+       </div>
+      </div>
+     </div>`
+   }).join('')
+   :`<div class="ac-empty-v9">
+      Nenhuma playlist criada.<br>
+      <b>Clique em “+ CRIAR PLAYLIST”.</b>
+     </div>`;
+
+  document.getElementById('backgroundListV9').innerHTML=bg.length
+   ?bg.map(x=>`<div class="ac-row-v9">
+      <span>🎙️</span>
+      <div>
+       <div class="ac-name-v9">${esc9(x.name)}</div>
+       <div class="ac-meta-v9">${size9(x.size)} • Fundo de locução</div>
+      </div>
+      <div class="ac-actions-v9">
+       <button class="btn secondary" onclick="playFileV9('bg','${x.id}')">▶ Ouvir</button>
+       <button class="btn danger" onclick="deleteBgV9('${x.id}')">🗑 Excluir</button>
+      </div>
+     </div>`).join('')
+   :`<div class="ac-empty-v9">Nenhum fundo de locução cadastrado.</div>`;
+ }
+
+ window.changeMusicThemeV11=function(id,theme){
+  let mus=jget(META,[]),m=mus.find(x=>x.id===id);
+  if(m){
+   m.theme=theme;
+   jset(META,mus);
+   renderAcervoV9()
+  }
+ }
+
+ document.addEventListener('DOMContentLoaded',()=>{
+  initThemesV11();
+  renderAcervoV9()
+ });
+
+ setTimeout(()=>{
+  initThemesV11();
+  renderAcervoV9()
+ },100);
+})();
+</script>
+
+
+<div id="playlistModalV10" class="modal" style="display:none">
+
+ <div class="modalbox" style="max-width:820px">
+
+  <div class="modalhead">
+
+   <div>
+    <h2 id="plTitleV10">📻 Criar Playlist</h2>
+    <div class="sub">
+     Escolha as músicas do Acervo e onde esta playlist será usada.
+    </div>
+   </div>
+
+   <button
+    class="x"
+    onclick="closePlaylistV10()"
+   >
+    ×
+   </button>
+
+  </div>
+
+  <div class="formgrid">
+
+   <label>
+    Nome da playlist
+    <input
+     id="plNameV10"
+     placeholder="Ex.: Farmácia 1"
+    >
+   </label>
+
+   <label>
+    Destino
+    <select
+     id="plDestV10"
+     onchange="destChangeV10()"
+    >
+     <option value="Geral">🌐 Geral</option>
+     <option value="Ramo">🏪 Ramo</option>
+     <option value="Cliente">👤 Cliente específico</option>
+    </select>
+   </label>
+
+   <label
+    id="plRamoWrapV10"
+    style="display:none"
+   >
+    Ramo
+    <select id="plRamoV10"></select>
+   </label>
+
+   <label
+    id="plClientWrapV10"
+    style="display:none"
+   >
+    Cliente
+    <input
+     id="plClientV10"
+     placeholder="Nome do cliente"
+    >
+   </label>
+
+  </div>
+
+  <div class="toolbar" style="margin-top:14px">
+
+   <input
+    id="plSearchV10"
+    placeholder="🔎 Buscar música..."
+    oninput="renderPlaylistPickerV10()"
+   >
+
+   <button
+    class="btn secondary"
+    onclick="selectAllPickerV10(true)"
+   >
+    ☑ Selecionar todas
+   </button>
+
+   <button
+    class="btn secondary"
+    onclick="selectAllPickerV10(false)"
+   >
+    ☐ Limpar
+   </button>
+
+   <span
+    class="badge"
+    id="plSelectedCountV10"
+   >
+    0 selecionadas
+   </span>
+
+  </div>
+
+  <div
+   id="plPickerV10"
+   style="max-height:390px;overflow:auto;border:1px solid var(--line);border-radius:12px"
+  ></div>
+
+  <div
+   class="toolbar"
+   style="justify-content:flex-end;margin-top:14px"
+  >
+
+   <button
+    class="btn secondary"
+    onclick="closePlaylistV10()"
+   >
+    Cancelar
+   </button>
+
+   <button
+    class="btn"
+    onclick="savePlaylistV10()"
+   >
+    💾 SALVAR PLAYLIST
+   </button>
+
+  </div>
+
+ </div>
+
+</div>
+
+<style>
+#playlistModalV10{
+ position:fixed;
+ inset:0;
+ background:#000a;
+ z-index:99999;
+ align-items:center;
+ justify-content:center;
+ padding:20px
+}
+#playlistModalV10 .modalbox{
+ width:100%;
+ max-height:92vh;
+ overflow:auto;
+ background:#0c1b13;
+ border:1px solid var(--line);
+ border-radius:18px;
+ padding:18px;
+ box-shadow:0 24px 80px #0008
+}
+#playlistModalV10 .modalhead{
+ display:flex;
+ justify-content:space-between;
+ align-items:flex-start;
+ gap:12px
+}
+#playlistModalV10 .x{
+ background:transparent;
+ border:0;
+ color:#fff;
+ font-size:30px;
+ cursor:pointer
+}
+#playlistModalV10 .formgrid{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:12px;
+ margin-top:16px
+}
+#playlistModalV10 label{
+ font-size:12px;
+ color:var(--muted);
+ font-weight:800
+}
+#playlistModalV10 label input,
+#playlistModalV10 label select{
+ display:block;
+ width:100%;
+ margin-top:6px
+}
+.pick-v10{
+ display:grid;
+ grid-template-columns:34px 1fr auto;
+ gap:10px;
+ align-items:center;
+ padding:11px;
+ border-bottom:1px solid var(--line);
+ cursor:pointer
+}
+.pick-v10:last-child{border-bottom:0}
+.pick-v10:hover{background:#10251a}
+.pick-v10 input{
+ width:19px;
+ height:19px
+}
+@media(max-width:700px){
+ #playlistModalV10 .formgrid{grid-template-columns:1fr}
+ .pick-v10{grid-template-columns:30px 1fr}
+ .pick-v10 button{grid-column:2}
+}
+</style>
+
+<script>
+let editPlV10=null, pickV10=new Set();
+
+function openPlaylistV10(id){
+ const pls=JSON.parse(localStorage.getItem('capivara_playlists_v9')||'[]');
+ const p=id?pls.find(x=>x.id===id):null;
+
+ editPlV10=id||null;
+ pickV10=new Set(p?p.musicIds:[]);
+
+ document.getElementById('plTitleV10').textContent=p?'✏️ Editar Playlist':'📻 Criar Playlist';
+ document.getElementById('plNameV10').value=p?p.name:'';
+ document.getElementById('plDestV10').value=p?p.destination:'Geral';
+ document.getElementById('plClientV10').value=p?p.client||'':'';
+
+ const sel=document.getElementById('plRamoV10');
+ sel.innerHTML=(window.ramoNames||[]).map(r=>'<option>'+r+'</option>').join('');
+
+ if(p&&p.ramo)sel.value=p.ramo;
+
+ destChangeV10();
+ renderPlaylistPickerV10();
+
+ document.getElementById('playlistModalV10').style.display='flex';
+}
+
+function closePlaylistV10(){
+ document.getElementById('playlistModalV10').style.display='none'
+}
+
+function destChangeV10(){
+ const d=document.getElementById('plDestV10').value;
+ document.getElementById('plRamoWrapV10').style.display=d==='Ramo'?'block':'none';
+ document.getElementById('plClientWrapV10').style.display=d==='Cliente'?'block':'none';
+}
+
+function renderPlaylistPickerV10(){
+ const mus=JSON.parse(localStorage.getItem('capivara_acervo_v9')||'[]');
+ const q=(document.getElementById('plSearchV10').value||'').toLowerCase();
+ const arr=mus.filter(m=>m.name.toLowerCase().includes(q));
+
+ document.getElementById('plPickerV10').innerHTML=arr.length
+  ?arr.map(m=>`<label class="pick-v10">
+    <input type="checkbox" ${pickV10.has(m.id)?'checked':''} onchange="togglePickV10('${m.id}',this.checked)">
+    <div>
+     <b>🎵 ${String(m.name).replace(/</g,'&lt;')}</b>
+     <div class="ac-meta-v9">${pickV10.has(m.id)?'Selecionada para esta playlist':'Clique para adicionar à playlist'}</div>
+    </div>
+    <button type="button" class="btn secondary" onclick="event.preventDefault();event.stopPropagation();playFileV9('music','${m.id}')">▶ Ouvir</button>
+   </label>`).join('')
+  :'<div class="ac-empty-v9">Nenhuma música encontrada no Acervo.</div>';
+
+ document.getElementById('plSelectedCountV10').textContent=
+  pickV10.size+' selecionada'+(pickV10.size===1?'':'s');
+}
+
+function togglePickV10(id,on){
+ on?pickV10.add(id):pickV10.delete(id);
+ renderPlaylistPickerV10()
+}
+
+function selectAllPickerV10(on){
+ const mus=JSON.parse(localStorage.getItem('capivara_acervo_v9')||'[]');
+ const q=(document.getElementById('plSearchV10').value||'').toLowerCase();
+
+ mus.filter(m=>m.name.toLowerCase().includes(q))
+    .forEach(m=>on?pickV10.add(m.id):pickV10.delete(m.id));
+
+ renderPlaylistPickerV10();
+}
+
+function savePlaylistV10(){
+ const name=document.getElementById('plNameV10').value.trim();
+
+ if(!name)return alert('Digite um nome para a playlist.');
+ if(!pickV10.size)return alert('Marque pelo menos uma música.');
+
+ const d=document.getElementById('plDestV10').value;
+ const ramo=d==='Ramo'?document.getElementById('plRamoV10').value:'';
+ const client=d==='Cliente'?document.getElementById('plClientV10').value.trim():'';
+
+ if(d==='Cliente'&&!client)return alert('Informe o cliente.');
+
+ let pls=JSON.parse(localStorage.getItem('capivara_playlists_v9')||'[]');
+
+ if(editPlV10){
+   const p=pls.find(x=>x.id===editPlV10);
+   if(!p)return;
+
+   Object.assign(p,{
+    name,
+    destination:d,
+    ramo,
+    client,
+    musicIds:[...pickV10]
+   });
+
+ }else{
+
+   pls.push({
+    id:Date.now().toString(36)+Math.random().toString(36).slice(2,8),
+    name,
+    destination:d,
+    ramo,
+    client,
+    musicIds:[...pickV10],
+    active:true
+   });
+ }
+
+ localStorage.setItem('capivara_playlists_v9',JSON.stringify(pls));
+ closePlaylistV10();
+
+ if(window.renderAcervoV9)renderAcervoV9();
+}
+
+window.newPlaylistV9=function(){
+ openPlaylistV10(null)
+}
+
+window.editPlaylistV9=function(id){
+ openPlaylistV10(id)
+}
+</script>
+
+
+<div id="newRamoModalV12" class="modal-v12">
+
+ <div class="modalbox-v12">
+
+  <button
+   class="close-v12"
+   onclick="closeNewRamoV12()"
+  >
+   ×
+  </button>
+
+  <h2>＋ Novo Ramo de Atividade</h2>
+
+  <p>
+   Digite o ramo. A Capivara prepara os agregados iniciais para você revisar.
+  </p>
+
+  <label>Nome do ramo</label>
+
+  <input
+   id="newRamoNameV12"
+   placeholder="Ex.: Clínica Veterinária"
+  >
+
+  <label>15 produtos/serviços</label>
+
+  <textarea
+   id="newRamoProductsV12"
+   rows="8"
+   placeholder="Um por linha"
+  ></textarea>
+
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+
+   <button
+    class="btn secondary"
+    onclick="suggestRamoV12()"
+   >
+    ✨ SUGERIR AGREGADOS
+   </button>
+
+   <button
+    class="btn"
+    onclick="saveNewRamoV12()"
+   >
+    💾 SALVAR NOVO RAMO
+   </button>
+
+  </div>
+
+  <small id="newRamoMsgV12"></small>
+
+ </div>
+
+</div>
+
+<script>
+
+const CUSTOM_RAMO_KEY_V12='capivara_custom_ramos_v12';
+
+function customRamosV12(){
+ try{
+  return JSON.parse(localStorage.getItem(CUSTOM_RAMO_KEY_V12)||'{}')
+ }catch(e){
+  return {}
+ }
+}
+
+function mergeCustomRamosV12(){
+ const c=customRamosV12();
+
+ Object.entries(c).forEach(([k,v])=>{
+  if(window.productCatalogs && !productCatalogs[k])
+   productCatalogs[k]=v.products||[]
+ });
+}
+
+function openNewRamoV12(){
+ document.getElementById('newRamoModalV12').classList.add('show');
+ document.getElementById('newRamoNameV12').focus()
+}
+
+function closeNewRamoV12(){
+ document.getElementById('newRamoModalV12').classList.remove('show')
+}
+
+const ramoSuggestionsV12={
+
+ 'clínica veterinária':[
+  'Consulta veterinária',
+  'Vacinação',
+  'Exames',
+  'Ultrassom',
+  'Raio-X',
+  'Cirurgia',
+  'Internação',
+  'Castração',
+  'Check-up',
+  'Odontologia veterinária',
+  'Microchipagem',
+  'Curativos',
+  'Atendimento emergencial',
+  'Farmácia veterinária',
+  'Retorno'
+ ],
+
+ 'barbearia':[
+  'Corte masculino',
+  'Barba',
+  'Corte infantil',
+  'Pezinho',
+  'Sobrancelha',
+  'Pigmentação',
+  'Hidratação',
+  'Relaxamento',
+  'Luzes',
+  'Platinado',
+  'Camuflagem de fios brancos',
+  'Barboterapia',
+  'Limpeza de pele',
+  'Pacote corte e barba',
+  'Agendamento'
+ ],
+
+ 'academia':[
+  'Musculação',
+  'Avaliação física',
+  'Treino personalizado',
+  'Personal trainer',
+  'Funcional',
+  'Spinning',
+  'Alongamento',
+  'Pilates',
+  'Dança',
+  'Aula experimental',
+  'Plano mensal',
+  'Plano trimestral',
+  'Plano semestral',
+  'Plano anual',
+  'Matrícula'
+ ],
+
+ 'salão de beleza':[
+  'Corte feminino',
+  'Escova',
+  'Hidratação',
+  'Coloração',
+  'Mechas',
+  'Progressiva',
+  'Penteado',
+  'Manicure',
+  'Pedicure',
+  'Design de sobrancelha',
+  'Maquiagem',
+  'Reconstrução capilar',
+  'Cauterização',
+  'Cronograma capilar',
+  'Pacote de beleza'
+ ]
+};
+
+function norm12(x){
+ return String(x||'')
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g,'')
+  .toLowerCase()
+  .trim()
+}
+
+function bestKnownRamoV13(name){
+
+ const n=norm12(name);
+
+ const aliases={
+  'clinica veternaria':'clínica veterinária',
+  'clinica veterinaria':'clínica veterinária',
+  'veterinaria':'clínica veterinária',
+  'barberia':'barbearia',
+  'barbearia':'barbearia',
+  'academia':'academia',
+  'salao beleza':'salão de beleza',
+  'salao de beleza':'salão de beleza'
+ };
+
+ return aliases[n]||null;
+}
+
+function suggestRamoV12(){
+
+ const inp=document.getElementById('newRamoNameV12');
+ const raw=inp.value.trim();
+ const msg=document.getElementById('newRamoMsgV12');
+
+ if(!raw){
+  msg.textContent='Digite primeiro o nome do ramo.';
+  return
+ }
+
+ const corrected=bestKnownRamoV13(raw);
+
+ if(corrected && norm12(corrected)!==norm12(raw)){
+  inp.value=corrected;
+  msg.textContent='✍️ Corrigi o nome para “'+corrected+'”. Revise antes de salvar.'
+ }
+
+ const finalName=corrected||raw;
+
+ const exact=Object.entries(ramoSuggestionsV12)
+  .find(([k])=>norm12(k)===norm12(finalName));
+
+ if(exact){
+   document.getElementById('newRamoProductsV12').value=exact[1].join('\n');
+   msg.textContent=(corrected?'✍️ Nome ajustado. ':'')+
+    '✨ 15 produtos/serviços sugeridos. Revise e salve.';
+   return;
+ }
+
+ const known=Object.keys(productCatalogs)
+  .find(k=>norm12(k)===norm12(finalName));
+
+ if(known){
+   inp.value=known;
+   document.getElementById('newRamoProductsV12').value=
+    productCatalogs[known].slice(0,15).join('\n');
+
+   msg.textContent=
+    '✨ Ramo reconhecido. Carreguei os 15 produtos/serviços.';
+
+   return;
+ }
+
+ document.getElementById('newRamoProductsV12').value='';
+
+ msg.textContent=
+  '⚠️ Ramo não reconhecido automaticamente. Informe/revise os 15 produtos ou serviços antes de salvar. Na versão online, a IA fará essa interpretação.';
+}
+
+function saveNewRamoV12(){
+
+ const inp=document.getElementById('newRamoNameV12');
+ const msg=document.getElementById('newRamoMsgV12');
+
+ let name=inp.value.trim();
+
+ const corrected=bestKnownRamoV13(name);
+
+ if(corrected){
+  name=corrected;
+  inp.value=corrected
+ }
+
+ const products=document.getElementById('newRamoProductsV12')
+  .value
+  .split(/\n+/)
+  .map(x=>x.trim())
+  .filter(Boolean)
+  .slice(0,15);
+
+ if(!name){
+  msg.textContent='Informe o nome do ramo.';
+  return
+ }
+
+ if(products.length!==15){
+  msg.textContent='⚠️ Para salvar, confirme exatamente 15 produtos/serviços.';
+  return
+ }
+
+ const existing=Object.keys(productCatalogs)
+  .find(k=>norm12(k)===norm12(name));
+
+ if(existing && !customRamosV12()[existing]){
+  msg.textContent='Esse ramo já existe na Capivara.';
+  return
+ }
+
+ const c=customRamosV12();
+
+ const oldKey=Object.keys(c)
+  .find(k=>norm12(k)===norm12(name));
+
+ if(oldKey && oldKey!==name)
+  delete c[oldKey];
+
+ c[name]={
+  products,
+  createdAt:new Date().toISOString()
+ };
+
+ localStorage.setItem(
+  CUSTOM_RAMO_KEY_V12,
+  JSON.stringify(c)
+ );
+
+ productCatalogs[name]=products;
+
+ msg.textContent=
+  '✅ Ramo salvo com os 15 produtos. Abrindo na lista...';
+
+ setTimeout(()=>location.reload(),450);
+}
+
+
+// V16 — geração real das vinhetas com ElevenLabs.
+const capVinhetaAudioV16=new WeakMap();
+
+function capVinhetaVoiceV16(btn){
+
+  const row=
+   btn.closest('.vinheta-row,.vinheta,.slot,.vitem')||
+   btn.parentElement;
+
+  const siblings=
+   row?.parentElement
+    ?[...row.parentElement.children].filter(
+      x=>x.querySelector &&
+      x.querySelector('input[type="text"],textarea')
+     )
+    :[];
+
+  const i=Math.max(0,siblings.indexOf(row));
+
+  return i%2===0?'male':'female';
+}
+
+function capVinhetaPhraseV16(btn){
+
+  const row=
+   btn.closest('.vinheta-row,.vinheta,.slot,.vitem')||
+   btn.parentElement;
+
+  const inp=
+   row?.querySelector('input[type="text"],textarea') ||
+   btn.parentElement?.querySelector('input[type="text"],textarea');
+
+  return {
+   row,
+   inp,
+   text:(inp?.value||'').trim()
+  };
+}
+
+async function generateVinhetaAudioV16(btn){
+
+  const {row,inp,text}=capVinhetaPhraseV16(btn);
+
+  if(!text){
+   alert('Digite a frase da vinheta.');
+   return
+  }
+
+  let cfg={};
+
+  try{
+   cfg=JSON.parse(
+    localStorage.getItem('capivara_admin_settings')||'{}'
+   )
+  }catch(e){}
+
+  const sex=capVinhetaVoiceV16(btn);
+
+  let jv={};
+
+  try{
+   jv=JSON.parse(
+    localStorage.getItem('capivara_vinheta_voice_ids_v2')||'{}'
+   )
+  }catch(e){}
+
+  const voiceId=sex==='female'
