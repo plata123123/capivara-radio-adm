@@ -1,660 +1,1973 @@
-<!-- COLE ESTE BLOCO NO FINAL DO SEU index.html, IMEDIATAMENTE ANTES DE </body> -->
-<script id="capivaraPreservaChavesV39">
-(function () {
-  const SERVER = 'https://capivara-radio-server.onrender.com';
-  const $ = id => document.getElementById(id);
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Capivara Rádio • Administrador</title>
 
-  const configured = {
-    text: {1:false,2:false,3:false},
-    voice:{1:false,2:false,3:false}
+<style>
+:root{
+  --bg:#07110d;
+  --panel:#0d1b15;
+  --panel2:#12241c;
+  --line:#234233;
+  --txt:#f5fbf7;
+  --muted:#92aa9d;
+  --green:#42e07f;
+  --gold:#ffc857;
+  --red:#ff6868;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Inter,system-ui,-apple-system,Segoe UI,Arial,sans-serif;
+  background:linear-gradient(135deg,#06100c,#0a1812 55%,#07110d);
+  color:var(--txt);
+}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+aside{
+  padding:24px 16px;
+  border-right:1px solid var(--line);
+  background:#08130f;
+  position:sticky;
+  top:0;
+  height:100vh;
+}
+.logo{font-weight:900;font-size:22px;margin:4px 10px 28px}
+.logo b{color:var(--green)}
+.sub{color:var(--muted);font-size:13px}
+nav button{
+  width:100%;
+  text-align:left;
+  border:0;
+  background:transparent;
+  color:#b9c9c0;
+  padding:13px 14px;
+  border-radius:12px;
+  margin:3px 0;
+  font-weight:800;
+}
+nav button:hover,nav button.active{background:#153023;color:#fff}
+main{padding:30px;max-width:1500px;width:100%}
+.section{display:none}
+.section.active{display:block}
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  margin-bottom:20px;
+}
+.top h1{margin:0;font-size:28px}
+.card{
+  background:rgba(14,29,22,.94);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:18px;
+  box-shadow:0 12px 30px #0003;
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:14px;
+}
+.metric span{color:var(--muted)}
+.metric strong{display:block;font-size:30px;margin-top:8px}
+.btn{
+  border:0;
+  border-radius:12px;
+  padding:11px 16px;
+  font-weight:900;
+  background:var(--green);
+  color:#04200e;
+}
+.btn.secondary{background:#183327;color:#dff7e7}
+.btn.gold{background:var(--gold);color:#2b2100}
+.btn.danger{background:#3a1c1c;color:#ffb8b8}
+.toolbar{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  flex-wrap:wrap;
+  margin-bottom:14px;
+}
+input,select,textarea{
+  background:#091710;
+  color:#fff;
+  border:1px solid #2c4b3a;
+  border-radius:11px;
+  padding:11px 12px;
+  outline:none;
+}
+textarea{resize:vertical}
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin:10px 0;
+}
+.field label{
+  color:#a9bdb2;
+  font-size:13px;
+  font-weight:800;
+}
+table{width:100%;border-collapse:collapse}
+th,td{
+  padding:13px 10px;
+  border-bottom:1px solid #203b2e;
+  text-align:left;
+  font-size:14px;
+}
+th{color:#8da99a}
+.badge{
+  display:inline-block;
+  padding:5px 9px;
+  border-radius:999px;
+  background:#163c27;
+  color:#7cf0a7;
+  font-size:12px;
+  font-weight:900;
+}
+.badge.off{background:#3a2323;color:#ffabab}
+.ramos{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:13px;
+}
+.ramo{cursor:pointer}
+.ramo:hover{border-color:#3f7558}
+.products{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+}
+.product{
+  padding:10px;
+  border-radius:10px;
+  background:#10251b;
+  border:1px solid #2a4938;
+}
+.modal{
+  position:fixed;
+  inset:0;
+  background:#000b;
+  z-index:9999;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+.modal.show{display:flex}
+.modalbox{
+  width:min(820px,96vw);
+  max-height:92vh;
+  overflow:auto;
+  background:#0c1b13;
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:20px;
+}
+.modalhead{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+}
+.x{
+  border:0;
+  background:transparent;
+  color:white;
+  font-size:28px;
+}
+.ac-row{
+  display:grid;
+  grid-template-columns:34px 1fr auto;
+  gap:10px;
+  align-items:center;
+  padding:11px;
+  border-top:1px solid var(--line);
+}
+.ac-name{font-weight:900}
+.ac-meta{font-size:12px;color:var(--muted)}
+.actions{display:flex;gap:7px;flex-wrap:wrap}
+.playlist{
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:14px;
+  margin:10px 0;
+  background:#0a1711;
+}
+.theme-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(145px,1fr));
+  gap:9px;
+  margin:12px 0 18px;
+}
+.theme{
+  border:1px solid #31533f;
+  background:#10251b;
+  color:white;
+  border-radius:13px;
+  padding:12px;
+  text-align:left;
+}
+.theme.active{
+  outline:2px solid var(--green);
+  background:#173b2c;
+}
+.status{
+  position:fixed;
+  right:16px;
+  bottom:16px;
+  z-index:10000;
+  padding:9px 12px;
+  border-radius:999px;
+  font:800 12px system-ui;
+  background:#173b2c;
+  color:#bff7d2;
+  border:1px solid #2f684d;
+}
+.vig{
+  border:1px solid #24503d;
+  border-radius:14px;
+  padding:14px;
+  margin:12px 0;
+  background:#0b2118;
+}
+.vig textarea{width:100%;min-height:74px}
+.saved{
+  margin-top:10px;
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+}
+.savedrow{
+  display:grid;
+  grid-template-columns:90px 85px 1fr auto auto;
+  gap:8px;
+  align-items:center;
+  background:#103a2b;
+  border:1px solid #23543f;
+  border-radius:11px;
+  padding:9px;
+}
+hr{border:0;border-top:1px solid var(--line);margin:18px 0}
+pre{
+  white-space:pre-wrap;
+  background:#08130f;
+  border:1px solid var(--line);
+  padding:12px;
+  border-radius:12px;
+  color:#ccebd8;
+}
+@media(max-width:950px){
+  .app{grid-template-columns:1fr}
+  aside{height:auto;position:static}
+  nav{display:flex;overflow:auto}
+  nav button{white-space:nowrap}
+  .grid,.ramos{grid-template-columns:1fr 1fr}
+}
+@media(max-width:650px){
+  .grid,.ramos,.products{grid-template-columns:1fr}
+  main{padding:16px}
+  .ac-row{grid-template-columns:30px 1fr}
+  .actions{grid-column:2}
+  .savedrow{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<aside>
+  <div class="logo">
+    CAPIVARA <b>RÁDIO</b>
+    <div class="sub">ADMINISTRADOR</div>
+  </div>
+
+  <nav>
+    <button class="active" data-go="painel">▦ Painel</button>
+    <button data-go="clientes">🏪 Clientes</button>
+    <button data-go="player">▶ Player do Cliente</button>
+    <button data-go="ramos">🧩 Ramos e Pacotes</button>
+    <button data-go="acervo">♫ Acervo da Rádio</button>
+    <button data-go="sistema">⚙ Configuração Geral</button>
+  </nav>
+</aside>
+
+<main>
+
+<section id="painel" class="section active">
+  <div class="top">
+    <div>
+      <h1>Painel</h1>
+      <div class="sub">Visão geral da Capivara Rádio</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card metric">
+      <span>Clientes</span>
+      <strong id="mClients">0</strong>
+    </div>
+
+    <div class="card metric">
+      <span>Ativos</span>
+      <strong id="mActive">0</strong>
+    </div>
+
+    <div class="card metric">
+      <span>Músicas online</span>
+      <strong id="mMusic">0</strong>
+    </div>
+
+    <div class="card metric">
+      <span>Playlists</span>
+      <strong id="mPlaylists">0</strong>
+    </div>
+  </div>
+</section>
+
+<section id="clientes" class="section">
+  <div class="top">
+    <div>
+      <h1>Clientes</h1>
+      <div class="sub">Cadastro e código de acesso</div>
+    </div>
+    <button class="btn" onclick="openClient()">+ Novo cliente</button>
+  </div>
+
+  <div class="card">
+    <div class="toolbar">
+      <input id="searchClient" placeholder="Buscar loja ou código..." oninput="renderClients()">
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Loja</th>
+          <th>Ramo</th>
+          <th>Código</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="clientRows"></tbody>
+    </table>
+  </div>
+</section>
+
+<section id="player" class="section">
+  <div class="top">
+    <div>
+      <h1>Player do Cliente</h1>
+      <div class="sub">Acesso rápido ao player</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="field">
+      <label>Cliente</label>
+      <select id="playerClient"></select>
+    </div>
+
+    <button class="btn" onclick="openSelectedPlayer()">▶ ABRIR PLAYER</button>
+  </div>
+</section>
+
+<section id="ramos" class="section">
+  <div class="top">
+    <div>
+      <h1>Ramos e Pacotes</h1>
+      <div class="sub">Produtos e vinhetas de cada ramo</div>
+    </div>
+  </div>
+
+  <div id="ramoGrid" class="ramos"></div>
+</section>
+
+<section id="acervo" class="section">
+
+  <div class="top">
+    <div>
+      <h1>Acervo da Rádio</h1>
+      <div class="sub">Músicas e playlists salvas online</div>
+    </div>
+
+    <div class="toolbar">
+      <select id="uploadTheme"></select>
+
+      <label class="btn">
+        + ADICIONAR MÚSICAS
+        <input
+          id="musicUpload"
+          hidden
+          type="file"
+          accept="audio/*"
+          multiple
+          onchange="uploadMusic(this.files)"
+        >
+      </label>
+
+      <button class="btn gold" onclick="openPlaylist()">+ CRIAR PLAYLIST</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card metric">
+      <span>Músicas online</span>
+      <strong id="musicCount">0</strong>
+    </div>
+
+    <div class="card metric">
+      <span>Playlists</span>
+      <strong id="playlistCount">0</strong>
+    </div>
+
+    <div class="card metric">
+      <span>Fundos</span>
+      <strong id="backgroundCount">0</strong>
+    </div>
+
+    <div class="card metric">
+      <span>Armazenamento</span>
+      <strong id="storageCount" style="font-size:20px">ONLINE</strong>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>🎵 Músicas do Acervo</h3>
+
+    <div id="themeCards" class="theme-grid"></div>
+
+    <div class="toolbar">
+      <input id="musicSearch" placeholder="Buscar música..." oninput="renderMusic()">
+      <button class="btn secondary" onclick="loadMedia()">↻ Atualizar</button>
+    </div>
+
+    <div id="musicList"></div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>📻 Playlists</h3>
+    <div id="playlistList"></div>
+  </div>
+
+</section>
+
+<section id="sistema" class="section">
+  <div class="top">
+    <div>
+      <h1>Configuração Geral</h1>
+      <div class="sub">APIs e vozes</div>
+    </div>
+  </div>
+
+  <div class="card">
+
+    <h3>Gemini</h3>
+
+    <div id="textKeys"></div>
+
+    <hr>
+
+    <h3>ElevenLabs</h3>
+
+    <div id="voiceKeys"></div>
+
+    <hr>
+
+    <h3>IDs das vozes</h3>
+
+    <div class="grid" style="grid-template-columns:repeat(2,1fr)">
+      <div class="field">
+        <label>Anúncio Homem</label>
+        <input id="adMale">
+      </div>
+
+      <div class="field">
+        <label>Anúncio Mulher</label>
+        <input id="adFemale">
+      </div>
+
+      <div class="field">
+        <label>Vinheta Homem</label>
+        <input id="jingleMale">
+      </div>
+
+      <div class="field">
+        <label>Vinheta Mulher</label>
+        <input id="jingleFemale">
+      </div>
+    </div>
+
+    <button class="btn" id="saveSettings" onclick="saveSettings()">
+      💾 SALVAR E TESTAR
+    </button>
+
+    <pre id="apiResult">Aguardando.</pre>
+
+  </div>
+</section>
+
+</main>
+</div>
+
+<div id="status" class="status">SERVIDOR • CONECTANDO</div>
+
+<div id="clientModal" class="modal">
+  <div class="modalbox" style="max-width:560px">
+    <div class="modalhead">
+      <div>
+        <h2>Novo Cliente</h2>
+      </div>
+      <button class="x" onclick="closeClient()">×</button>
+    </div>
+
+    <div class="field">
+      <label>Nome fantasia</label>
+      <input id="newName">
+    </div>
+
+    <div class="field">
+      <label>Ramo</label>
+      <select id="newRamo"></select>
+    </div>
+
+    <div class="field">
+      <label>Código</label>
+      <div class="toolbar">
+        <input id="newCode" readonly>
+        <button class="btn secondary" onclick="generateCode()">GERAR</button>
+      </div>
+    </div>
+
+    <button class="btn" onclick="saveClient()">CADASTRAR CLIENTE</button>
+  </div>
+</div>
+
+<div id="playlistModal" class="modal">
+  <div class="modalbox">
+    <div class="modalhead">
+      <div>
+        <h2 id="playlistTitle">Criar Playlist</h2>
+        <div class="sub">Escolha as músicas que farão parte da playlist.</div>
+      </div>
+      <button class="x" onclick="closePlaylist()">×</button>
+    </div>
+
+    <div class="field">
+      <label>Nome da playlist</label>
+      <input id="playlistName">
+    </div>
+
+    <div class="toolbar">
+      <input id="playlistSearch" placeholder="Buscar música..." oninput="renderPlaylistPicker()">
+      <span class="badge" id="selectedCount">0 selecionadas</span>
+    </div>
+
+    <div id="playlistPicker"></div>
+
+    <br>
+
+    <button class="btn" onclick="savePlaylist()">💾 SALVAR PLAYLIST</button>
+  </div>
+</div>
+
+<div id="ramoModal" class="modal">
+  <div class="modalbox">
+    <div class="modalhead">
+      <div>
+        <h2 id="ramoTitle">Ramo</h2>
+      </div>
+      <button class="x" onclick="closeRamo()">×</button>
+    </div>
+
+    <h3>15 produtos / serviços</h3>
+    <div id="ramoProducts" class="products"></div>
+
+    <hr>
+
+    <h3>Vinhetas</h3>
+    <div id="vinhetaArea"></div>
+  </div>
+</div>
+
+<script>
+const SERVER="https://capivara-radio-server.onrender.com";
+const PLAYER="https://plata123123.github.io/capivara-radio-player/";
+const PASS_KEY="capivara_admin_password_v38";
+
+let adminPassword=sessionStorage.getItem(PASS_KEY)||"";
+let clients=[];
+let media=[];
+let playlists={};
+let selectedTheme="TODOS";
+let editingPlaylist=null;
+let playlistSelection=new Set();
+let currentRamo="";
+
+const THEMES=[
+  "Jazz & Lounge",
+  "Sertanejo",
+  "MPB & Brasilidades",
+  "Flashback",
+  "Dance & Pop",
+  "Moderno / Hits",
+  "Rock & Clássicos",
+  "Instrumental & Ambiente",
+  "Leve & Relax",
+  "Popular & Animada"
+];
+
+const RAMOS={
+"Açougue":[
+"Picanha kg","Alcatra kg","Acém kg","Carne moída kg","Frango kg",
+"Pernil kg","Costela kg","Linguiça kg","Contrafilé kg","Coxão mole kg",
+"Coxão duro kg","Patinho kg","Maminha kg","Cupim kg","Paleta kg"
+],
+"Supermercado":[
+"Arroz 5 kg","Feijão 1 kg","Açúcar 5 kg","Café 500 g","Leite 1 litro",
+"Óleo 900 ml","Macarrão 500 g","Farinha 1 kg","Detergente unidade","Sabão em pó",
+"Papel higiênico","Refrigerante 2 litros","Biscoito pacote","Margarina","Ovos dúzia"
+],
+"Farmácia":[
+"Medicamentos","Higiene pessoal","Protetor solar","Shampoo","Condicionador",
+"Sabonete","Desodorante","Fraldas","Lenços umedecidos","Vitaminas",
+"Curativos","Creme dental","Escova dental","Repelente","Cosméticos"
+],
+"Padaria":[
+"Pão francês","Pão de queijo","Bolo","Rosca","Sonho",
+"Croissant","Pão doce","Pão integral","Salgados","Café",
+"Leite","Queijo","Presunto","Torta","Biscoitos"
+],
+"Hortifruti":[
+"Banana kg","Maçã kg","Laranja kg","Melancia kg","Mamão kg",
+"Abacaxi unidade","Morango bandeja","Pera kg","Uva kg","Tomate kg",
+"Batata kg","Cebola kg","Cenoura kg","Alface unidade","Limão kg"
+],
+"Pet Shop":[
+"Ração cães","Ração gatos","Petiscos","Shampoo pet","Tapete higiênico",
+"Areia para gatos","Brinquedos","Coleiras","Camas","Comedouros",
+"Antipulgas","Banho","Tosa","Acessórios","Higiene pet"
+],
+"Pizzaria":[
+"Pizza calabresa","Pizza mussarela","Pizza portuguesa","Pizza frango",
+"Pizza marguerita","Pizza quatro queijos","Pizza bacon","Pizza especial",
+"Pizza doce","Refrigerante","Suco","Água","Borda recheada","Combo","Delivery"
+],
+"Lanchonete":[
+"Hambúrguer","X-burguer","X-salada","X-bacon","X-tudo",
+"Batata frita","Cachorro-quente","Misto quente","Salgado","Refrigerante",
+"Suco","Água","Milk-shake","Açaí","Combo"
+],
+"Restaurante":[
+"Prato executivo","Marmitex","Self-service","Feijoada","Churrasco",
+"Frango","Peixe","Massas","Saladas","Sobremesa",
+"Suco","Refrigerante","Água","Café","Delivery"
+],
+"Hotel/Pousada":[
+"Diária","Café da manhã","Suíte","Quarto casal","Quarto família",
+"Wi-Fi","Estacionamento","Piscina","Reserva","Pacote fim de semana",
+"Hospedagem","Recepção","Serviço de quarto","Eventos","Promoção de diária"
+],
+"Roupas":[
+"Camiseta","Camisa","Calça","Bermuda","Vestido",
+"Saia","Blusa","Jaqueta","Conjunto","Moda infantil",
+"Moda masculina","Moda feminina","Acessórios","Jeans","Promoção"
+],
+"Calçados":[
+"Tênis","Sapato","Sandália","Chinelo","Bota",
+"Sapatilha","Tênis infantil","Calçado masculino","Calçado feminino","Meias",
+"Bolsa","Cinto","Acessórios","Lançamentos","Promoção"
+],
+"Material de Construção":[
+"Cimento","Areia","Brita","Tijolo","Telha",
+"Tinta","Argamassa","Piso","Revestimento","Tubo PVC",
+"Ferramentas","Elétrica","Hidráulica","Portas","Janelas"
+],
+"Autopeças":[
+"Óleo motor","Filtro óleo","Filtro ar","Pastilha freio","Bateria",
+"Palheta","Lâmpadas","Correias","Velas","Amortecedor",
+"Disco freio","Aditivo","Rolamento","Kit embreagem","Acessórios"
+],
+"Oficina/Auto Center":[
+"Troca de óleo","Alinhamento","Balanceamento","Freios","Suspensão",
+"Motor","Injeção eletrônica","Bateria","Pneus","Ar-condicionado",
+"Revisão","Diagnóstico","Embreagem","Escapamento","Elétrica"
+],
+"Posto/Conveniência":[
+"Gasolina","Etanol","Diesel","Lubrificante","Calibragem",
+"Café","Água","Refrigerante","Energético","Salgados",
+"Doces","Gelo","Carvão","Conveniência","Lavagem"
+],
+"Cosméticos/Perfumaria":[
+"Perfume","Hidratante","Maquiagem","Shampoo","Condicionador",
+"Creme corporal","Desodorante","Batom","Base","Máscara",
+"Protetor solar","Sabonete","Kit presente","Linha masculina","Linha feminina"
+],
+"Ótica":[
+"Óculos de grau","Óculos solar","Armação","Lentes","Lentes multifocais",
+"Lentes antirreflexo","Lentes de contato","Ajuste de óculos","Estojo","Limpeza",
+"Óculos infantil","Óculos masculino","Óculos feminino","Exame visual","Promoção"
+],
+"Papelaria":[
+"Caderno","Caneta","Lápis","Borracha","Mochila",
+"Estojo","Papel A4","Impressão","Xerox","Material escolar",
+"Agenda","Marcador","Cola","Tesoura","Cartolina"
+],
+"Móveis/Eletro":[
+"Sofá","Cama","Colchão","Guarda-roupa","Mesa",
+"Cadeira","Rack","Geladeira","Fogão","Televisão",
+"Micro-ondas","Máquina de lavar","Ventilador","Eletrodomésticos","Móveis"
+],
+"Agropecuária/Rações":[
+"Ração cães","Ração gatos","Ração aves","Ração bovinos","Ração equinos",
+"Milho","Sal mineral","Sementes","Adubo","Ferramentas",
+"Medicamentos veterinários","Acessórios","Bebedouro","Comedouro","Produtos rurais"
+],
+"Distribuidora de Bebidas":[
+"Refrigerante","Água","Suco","Energético","Gelo",
+"Água com gás","Tônica","Bebidas sem álcool","Pack refrigerante","Garrafas",
+"Latas","Copos","Carvão","Petiscos","Entrega"
+],
+"Utilidades/Variedades":[
+"Utensílios","Organizadores","Cozinha","Limpeza","Decoração",
+"Brinquedos","Presentes","Papelaria","Ferramentas","Acessórios",
+"Eletrônicos","Casa","Banheiro","Quarto","Promoção"
+]
+};
+
+function esc(v){
+  return String(v||"")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;");
+}
+
+function setStatus(ok,text){
+  const e=document.getElementById("status");
+  e.textContent=text;
+  e.style.background=ok?"#173b2c":"#442323";
+  e.style.color=ok?"#bff7d2":"#ffc1c1";
+}
+
+function getPassword(){
+  if(adminPassword)return adminPassword;
+
+  adminPassword=prompt("Senha do Administrador:")||"";
+
+  if(adminPassword){
+    sessionStorage.setItem(PASS_KEY,adminPassword);
+  }
+
+  return adminPassword;
+}
+
+async function api(path,options={}){
+  const isAdmin=path.includes("/api/admin/");
+  const headers=new Headers(options.headers||{});
+
+  if(isAdmin){
+    const password=getPassword();
+
+    if(!password){
+      throw new Error("Senha do administrador não informada.");
+    }
+
+    headers.set("X-Admin-Password",password);
+  }
+
+  if(options.body && !(options.body instanceof Blob) && !(options.body instanceof ArrayBuffer)){
+    if(!headers.has("Content-Type")){
+      headers.set("Content-Type","application/json");
+    }
+  }
+
+  let response=await fetch(SERVER+path,{
+    ...options,
+    headers
+  });
+
+  if(response.status===401 && isAdmin){
+    sessionStorage.removeItem(PASS_KEY);
+    adminPassword="";
+    const password=getPassword();
+
+    if(!password){
+      throw new Error("Senha incorreta.");
+    }
+
+    headers.set("X-Admin-Password",password);
+
+    response=await fetch(SERVER+path,{
+      ...options,
+      headers
+    });
+  }
+
+  return response;
+}
+
+async function jsonApi(path,options={}){
+  const r=await api(path,options);
+  const text=await r.text();
+
+  let data={};
+
+  try{
+    data=text?JSON.parse(text):{};
+  }catch{
+    data={raw:text};
+  }
+
+  if(!r.ok){
+    throw new Error(
+      data.error||
+      data.message||
+      data.raw||
+      "HTTP "+r.status
+    );
+  }
+
+  return data;
+}
+
+document.querySelectorAll("nav button").forEach(btn=>{
+  btn.onclick=()=>{
+    document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+
+    document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+
+    const id=btn.dataset.go;
+    document.getElementById(id).classList.add("active");
+
+    if(id==="acervo"){
+      loadMedia();
+      loadPlaylists();
+    }
+
+    if(id==="sistema"){
+      loadSettings();
+    }
   };
+});
 
-  function value(id){
-    return String($(id)?.value || '').trim();
+function fillRamos(){
+  const names=Object.keys(RAMOS);
+
+  document.getElementById("newRamo").innerHTML=
+    names.map(r=>`<option>${esc(r)}</option>`).join("");
+
+  document.getElementById("ramoGrid").innerHTML=
+    names.map(r=>`
+      <div class="card ramo" onclick="openRamo('${esc(r)}')">
+        <h3>${esc(r)}</h3>
+        <div class="sub">15 itens + vinhetas</div>
+      </div>
+    `).join("");
+}
+
+async function loadClients(){
+  try{
+    setStatus(true,"SERVIDOR • CARREGANDO");
+
+    const d=await jsonApi("/api/admin/clients");
+
+    clients=Array.isArray(d.clients)?d.clients:[];
+
+    renderClients();
+    updateDashboard();
+
+    setStatus(true,"SERVIDOR • ONLINE");
+  }catch(e){
+    setStatus(false,"SERVIDOR • ERRO");
+    console.error(e);
   }
+}
 
-  function checked(id){
-    return !!$(id)?.checked;
+function renderClients(){
+  const q=(document.getElementById("searchClient").value||"").toLowerCase();
+
+  const arr=clients.filter(c=>
+    String(c.name||c.nome||"").toLowerCase().includes(q) ||
+    String(c.code||c.codigo||"").includes(q)
+  );
+
+  document.getElementById("clientRows").innerHTML=
+    arr.length
+    ?arr.map(c=>{
+      const code=c.code||c.codigo||"";
+      const name=c.name||c.nome||"";
+      const ramo=c.ramo||"";
+      const active=c.active!==false;
+
+      return `
+        <tr>
+          <td><b>${esc(name)}</b></td>
+          <td>${esc(ramo)}</td>
+          <td><b>${esc(code)}</b></td>
+          <td>
+            <span class="badge ${active?"":"off"}">
+              ${active?"ATIVO":"BLOQUEADO"}
+            </span>
+          </td>
+          <td>
+            <div class="actions">
+              <button class="btn secondary" onclick="openPlayerCode('${esc(code)}')">▶ Player</button>
+              <button class="btn secondary" onclick="toggleClient('${esc(code)}')">${active?"Bloquear":"Ativar"}</button>
+              <button class="btn danger" onclick="deleteClient('${esc(code)}')">Excluir</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join("")
+    :`<tr><td colspan="5">Nenhum cliente.</td></tr>`;
+
+  document.getElementById("playerClient").innerHTML=
+    clients.map(c=>{
+      const code=c.code||c.codigo||"";
+      const name=c.name||c.nome||"";
+      return `<option value="${esc(code)}">${esc(name)} • ${esc(code)}</option>`;
+    }).join("");
+}
+
+function openClient(){
+  document.getElementById("newName").value="";
+  generateCode();
+  document.getElementById("clientModal").classList.add("show");
+}
+
+function closeClient(){
+  document.getElementById("clientModal").classList.remove("show");
+}
+
+function generateCode(){
+  let code="";
+
+  do{
+    code=String(Math.floor(100000+Math.random()*900000));
+  }while(clients.some(c=>String(c.code||c.codigo)===code));
+
+  document.getElementById("newCode").value=code;
+}
+
+async function saveClient(){
+  const name=document.getElementById("newName").value.trim();
+  const ramo=document.getElementById("newRamo").value;
+  const code=document.getElementById("newCode").value.trim();
+
+  if(!name)return alert("Digite o nome da loja.");
+  if(!code)return alert("Gere o código.");
+
+  try{
+    await jsonApi("/api/admin/client",{
+      method:"POST",
+      body:JSON.stringify({
+        name,
+        ramo,
+        code,
+        active:true
+      })
+    });
+
+    closeClient();
+    await loadClients();
+  }catch(e){
+    alert(e.message);
   }
+}
 
-  function setSavedField(input, isConfigured, masked){
-    if(!input) return;
+async function toggleClient(code){
+  const c=clients.find(x=>String(x.code||x.codigo)===String(code));
+  if(!c)return;
 
-    if(isConfigured){
-      input.value = '';
-      input.placeholder = masked
-        ? 'CHAVE JÁ SALVA • ' + masked
-        : 'CHAVE JÁ SALVA NO SERVIDOR';
-      input.dataset.configured = '1';
-    }else{
-      input.dataset.configured = '0';
-    }
+  try{
+    await jsonApi("/api/admin/client/"+encodeURIComponent(code),{
+      method:"PUT",
+      body:JSON.stringify({
+        ...c,
+        active:c.active===false
+      })
+    });
+
+    await loadClients();
+  }catch(e){
+    alert(e.message);
   }
+}
 
-  async function readResponse(r){
-    const text = await r.text();
-    let data = {};
+async function deleteClient(code){
+  if(!confirm("Excluir este cliente?"))return;
+
+  try{
+    await jsonApi("/api/admin/client/"+encodeURIComponent(code),{
+      method:"DELETE"
+    });
+
+    await loadClients();
+  }catch(e){
+    alert(e.message);
+  }
+}
+
+function openPlayerCode(code){
+  window.open(
+    PLAYER+"?code="+encodeURIComponent(code),
+    "_blank"
+  );
+}
+
+function openSelectedPlayer(){
+  const code=document.getElementById("playerClient").value;
+  if(!code)return;
+  openPlayerCode(code);
+}
+
+function updateDashboard(){
+  document.getElementById("mClients").textContent=clients.length;
+  document.getElementById("mActive").textContent=
+    clients.filter(c=>c.active!==false).length;
+
+  document.getElementById("mMusic").textContent=
+    media.filter(x=>x.kind==="music").length;
+
+  document.getElementById("mPlaylists").textContent=
+    Object.keys(playlists||{}).length;
+}
+
+function initThemes(){
+  document.getElementById("uploadTheme").innerHTML=
+    THEMES.map(t=>`<option>${esc(t)}</option>`).join("");
+}
+
+async function uploadMusic(files){
+  if(!files?.length)return;
+
+  const theme=document.getElementById("uploadTheme").value||THEMES[0];
+
+  for(const file of [...files]){
+    setStatus(true,"ENVIANDO • "+file.name);
 
     try{
-      data = text ? JSON.parse(text) : {};
-    }catch(_){
-      data = {raw:text};
-    }
+      const headers=new Headers();
+      headers.set("Content-Type",file.type||"audio/mpeg");
+      headers.set("X-File-Name",encodeURIComponent(file.name));
+      headers.set("X-Media-Kind","music");
+      headers.set("X-Admin-Password",getPassword());
 
-    if(!r.ok){
-      throw new Error(
-        data.error ||
-        data.message ||
-        data.raw ||
-        ('HTTP ' + r.status)
-      );
-    }
-
-    return data;
-  }
-
-  async function loadSavedSettings(){
-    try{
-      const r = await fetch(
-        SERVER + '/api/admin/settings'
+      const r=await fetch(
+        SERVER+
+        "/api/admin/media?kind=music&name="+
+        encodeURIComponent(file.name),
+        {
+          method:"POST",
+          headers,
+          body:file
+        }
       );
 
-      const j = await readResponse(r);
-      const c = j.settings || j.data || j || {};
+      const text=await r.text();
+      let d={};
 
-      const textPool = c.apiPool?.text || [];
-      const voicePool = c.apiPool?.voice || [];
-      const voices = c.voices || {};
-      const programming = c.programming || {};
+      try{d=JSON.parse(text)}catch{}
 
-      for(let i=1;i<=3;i++){
-        const item =
-          textPool.find(
-            x => Number(x.slot) === i
-          ) || textPool[i-1] || {};
+      if(!r.ok){
+        throw new Error(d.error||text||"Erro no upload");
+      }
 
-        configured.text[i] = !!item.configured;
+      const mediaId=d.media?.id;
 
-        if($('textKeyOn'+i)){
-          $('textKeyOn'+i).checked =
-            item.enabled !== undefined
-              ? !!item.enabled
-              : $('textKeyOn'+i).checked;
-        }
-
-        setSavedField(
-          $('textKey'+i),
-          configured.text[i],
-          item.masked || ''
+      if(mediaId){
+        const themeMap=JSON.parse(
+          localStorage.getItem("capivara_media_themes")||"{}"
         );
-      }
 
-      for(let i=1;i<=3;i++){
-        const item =
-          voicePool.find(
-            x => Number(x.slot) === i
-          ) || voicePool[i-1] || {};
+        themeMap[mediaId]=theme;
 
-        configured.voice[i] = !!item.configured;
-
-        if($('voiceKeyOn'+i)){
-          $('voiceKeyOn'+i).checked =
-            item.enabled !== undefined
-              ? !!item.enabled
-              : $('voiceKeyOn'+i).checked;
-        }
-
-        setSavedField(
-          $('voiceKey'+i),
-          configured.voice[i],
-          item.masked || ''
+        localStorage.setItem(
+          "capivara_media_themes",
+          JSON.stringify(themeMap)
         );
-      }
-
-      if(
-        voices.adMale &&
-        $('voiceAdMaleV34')
-      ){
-        $('voiceAdMaleV34').value =
-          voices.adMale;
-      }
-
-      if(
-        voices.adFemale &&
-        $('voiceAdFemaleV34')
-      ){
-        $('voiceAdFemaleV34').value =
-          voices.adFemale;
-      }
-
-      if(
-        voices.jingleMale &&
-        $('voiceJingleMaleV34')
-      ){
-        $('voiceJingleMaleV34').value =
-          voices.jingleMale;
-      }
-
-      if(
-        voices.jingleFemale &&
-        $('voiceJingleFemaleV34')
-      ){
-        $('voiceJingleFemaleV34').value =
-          voices.jingleFemale;
-      }
-
-      if(
-        programming.defaultAdsPerBlock !== undefined &&
-        $('defaultAdsPerBlock')
-      ){
-        $('defaultAdsPerBlock').value =
-          programming.defaultAdsPerBlock;
-      }
-
-      if(
-        programming.dailyLimit !== undefined &&
-        $('dailyLimit')
-      ){
-        $('dailyLimit').value =
-          programming.dailyLimit;
-      }
-
-      if(
-        programming.weeklyLimit !== undefined &&
-        $('weeklyLimit')
-      ){
-        $('weeklyLimit').value =
-          programming.weeklyLimit;
-      }
-
-      if(
-        programming.topDailyLimit !== undefined &&
-        $('topDailyLimit')
-      ){
-        $('topDailyLimit').value =
-          programming.topDailyLimit;
-      }
-
-      const status = $('centralStatusV34');
-
-      if(status){
-        status.textContent =
-          '🟢 Configurações carregadas';
-
-        status.style.background =
-          '#173b2c';
-
-        status.style.color =
-          '#bff7d2';
       }
 
     }catch(e){
-      console.error(
-        'Erro carregando configurações:',
-        e
-      );
+      alert("Erro ao enviar "+file.name+"\n\n"+e.message);
+      break;
     }
   }
 
-  async function testGemini(){
-    const r = await fetch(
-      SERVER + '/api/ai/generate',
-      {
-        method:'POST',
-        headers:{
-          'Content-Type':'application/json'
-        },
-        body:JSON.stringify({
-          item:'coxão mole',
-          price:'29,90',
-          ramo:'Açougue',
-          maxChars:150
-        })
-      }
-    );
+  document.getElementById("musicUpload").value="";
 
-    const data = await readResponse(r);
+  setStatus(true,"SERVIDOR • ONLINE");
 
-    if(data.ok === false){
-      throw new Error(
-        data.error ||
-        'Gemini não respondeu.'
-      );
-    }
+  await loadMedia();
+}
 
-    return true;
+async function loadMedia(){
+  try{
+    const d=await jsonApi("/api/media");
+
+    media=Array.isArray(d.media)?d.media:[];
+
+    renderMusic();
+
+    document.getElementById("musicCount").textContent=
+      media.filter(x=>x.kind==="music").length;
+
+    document.getElementById("backgroundCount").textContent=
+      media.filter(x=>x.kind==="background").length;
+
+    updateDashboard();
+
+  }catch(e){
+    console.error(e);
+    setStatus(false,"ACERVO • ERRO");
+  }
+}
+
+function getThemeMap(){
+  try{
+    return JSON.parse(localStorage.getItem("capivara_media_themes")||"{}");
+  }catch{
+    return {};
+  }
+}
+
+function saveTheme(id,theme){
+  const map=getThemeMap();
+  map[id]=theme;
+  localStorage.setItem("capivara_media_themes",JSON.stringify(map));
+  renderMusic();
+}
+
+function sizeText(n){
+  n=Number(n||0);
+
+  if(n<1024*1024){
+    return Math.round(n/1024)+" KB";
   }
 
-  async function testElevenLabs(){
-    const r = await fetch(
-      SERVER + '/api/voice/generate',
-      {
-        method:'POST',
-        headers:{
-          'Content-Type':'application/json'
-        },
-        body:JSON.stringify({
-          text:'teste de conexão',
-          voiceType:'adMale'
-        })
-      }
-    );
+  return (n/1024/1024).toFixed(1)+" MB";
+}
 
-    if(!r.ok){
-      const text = await r.text();
+function mediaUrl(id){
+  return SERVER+"/api/media/"+encodeURIComponent(id);
+}
 
-      let data = {};
+function playMedia(id){
+  new Audio(mediaUrl(id)).play();
+}
 
-      try{
-        data = text
-          ? JSON.parse(text)
-          : {};
-      }catch(_){
-        data = {raw:text};
-      }
+function renderMusic(){
+  const music=media.filter(x=>x.kind==="music");
+  const map=getThemeMap();
 
-      throw new Error(
-        data.error ||
-        data.message ||
-        data.raw ||
-        ('HTTP ' + r.status)
-      );
-    }
+  const q=(document.getElementById("musicSearch")?.value||"").toLowerCase();
 
-    const contentType =
-      String(
-        r.headers.get('content-type') || ''
-      ).toLowerCase();
+  const filtered=music.filter(m=>{
+    const theme=map[m.id]||THEMES[0];
 
-    if(
-      !contentType.includes(
-        'application/json'
+    return (
+      String(m.name||"").toLowerCase().includes(q) &&
+      (
+        selectedTheme==="TODOS" ||
+        theme===selectedTheme
       )
-    ){
-      const blob = await r.blob();
+    );
+  });
+
+  document.getElementById("themeCards").innerHTML=
+    ["TODOS",...THEMES].map(t=>{
+      const count=t==="TODOS"
+        ?music.length
+        :music.filter(m=>(map[m.id]||THEMES[0])===t).length;
+
+      return `
+        <button
+          class="theme ${selectedTheme===t?"active":""}"
+          onclick="selectedTheme=${JSON.stringify(t)};renderMusic()"
+        >
+          <b>${t==="TODOS"?"🎵 Todo o Acervo":esc(t)}</b>
+          <div class="sub">${count} música${count===1?"":"s"}</div>
+        </button>
+      `;
+    }).join("");
+
+  document.getElementById("musicList").innerHTML=
+    filtered.length
+    ?filtered.map(m=>{
+      const theme=map[m.id]||THEMES[0];
+
+      return `
+        <div class="ac-row">
+          <span>🎵</span>
+
+          <div>
+            <div class="ac-name">${esc(m.name)}</div>
+            <div class="ac-meta">
+              ${sizeText(m.size)} • ${esc(theme)} • ONLINE
+            </div>
+          </div>
+
+          <div class="actions">
+
+            <select onchange="saveTheme('${esc(m.id)}',this.value)">
+              ${THEMES.map(t=>`
+                <option ${t===theme?"selected":""}>${esc(t)}</option>
+              `).join("")}
+            </select>
+
+            <button class="btn secondary" onclick="playMedia('${esc(m.id)}')">
+              ▶ Ouvir
+            </button>
+
+            <button class="btn danger" onclick="deleteMedia('${esc(m.id)}')">
+              🗑
+            </button>
+
+          </div>
+        </div>
+      `;
+    }).join("")
+    :`
+      <div style="padding:30px;text-align:center;color:var(--muted)">
+        Nenhuma música encontrada.
+      </div>
+    `;
+}
+
+async function deleteMedia(id){
+  if(!confirm("Excluir esta música do acervo online?"))return;
+
+  try{
+    await jsonApi("/api/admin/media/"+encodeURIComponent(id),{
+      method:"DELETE"
+    });
+
+    Object.values(playlists||{}).forEach(p=>{
+      if(Array.isArray(p.musicIds)){
+        p.musicIds=p.musicIds.filter(x=>x!==id);
+      }
+    });
+
+    await savePlaylistsServer();
+
+    await loadMedia();
+
+  }catch(e){
+    alert(e.message);
+  }
+}
+
+async function loadPlaylists(){
+  try{
+    const d=await jsonApi("/api/playlists");
+
+    playlists=d.playlists||{};
+
+    if(Array.isArray(playlists)){
+      const obj={};
+      playlists.forEach(p=>{
+        if(p?.id)obj[p.id]=p;
+      });
+      playlists=obj;
+    }
+
+    renderPlaylists();
+
+    document.getElementById("playlistCount").textContent=
+      Object.keys(playlists).length;
+
+    updateDashboard();
+
+  }catch(e){
+    console.error(e);
+  }
+}
+
+async function savePlaylistsServer(){
+  await jsonApi("/api/admin/playlists",{
+    method:"PUT",
+    body:JSON.stringify(playlists)
+  });
+}
+
+function openPlaylist(id=null){
+  editingPlaylist=id;
+
+  const p=id?playlists[id]:null;
+
+  document.getElementById("playlistTitle").textContent=
+    p?"✏️ Editar Playlist":"📻 Criar Playlist";
+
+  document.getElementById("playlistName").value=
+    p?.name||"";
+
+  playlistSelection=
+    new Set(
+      Array.isArray(p?.musicIds)
+        ?p.musicIds
+        :[]
+    );
+
+  document.getElementById("playlistSearch").value="";
+
+  renderPlaylistPicker();
+
+  document.getElementById("playlistModal").classList.add("show");
+}
+
+function closePlaylist(){
+  document.getElementById("playlistModal").classList.remove("show");
+}
+
+function renderPlaylistPicker(){
+  const q=(document.getElementById("playlistSearch").value||"").toLowerCase();
+
+  const music=media
+    .filter(x=>x.kind==="music")
+    .filter(x=>String(x.name||"").toLowerCase().includes(q));
+
+  document.getElementById("playlistPicker").innerHTML=
+    music.length
+    ?music.map(m=>`
+      <label class="ac-row">
+        <input
+          type="checkbox"
+          ${playlistSelection.has(m.id)?"checked":""}
+          onchange="togglePlaylistMusic('${esc(m.id)}',this.checked)"
+        >
+
+        <div>
+          <div class="ac-name">🎵 ${esc(m.name)}</div>
+          <div class="ac-meta">
+            ${playlistSelection.has(m.id)?"Selecionada":"Disponível"}
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="btn secondary"
+          onclick="event.preventDefault();playMedia('${esc(m.id)}')"
+        >
+          ▶ Ouvir
+        </button>
+      </label>
+    `).join("")
+    :`<div style="padding:25px">Nenhuma música.</div>`;
+
+  document.getElementById("selectedCount").textContent=
+    playlistSelection.size+
+    " selecionada"+
+    (playlistSelection.size===1?"":"s");
+}
+
+function togglePlaylistMusic(id,on){
+  if(on){
+    playlistSelection.add(id);
+  }else{
+    playlistSelection.delete(id);
+  }
+
+  renderPlaylistPicker();
+}
+
+async function savePlaylist(){
+  const name=document.getElementById("playlistName").value.trim();
+
+  if(!name){
+    return alert("Digite o nome da playlist.");
+  }
+
+  if(!playlistSelection.size){
+    return alert("Escolha pelo menos uma música.");
+  }
+
+  const id=
+    editingPlaylist||
+    (
+      "playlist_"+
+      Date.now().toString(36)+
+      "_"+
+      Math.random().toString(36).slice(2,7)
+    );
+
+  playlists[id]={
+    ...(playlists[id]||{}),
+    id,
+    name,
+    musicIds:[...playlistSelection],
+    active:true,
+    updatedAt:new Date().toISOString()
+  };
+
+  try{
+    await savePlaylistsServer();
+
+    closePlaylist();
+
+    await loadPlaylists();
+
+  }catch(e){
+    alert(e.message);
+  }
+}
+
+async function deletePlaylist(id){
+  if(!confirm("Excluir esta playlist?"))return;
+
+  delete playlists[id];
+
+  try{
+    await savePlaylistsServer();
+    await loadPlaylists();
+  }catch(e){
+    alert(e.message);
+  }
+}
+
+async function togglePlaylist(id){
+  const p=playlists[id];
+  if(!p)return;
+
+  p.active=p.active===false;
+
+  try{
+    await savePlaylistsServer();
+    await loadPlaylists();
+  }catch(e){
+    alert(e.message);
+  }
+}
+
+function testPlaylist(id){
+  const p=playlists[id];
+
+  if(!p?.musicIds?.length){
+    return alert("Playlist vazia.");
+  }
+
+  playMedia(p.musicIds[0]);
+}
+
+function renderPlaylists(){
+  const arr=Object.values(playlists||{});
+
+  document.getElementById("playlistList").innerHTML=
+    arr.length
+    ?arr.map(p=>`
+      <div class="playlist">
+
+        <div class="top" style="margin:0">
+
+          <div>
+            <b style="font-size:17px">📻 ${esc(p.name)}</b>
+
+            <div style="margin-top:7px">
+              <span class="badge">${p.musicIds?.length||0} músicas</span>
+              <span class="badge ${p.active===false?"off":""}">
+                ${p.active===false?"PAUSADA":"ATIVA"}
+              </span>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn secondary" onclick="testPlaylist('${esc(p.id)}')">▶ Testar</button>
+            <button class="btn secondary" onclick="openPlaylist('${esc(p.id)}')">✏ Editar</button>
+            <button class="btn secondary" onclick="togglePlaylist('${esc(p.id)}')">
+              ${p.active===false?"▶ Ativar":"⏸ Pausar"}
+            </button>
+            <button class="btn danger" onclick="deletePlaylist('${esc(p.id)}')">🗑</button>
+          </div>
+
+        </div>
+
+      </div>
+    `).join("")
+    :`
+      <div style="padding:25px;color:var(--muted)">
+        Nenhuma playlist criada.
+      </div>
+    `;
+
+  document.getElementById("playlistCount").textContent=arr.length;
+}
+
+function openRamo(ramo){
+  currentRamo=ramo;
+
+  document.getElementById("ramoTitle").textContent=
+    "📦 "+ramo;
+
+  document.getElementById("ramoProducts").innerHTML=
+    RAMOS[ramo].map((p,i)=>`
+      <div class="product">${i+1}. ${esc(p)}</div>
+    `).join("");
+
+  renderVinhetas();
+
+  document.getElementById("ramoModal").classList.add("show");
+}
+
+function closeRamo(){
+  document.getElementById("ramoModal").classList.remove("show");
+}
+
+const VINHETA_TYPES=[
+  ["entry","Entrada"],
+  ["exit","Saída"],
+  ["top-entry","TOP entrada"],
+  ["top-exit","TOP saída"]
+];
+
+async function loadJingles(){
+  try{
+    const d=await jsonApi("/api/jingles");
+    return d.jingles||{};
+  }catch{
+    return {};
+  }
+}
+
+async function saveJingles(data){
+  await jsonApi("/api/admin/jingles",{
+    method:"PUT",
+    body:JSON.stringify(data)
+  });
+}
+
+async function renderVinhetas(){
+  const area=document.getElementById("vinhetaArea");
+
+  area.innerHTML="Carregando...";
+
+  const jingles=await loadJingles();
+
+  const ramoData=jingles[currentRamo]||{};
+
+  area.innerHTML=VINHETA_TYPES.map(([key,label])=>{
+
+    const list=Array.isArray(ramoData[key])?ramoData[key]:[];
+
+    return `
+      <div class="vig">
+
+        <h3>${esc(label)}</h3>
+
+        <textarea
+          id="vigText_${key}"
+          placeholder="Digite a frase da vinheta..."
+        ></textarea>
+
+        <button
+          class="btn"
+          style="width:100%;margin-top:8px"
+          onclick="generateJingle('${key}')"
+        >
+          🔊 GERAR E SALVAR
+        </button>
+
+        <div class="saved">
+          ${
+            list.length
+            ?list.map((v,i)=>`
+              <div class="savedrow">
+                <b>${String(i+1).padStart(2,"0")}</b>
+                <span>${v.voice==="jingleFemale"?"👩 Mulher":"👨 Homem"}</span>
+                <span>${esc(v.text)}</span>
+                <button class="btn secondary" onclick="playMedia('${esc(v.mediaId)}')">▶</button>
+                <button class="btn danger" onclick="deleteJingle('${key}',${i})">🗑</button>
+              </div>
+            `).join("")
+            :`<div class="sub">Nenhuma vinheta salva.</div>`
+          }
+        </div>
+
+      </div>
+    `;
+  }).join("");
+}
+
+async function generateJingle(type){
+  const textarea=document.getElementById("vigText_"+type);
+  const text=textarea.value.trim();
+
+  if(!text)return alert("Digite a frase da vinheta.");
+
+  try{
+    const jingles=await loadJingles();
+
+    jingles[currentRamo] ||= {};
+    jingles[currentRamo][type] ||= [];
+
+    const list=jingles[currentRamo][type];
+
+    const voiceType=
+      list.length%2===0
+        ?"jingleMale"
+        :"jingleFemale";
+
+    setStatus(true,"GERANDO VINHETA...");
+
+    const voiceResponse=await fetch(
+      SERVER+"/api/voice/generate",
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+          text,
+          voiceType
+        })
+      }
+    );
+
+    if(!voiceResponse.ok){
+      const t=await voiceResponse.text();
+      throw new Error(t||"Falha ao gerar áudio.");
+    }
+
+    const blob=await voiceResponse.blob();
+
+    const headers=new Headers();
+    headers.set("Content-Type","audio/mpeg");
+    headers.set("X-Admin-Password",getPassword());
+
+    const fileName=
+      currentRamo+
+      "-"+
+      type+
+      "-"+
+      Date.now()+
+      ".mp3";
+
+    const upload=await fetch(
+      SERVER+
+      "/api/admin/media?kind=jingle&name="+
+      encodeURIComponent(fileName),
+      {
+        method:"POST",
+        headers,
+        body:blob
+      }
+    );
+
+    const uploadText=await upload.text();
+
+    let uploadData={};
+
+    try{
+      uploadData=JSON.parse(uploadText);
+    }catch{}
+
+    if(!upload.ok){
+      throw new Error(uploadData.error||uploadText);
+    }
+
+    list.push({
+      id:"vig_"+Date.now().toString(36),
+      text,
+      voice:voiceType,
+      mediaId:uploadData.media.id,
+      url:uploadData.media.url,
+      createdAt:new Date().toISOString()
+    });
+
+    await saveJingles(jingles);
+
+    textarea.value="";
+
+    setStatus(true,"VINHETA • SALVA");
+
+    await renderVinhetas();
+
+  }catch(e){
+    setStatus(false,"VINHETA • ERRO");
+    alert(e.message);
+  }
+}
+
+async function deleteJingle(type,index){
+  if(!confirm("Excluir esta vinheta?"))return;
+
+  try{
+    const jingles=await loadJingles();
+
+    const list=jingles?.[currentRamo]?.[type]||[];
+
+    const item=list[index];
+
+    if(item?.mediaId){
+      try{
+        await jsonApi(
+          "/api/admin/media/"+encodeURIComponent(item.mediaId),
+          {method:"DELETE"}
+        );
+      }catch{}
+    }
+
+    list.splice(index,1);
+
+    await saveJingles(jingles);
+
+    await renderVinhetas();
+
+  }catch(e){
+    alert(e.message);
+  }
+}
+
+function buildKeyFields(){
+  document.getElementById("textKeys").innerHTML=
+    [1,2,3].map(i=>`
+      <div class="field">
+        <label>
+          <input type="checkbox" id="textOn${i}">
+          Chave Gemini ${i}
+        </label>
+        <input
+          id="textKey${i}"
+          type="password"
+          autocomplete="off"
+          placeholder="Não configurada"
+        >
+      </div>
+    `).join("");
+
+  document.getElementById("voiceKeys").innerHTML=
+    [1,2,3].map(i=>`
+      <div class="field">
+        <label>
+          <input type="checkbox" id="voiceOn${i}">
+          Chave ElevenLabs ${i}
+        </label>
+        <input
+          id="voiceKey${i}"
+          type="password"
+          autocomplete="off"
+          placeholder="Não configurada"
+        >
+      </div>
+    `).join("");
+}
+
+async function loadSettings(){
+  try{
+    const d=await jsonApi("/api/admin/settings");
+    const s=d.settings||{};
+
+    const text=s.apiPool?.text||[];
+    const voice=s.apiPool?.voice||[];
+
+    [1,2,3].forEach(i=>{
+      const t=text[i-1]||{};
+      const v=voice[i-1]||{};
+
+      document.getElementById("textOn"+i).checked=!!t.enabled;
+      document.getElementById("voiceOn"+i).checked=!!v.enabled;
+
+      document.getElementById("textKey"+i).value="";
+      document.getElementById("voiceKey"+i).value="";
+
+      document.getElementById("textKey"+i).dataset.configured=
+        t.configured?"1":"0";
+
+      document.getElementById("voiceKey"+i).dataset.configured=
+        v.configured?"1":"0";
+
+      document.getElementById("textKey"+i).placeholder=
+        t.configured
+          ?"CHAVE JÁ SALVA • "+(t.masked||"••••")
+          :"Não configurada";
+
+      document.getElementById("voiceKey"+i).placeholder=
+        v.configured
+          ?"CHAVE JÁ SALVA • "+(v.masked||"••••")
+          :"Não configurada";
+    });
+
+    document.getElementById("adMale").value=s.voices?.adMale||"";
+    document.getElementById("adFemale").value=s.voices?.adFemale||"";
+    document.getElementById("jingleMale").value=s.voices?.jingleMale||"";
+    document.getElementById("jingleFemale").value=s.voices?.jingleFemale||"";
+
+  }catch(e){
+    document.getElementById("apiResult").textContent="❌ "+e.message;
+  }
+}
+
+async function saveSettings(){
+  const button=document.getElementById("saveSettings");
+  const result=document.getElementById("apiResult");
+
+  const old=button.textContent;
+
+  button.disabled=true;
+  button.textContent="SALVANDO E TESTANDO...";
+
+  try{
+    const textPool=[1,2,3].map(i=>({
+      slot:i,
+      enabled:document.getElementById("textOn"+i).checked,
+      key:document.getElementById("textKey"+i).value.trim()
+    }));
+
+    const voicePool=[1,2,3].map(i=>({
+      slot:i,
+      enabled:document.getElementById("voiceOn"+i).checked,
+      key:document.getElementById("voiceKey"+i).value.trim()
+    }));
+
+    const textValid=textPool.some((x,i)=>
+      x.enabled &&
+      (
+        x.key ||
+        document.getElementById("textKey"+(i+1)).dataset.configured==="1"
+      )
+    );
+
+    const voiceValid=voicePool.some((x,i)=>
+      x.enabled &&
+      (
+        x.key ||
+        document.getElementById("voiceKey"+(i+1)).dataset.configured==="1"
+      )
+    );
+
+    if(!textValid){
+      throw new Error("Ative pelo menos uma chave Gemini salva.");
+    }
+
+    if(!voiceValid){
+      throw new Error("Ative pelo menos uma chave ElevenLabs salva.");
+    }
+
+    const voices={
+      adMale:document.getElementById("adMale").value.trim(),
+      adFemale:document.getElementById("adFemale").value.trim(),
+      jingleMale:document.getElementById("jingleMale").value.trim(),
+      jingleFemale:document.getElementById("jingleFemale").value.trim()
+    };
+
+    if(Object.values(voices).some(v=>!v)){
+      throw new Error("Preencha os 4 IDs de voz.");
+    }
+
+    await jsonApi("/api/admin/settings",{
+      method:"PUT",
+      body:JSON.stringify({
+        apiPool:{
+          text:textPool,
+          voice:voicePool
+        },
+        voices
+      })
+    });
+
+    result.textContent="✅ Configurações salvas.\nTestando Gemini...";
+
+    let lines=["✅ Configurações salvas no servidor."];
+
+    try{
+      const r=await fetch(SERVER+"/api/ai/generate",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          text:"teste de conexão"
+        })
+      });
+
+      const d=await r.json();
+
+      if(!r.ok)throw new Error(d.error||"Erro Gemini");
+
+      lines.push("✅ Gemini OK.");
+    }catch(e){
+      lines.push("❌ Gemini: "+e.message);
+    }
+
+    try{
+      const r=await fetch(SERVER+"/api/voice/generate",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({
+          text:"teste de conexão",
+          voiceType:"adMale"
+        })
+      });
+
+      if(!r.ok){
+        let msg="Erro ElevenLabs";
+
+        try{
+          const d=await r.json();
+          msg=d.error||msg;
+        }catch{}
+
+        throw new Error(msg);
+      }
+
+      const blob=await r.blob();
 
       if(!blob.size){
-        throw new Error(
-          'ElevenLabs retornou áudio vazio.'
-        );
-      }
-    }else{
-      const data = await r.json();
-
-      if(data.ok === false){
-        throw new Error(
-          data.error ||
-          'Falha na ElevenLabs.'
-        );
-      }
-    }
-
-    return true;
-  }
-
-  window.capSaveCentralV34 =
-  async function(){
-
-    const button =
-      $('saveCentralV34');
-
-    const result =
-      $('apiTestResult');
-
-    const copy =
-      $('copyApiError');
-
-    const status =
-      $('centralStatusV34');
-
-    if(button){
-      button.disabled = true;
-      button.textContent =
-        'SALVANDO E TESTANDO...';
-    }
-
-    if(copy){
-      copy.style.display =
-        'none';
-    }
-
-    try{
-      const textPool = [];
-
-      for(let i=1;i<=3;i++){
-        textPool.push({
-          slot:i,
-          enabled:
-            checked('textKeyOn'+i),
-          key:
-            value('textKey'+i)
-        });
+        throw new Error("Áudio vazio");
       }
 
-      const voicePool = [];
-
-      for(let i=1;i<=3;i++){
-        voicePool.push({
-          slot:i,
-          enabled:
-            checked('voiceKeyOn'+i),
-          key:
-            value('voiceKey'+i)
-        });
-      }
-
-      const hasText =
-        textPool.some(
-          x =>
-            x.enabled &&
-            (
-              x.key ||
-              configured.text[x.slot]
-            )
-        );
-
-      if(!hasText){
-        throw new Error(
-          'Ative pelo menos uma chave Gemini já salva ou digite uma nova.'
-        );
-      }
-
-      const hasVoice =
-        voicePool.some(
-          x =>
-            x.enabled &&
-            (
-              x.key ||
-              configured.voice[x.slot]
-            )
-        );
-
-      if(!hasVoice){
-        throw new Error(
-          'Ative pelo menos uma chave ElevenLabs já salva ou digite uma nova.'
-        );
-      }
-
-      const voices = {
-        adMale:
-          value('voiceAdMaleV34'),
-
-        adFemale:
-          value('voiceAdFemaleV34'),
-
-        jingleMale:
-          value('voiceJingleMaleV34'),
-
-        jingleFemale:
-          value('voiceJingleFemaleV34')
-      };
-
-      if(
-        Object.values(voices)
-        .some(x => !x)
-      ){
-        throw new Error(
-          'Preencha os 4 IDs de voz.'
-        );
-      }
-
-      const programming = {
-        defaultAdsPerBlock:
-          Math.max(
-            1,
-            parseInt(
-              value('defaultAdsPerBlock') ||
-              '3',
-              10
-            )
-          ),
-
-        dailyLimit:
-          Math.max(
-            1,
-            parseInt(
-              value('dailyLimit') ||
-              '15',
-              10
-            )
-          ),
-
-        weeklyLimit:
-          Math.max(
-            1,
-            parseInt(
-              value('weeklyLimit') ||
-              '75',
-              10
-            )
-          ),
-
-        topDailyLimit:
-          Math.max(
-            0,
-            parseInt(
-              value('topDailyLimit') ||
-              '1',
-              10
-            )
-          )
-      };
-
-      if(result){
-        result.textContent =
-          'Salvando configurações no servidor...';
-      }
-
-      /*
-       IMPORTANTE:
-       chave vazia NÃO apaga a chave antiga.
-       O servidor preserva a chave já salva.
-      */
-      const saveResponse =
-        await fetch(
-          SERVER +
-          '/api/admin/settings',
-          {
-            method:'PUT',
-            headers:{
-              'Content-Type':
-                'application/json'
-            },
-            body:JSON.stringify({
-              apiPool:{
-                text:textPool,
-                voice:voicePool
-              },
-              voices,
-              programming
-            })
-          }
-        );
-
-      await readResponse(
-        saveResponse
-      );
-
-      if(status){
-        status.textContent =
-          '🟡 Testando APIs...';
-
-        status.style.background =
-          '#453b16';
-
-        status.style.color =
-          '#ffe69c';
-      }
-
-      const lines = [
-        '✅ Configurações salvas no servidor.'
-      ];
-
-      const errors = [];
-
-      try{
-        await testGemini();
-
-        lines.push(
-          '✅ Gemini: teste real OK.'
-        );
-      }catch(e){
-        errors.push(
-          '❌ Gemini: ' +
-          e.message
-        );
-      }
-
-      try{
-        await testElevenLabs();
-
-        lines.push(
-          '✅ ElevenLabs: teste real de áudio OK.'
-        );
-      }catch(e){
-        errors.push(
-          '❌ ElevenLabs: ' +
-          e.message
-        );
-      }
-
-      if(errors.length){
-        if(result){
-          result.textContent =
-            lines
-            .concat(
-              [''],
-              errors
-            )
-            .join('\n');
-        }
-
-        if(copy){
-          copy.style.display =
-            'inline-block';
-        }
-
-        if(status){
-          status.textContent =
-            '⚠ Salvo • teste com erro';
-
-          status.style.background =
-            '#442323';
-
-          status.style.color =
-            '#ffc1c1';
-        }
-      }else{
-        if(result){
-          result.textContent =
-            lines
-            .concat([
-              '',
-              '🎉 TUDO CERTO. GEMINI E ELEVENLABS FUNCIONANDO.'
-            ])
-            .join('\n');
-        }
-
-        if(status){
-          status.textContent =
-            '🟢 Salvo e testado';
-
-          status.style.background =
-            '#173b2c';
-
-          status.style.color =
-            '#bff7d2';
-        }
-      }
-
-      await loadSavedSettings();
-
+      lines.push("✅ ElevenLabs OK.");
     }catch(e){
-      if(result){
-        result.textContent =
-          '❌ Não foi possível salvar/testar.\n' +
-          e.message;
-      }
-
-      if(copy){
-        copy.style.display =
-          'inline-block';
-      }
-
-      if(status){
-        status.textContent =
-          '⚠ ' + e.message;
-
-        status.style.background =
-          '#442323';
-
-        status.style.color =
-          '#ffc1c1';
-      }
-    }finally{
-      if(button){
-        button.disabled = false;
-        button.textContent =
-          '💾 SALVAR E TESTAR';
-      }
+      lines.push("❌ ElevenLabs: "+e.message);
     }
-  };
 
-  function prepareInputs(){
-    for(let i=1;i<=3;i++){
-      const text = $('textKey'+i);
-      const voice = $('voiceKey'+i);
+    result.textContent=lines.join("\n");
 
-      if(text){
-        text.addEventListener(
-          'input',
-          function(){
-            if(this.value.trim()){
-              this.dataset.configured =
-                '1';
-            }
-          }
-        );
-      }
+    await loadSettings();
 
-      if(voice){
-        voice.addEventListener(
-          'input',
-          function(){
-            if(this.value.trim()){
-              this.dataset.configured =
-                '1';
-            }
-          }
-        );
-      }
-    }
+  }catch(e){
+    result.textContent="❌ "+e.message;
+  }finally{
+    button.disabled=false;
+    button.textContent=old;
   }
+}
 
-  if(
-    document.readyState ===
-    'loading'
-  ){
-    document.addEventListener(
-      'DOMContentLoaded',
-      function(){
-        prepareInputs();
+async function start(){
+  fillRamos();
+  initThemes();
+  buildKeyFields();
 
-        setTimeout(
-          loadSavedSettings,
-          300
-        );
-      },
-      {once:true}
-    );
-  }else{
-    prepareInputs();
+  try{
+    const pass=getPassword();
 
-    setTimeout(
-      loadSavedSettings,
-      300
-    );
+    if(!pass)return;
+
+    await jsonApi("/api/admin/login",{
+      method:"POST"
+    });
+
+    await Promise.all([
+      loadClients(),
+      loadMedia(),
+      loadPlaylists()
+    ]);
+
+    setStatus(true,"SERVIDOR • ONLINE");
+
+  }catch(e){
+    setStatus(false,"SERVIDOR • ERRO");
+    alert(e.message);
   }
+}
 
-})();
+start();
 </script>
+
+</body>
+</html>
