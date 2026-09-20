@@ -204,26 +204,24 @@ hr{border:0;border-top:1px solid var(--line);margin:18px 0}
 </section>
 
 <section id="sistema" class="section">
-<div class="top"><div><h1>Configuração Geral</h1><div class="sub">Área técnica — não aparece para o cliente</div></div><button class="btn" id="saveTestBtn" onclick="saveAndTestSettings()">💾 SALVAR E TESTAR</button></div>
+<div class="top"><div><h1>Configuração Geral</h1><div class="sub">Área técnica — não aparece para o cliente</div></div></div>
 <div class="cols">
-<div class="card"><h3>🤖 IA de texto + APIs</h3>
-<div class="field"><label>Modo de geração</label><select id="aiMode"><option value="hybrid" selected>Híbrido — Gemini → Capivara Vox AI</option><option value="gemini">Somente Gemini</option><option value="vox">Somente Capivara Vox AI</option></select></div>
-<div class="field"><label>Capivara Vox AI — servidor</label><input id="ownAiUrl" value="https://capivara-vox-ai.onrender.com/generate"></div>
-<div class="field"><label>Tempo máximo do Gemini (ms)</label><input id="geminiTimeout" type="number" value="5000" min="1000" step="500"></div>
-<div class="notice" style="margin-bottom:12px">No modo Híbrido, tenta Gemini primeiro e usa a Capivara Vox AI se falhar ou demorar. Em Somente Gemini, não usa a Vox.</div>
-<div class="field"><label>Gemini API Key</label><input id="gemini" type="password" placeholder="••••••••••••"></div>
-<div class="field"><label>Modelo Gemini</label><input id="geminiModel" value="gemini-3.6-flash"></div>
-<div class="field"><label>ElevenLabs API Key</label><input id="eleven" type="password" placeholder="••••••••••••"></div>
-<div class="notice">No sistema online final, chaves e IDs devem ficar protegidos no servidor da Capivara e não expostos ao Player.</div></div>
-<div class="card"><h3>🎙️ Vozes</h3><div class="field"><label>Voice ID — Masculina</label><input id="male"></div><div class="field"><label>Voice ID — Feminina</label><input id="female"></div>
-<div class="card" style="margin-top:14px">
-  <h3>🎙️ Vozes das vinhetas</h3>
-  <p class="muted">IDs exclusivos para as vinhetas. As vozes dos anúncios continuam separadas.</p>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-    <label>Vinhetas — Homem<input id="jingleMaleVoice" type="text" placeholder="Voice ID ElevenLabs"></label>
-    <label>Vinhetas — Mulher<input id="jingleFemaleVoice" type="text" placeholder="Voice ID ElevenLabs"></label>
-  </div>
-</div><div class="slot"><div>Alternância automática<br><small>Homem → Mulher → Homem → Mulher</small></div><span class="badge">ATIVA</span></div></div>
+<div class="card" style="grid-column:1/-1" id="capKeysV34">
+<h3>🔐 Central de chaves e vozes</h3>
+<p class="muted">3 chaves de texto, 3 chaves de voz e 4 IDs oficiais. Marque quais chaves ficam ativas.</p>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+<div><h3>🤖 Chaves de texto</h3><div class="field"><label>Chave 1 <span><input id="textKeyOn1" type="checkbox" checked> Ligada</span></label><input id="textKey1" type="password" placeholder="Gemini API Key 1"></div><div class="field"><label>Chave 2 <span><input id="textKeyOn2" type="checkbox" > Ligada</span></label><input id="textKey2" type="password" placeholder="Gemini API Key 2"></div><div class="field"><label>Chave 3 <span><input id="textKeyOn3" type="checkbox" > Ligada</span></label><input id="textKey3" type="password" placeholder="Gemini API Key 3"></div><small class="muted">Se uma ativa falhar, o servidor poderá tentar a próxima ativa.</small></div>
+<div><h3>🎙️ Chaves de voz</h3><div class="field"><label>Chave 1 <span><input id="voiceKeyOn1" type="checkbox" checked> Ligada</span></label><input id="voiceKey1" type="password" placeholder="ElevenLabs API Key 1"></div><div class="field"><label>Chave 2 <span><input id="voiceKeyOn2" type="checkbox" > Ligada</span></label><input id="voiceKey2" type="password" placeholder="ElevenLabs API Key 2"></div><div class="field"><label>Chave 3 <span><input id="voiceKeyOn3" type="checkbox" > Ligada</span></label><input id="voiceKey3" type="password" placeholder="ElevenLabs API Key 3"></div><small class="muted">Somente as chaves marcadas como ligadas entram na rotação.</small></div></div>
+<hr><h3>🎚️ 4 IDs de voz</h3>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div class="field"><label>Anúncios — Homem</label><input id="voiceAdMaleV34" placeholder="Voice ID"></div>
+<div class="field"><label>Anúncios — Mulher</label><input id="voiceAdFemaleV34" placeholder="Voice ID"></div>
+<div class="field"><label>Vinhetas — Homem</label><input id="voiceJingleMaleV34" placeholder="Voice ID"></div>
+<div class="field"><label>Vinhetas — Mulher</label><input id="voiceJingleFemaleV34" placeholder="Voice ID"></div>
+</div>
+<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px">
+<button class="btn" type="button" id="saveCentralV34" onclick="capSaveCentralV34()">💾 SALVAR NO SERVIDOR</button>
+<span id="centralStatusV34" class="badge">Aguardando</span></div></div>
 <div class="card" style="grid-column:1/-1"><h3>🧪 Resultado do teste</h3><div id="apiTestResult" class="notice" style="white-space:pre-wrap;min-height:54px">O teste usa geração real de áudio, igual ao Player. Preencha chave, modelo e IDs; depois clique em SALVAR E TESTAR.</div><button class="btn secondary" id="copyApiError" onclick="copyApiTest()" style="display:none;margin-top:10px">📋 COPIAR ERRO</button></div>
 <div class="card"><h3>📻 Padrões de programação</h3><div class="field"><label>Anúncios por bloco — padrão</label><input id="defaultAdsPerBlock" value="3" type="number" min="1" step="1" inputmode="numeric"></div><div class="field"><label>Limite por dia</label><input id="dailyLimit" value="15" type="number" min="1" step="1" inputmode="numeric"></div>
 <div class="field"><label>Limite por semana</label><input id="weeklyLimit" value="75" type="number" min="1" step="1" inputmode="numeric"></div><div class="notice">Quantidade livre: digite qualquer número de anúncios por bloco.</div></div>
@@ -1297,4 +1295,35 @@ document.addEventListener('DOMContentLoaded',()=>{load();I.forEach(i=>document.g
 })();
 </script>
 
+<script>
+(function(){
+ const SERVER='https://capivara-radio-server.onrender.com',$=id=>document.getElementById(id);
+ const val=id=>($(id)?.value||'').trim(), on=id=>!!$(id)?.checked;
+ function stat(t,ok){const e=$('centralStatusV34');if(e){e.textContent=t;e.style.background=ok?'#e9f8ef':'#fff3cd';e.style.color=ok?'#176b37':'#7a5b00'}}
+ function data(){return {apiPool:{text:[1,2,3].map(i=>({slot:i,enabled:on('textKeyOn'+i),key:val('textKey'+i)})),voice:[1,2,3].map(i=>({slot:i,enabled:on('voiceKeyOn'+i),key:val('voiceKey'+i)}))},voices:{adMale:val('voiceAdMaleV34'),adFemale:val('voiceAdFemaleV34'),jingleMale:val('voiceJingleMaleV34'),jingleFemale:val('voiceJingleFemaleV34')}}}
+ window.capSaveCentralV34=async()=>{
+  const b=$('saveCentralV34');if(b){b.disabled=true;b.textContent='SALVANDO...'}
+  try{
+   const p=data();
+   if(!p.apiPool.text.some(x=>x.enabled&&x.key))throw Error('Ative e preencha pelo menos 1 chave de texto.');
+   if(!p.apiPool.voice.some(x=>x.enabled&&x.key))throw Error('Ative e preencha pelo menos 1 chave de voz.');
+   if(Object.values(p.voices).some(x=>!x))throw Error('Preencha os 4 IDs de voz.');
+   const r=await fetch(SERVER+'/api/admin/settings',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});
+   let j={};try{j=await r.json()}catch(e){};if(!r.ok)throw Error(j.error||('Servidor '+r.status));
+   stat('🟢 Salvo no servidor',true);
+  }catch(e){stat('⚠ '+e.message,false)}
+  finally{if(b){b.disabled=false;b.textContent='💾 SALVAR NO SERVIDOR'}}
+ };
+ async function load(){
+  try{
+   const r=await fetch(SERVER+'/api/admin/settings');if(!r.ok)return;const j=await r.json(),c=j.settings||j.data||j||{},t=c.apiPool?.text||[],v=c.apiPool?.voice||[],ids=c.voices||{};
+   t.forEach(x=>{if($('textKeyOn'+x.slot))$('textKeyOn'+x.slot).checked=!!x.enabled;if(x.key&&$('textKey'+x.slot))$('textKey'+x.slot).value=x.key});
+   v.forEach(x=>{if($('voiceKeyOn'+x.slot))$('voiceKeyOn'+x.slot).checked=!!x.enabled;if(x.key&&$('voiceKey'+x.slot))$('voiceKey'+x.slot).value=x.key});
+   if(ids.adMale)$('voiceAdMaleV34').value=ids.adMale;if(ids.adFemale)$('voiceAdFemaleV34').value=ids.adFemale;if(ids.jingleMale)$('voiceJingleMaleV34').value=ids.jingleMale;if(ids.jingleFemale)$('voiceJingleFemaleV34').value=ids.jingleFemale;
+   stat('🟢 Servidor conectado',true);
+  }catch(e){stat('⚠ Servidor indisponível',false)}
+ }
+ window.addEventListener('DOMContentLoaded',load);
+})();
+</script>
 </body></html>
