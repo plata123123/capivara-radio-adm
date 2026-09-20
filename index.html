@@ -1326,4 +1326,192 @@ document.addEventListener('DOMContentLoaded',()=>{load();I.forEach(i=>document.g
  window.addEventListener('DOMContentLoaded',load);
 })();
 </script>
+ <!-- CAPIVARA ADM V36 — LOGIN SEGURO NO SERVIDOR -->
+<script>
+(function () {
+  const SERVER = 'https://capivara-radio-server.onrender.com';
+  const STORAGE = 'capivara_admin_session_password_v36';
+
+  function getPassword() {
+    let password = sessionStorage.getItem(STORAGE) || '';
+
+    if (!password) {
+      password = window.prompt('Senha do Administrador:') || '';
+
+      if (password) {
+        sessionStorage.setItem(STORAGE, password);
+      }
+    }
+
+    return password;
+  }
+
+  function logout() {
+    sessionStorage.removeItem(STORAGE);
+    location.reload();
+  }
+
+  window.capivaraAdminLogout = logout;
+
+  const originalFetch = window.fetch.bind(window);
+
+  window.fetch = async function(input, options = {}) {
+    const url =
+      typeof input === 'string'
+        ? input
+        : input?.url || '';
+
+    const isOurServer =
+      url.startsWith(SERVER);
+
+    const isAdmin =
+      isOurServer &&
+      url.includes('/api/admin/');
+
+    if (!isAdmin) {
+      return originalFetch(input, options);
+    }
+
+    const password = getPassword();
+
+    if (!password) {
+      throw new Error('Senha do administrador não informada.');
+    }
+
+    const headers = new Headers(options.headers || {});
+
+    headers.set(
+      'X-Admin-Password',
+      password
+    );
+
+    if (
+      options.body &&
+      !headers.has('Content-Type')
+    ) {
+      headers.set(
+        'Content-Type',
+        'application/json'
+      );
+    }
+
+    let response = await originalFetch(
+      input,
+      {
+        ...options,
+        headers
+      }
+    );
+
+    if (response.status === 401) {
+      sessionStorage.removeItem(STORAGE);
+
+      const newPassword =
+        window.prompt(
+          'Senha incorreta. Digite a senha do Administrador:'
+        ) || '';
+
+      if (!newPassword) {
+        return response;
+      }
+
+      sessionStorage.setItem(
+        STORAGE,
+        newPassword
+      );
+
+      const retryHeaders =
+        new Headers(options.headers || {});
+
+      retryHeaders.set(
+        'X-Admin-Password',
+        newPassword
+      );
+
+      if (
+        options.body &&
+        !retryHeaders.has('Content-Type')
+      ) {
+        retryHeaders.set(
+          'Content-Type',
+          'application/json'
+        );
+      }
+
+      response = await originalFetch(
+        input,
+        {
+          ...options,
+          headers: retryHeaders
+        }
+      );
+    }
+
+    return response;
+  };
+
+  async function testLogin() {
+    try {
+      const password = getPassword();
+
+      if (!password) return;
+
+      const response =
+        await originalFetch(
+          SERVER + '/api/admin/login',
+          {
+            method: 'POST',
+            headers: {
+              'X-Admin-Password':
+                password
+            }
+          }
+        );
+
+      if (response.status === 401) {
+        sessionStorage.removeItem(STORAGE);
+
+        alert(
+          'Senha do Administrador incorreta.'
+        );
+
+        location.reload();
+        return;
+      }
+
+      if (!response.ok) {
+        console.warn(
+          'Servidor ADM indisponível:',
+          response.status
+        );
+        return;
+      }
+
+      console.log(
+        'Capivara ADM autenticado com segurança.'
+      );
+
+    } catch (error) {
+      console.warn(
+        'Falha ao validar ADM:',
+        error
+      );
+    }
+  }
+
+  if (
+    document.readyState === 'loading'
+  ) {
+    document.addEventListener(
+      'DOMContentLoaded',
+      testLogin,
+      { once: true }
+    );
+  } else {
+    testLogin();
+  }
+})();
+</script>
 </body></html>
+
+
