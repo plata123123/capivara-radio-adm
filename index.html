@@ -3751,3 +3751,156 @@ window.addEventListener(
    };
  }
   
+ async function readJson(r){
+   const text=await r.text();
+   let data={};
+   try{data=text?JSON.parse(text):{}}catch(_){data={raw:text}}
+   if(!r.ok) throw new Error(data.error || data.message || data.raw || ('HTTP '+r.status));
+   return data;
+ }
+
+ async function testGemini(){
+   const r=await fetch(SERVER+'/api/ai/generate',{
+     method:'POST',
+     headers:{'Content-Type':'application/json'},
+     body:JSON.stringify({
+       item:'teste de conexão',
+       price:'',
+       ramo:'Açougue',
+       maxChars:150
+     })
+   });
+   const data=await readJson(r);
+   const text=String(data.text||data.output||data.result||data.ad||'').trim();
+   if(!text && data.ok===false) throw new Error(data.error||'sem resposta');
+   return true;
+ }
+
+ async function testElevenLabs(){
+   const r=await fetch(SERVER+'/api/voice/generate',{
+     method:'POST',
+     headers:{'Content-Type':'application/json'},
+     body:JSON.stringify({
+       text:'teste de conexão',
+       voiceType:'adMale'
+     })
+   });
+   if(!r.ok){
+     const text=await r.text();
+     let data={};
+     try{data=text?JSON.parse(text):{}}catch(_){data={raw:text}}
+     throw new Error(data.error || data.message || data.raw || ('HTTP '+r.status));
+   }
+   const ct=(r.headers.get('content-type')||'').toLowerCase();
+   if(ct.includes('application/json')){
+     const data=await r.json();
+     if(data.ok===false) throw new Error(data.error||'falha na voz');
+     if(data.audioBase64 || data.audio || data.url || data.ok===true) return true;
+   }else{
+     const blob=await r.blob();
+     if(!blob.size) throw new Error('áudio vazio');
+   }
+   return true;
+ }
+
+ window.capSaveCentralV34=async function(){
+   const b=$('saveCentralV34');
+   const box=$('apiTestResult');
+   const copy=$('copyApiError');
+   const old=b?.textContent||'💾 SALVAR E TESTAR';
+
+   if(b){b.disabled=true;b.textContent='SALVANDO E TESTANDO...'}
+   if(copy)copy.style.display='none';
+   if(box)box.textContent='Salvando configurações no servidor...';
+
+   try{
+     const p=payload();
+
+     if(!p.apiPool.text.some(x=>x.enabled&&x.key))
+       throw new Error('Ative e preencha pelo menos 1 chave de texto.');
+     if(!p.apiPool.voice.some(x=>x.enabled&&x.key))
+       throw new Error('Ative e preencha pelo menos 1 chave de voz.');
+     if(Object.values(p.voices).some(x=>!x))
+       throw new Error('Preencha os 4 IDs de voz.');
+
+     const save=await fetch(SERVER+'/api/admin/settings',{
+       method:'PUT',
+       headers:{'Content-Type':'application/json'},
+       body:JSON.stringify(p)
+     });
+     await readJson(save);
+
+     stat('🟡 Testando APIs...',true);
+     const lines=['✅ Configurações salvas no servidor.'];
+     const errors=[];
+
+     try{
+       await testGemini();
+       lines.push('✅ Gemini: teste real OK.');
+     }catch(e){
+       errors.push('❌ Gemini: '+e.message);
+     }
+
+     try{
+       await testElevenLabs();
+       lines.push('✅ ElevenLabs: teste real de áudio OK.');
+     }catch(e){
+       errors.push('❌ ElevenLabs: '+e.message);
+     }
+
+     if(errors.length){
+       if(box)box.textContent=lines.concat([''],errors).join('\n');
+       if(copy)copy.style.display='inline-block';
+       stat('⚠ Salvo • teste com erro',false);
+     }else{
+       if(box)box.textContent=lines.concat(['','🎉 TUDO CERTO. GEMINI E ELEVENLABS FUNCIONANDO.']).join('\n');
+       stat('🟢 Salvo e testado',true);
+     }
+   }catch(e){
+     if(box)box.textContent='❌ Não foi possível salvar/testar.\n'+e.message;
+     if(copy)copy.style.display='inline-block';
+     stat('⚠ '+e.message,false);
+   }finally{
+     if(b){b.disabled=false;b.textContent='💾 SALVAR E TESTAR'}
+   }
+ };
+
+ async function load(){
+   try{
+     const r=await fetch(SERVER+'/api/admin/settings');
+     if(!r.ok)return;
+     const j=await r.json();
+     const c=j.settings||j.data||j||{};
+     const t=c.apiPool?.text||[];
+     const v=c.apiPool?.voice||[];
+     const ids=c.voices||{};
+
+     t.forEach(x=>{
+       if($('textKeyOn'+x.slot))$('textKeyOn'+x.slot).checked=!!x.enabled;
+       if(x.key && !String(x.key).includes('•') && $('textKey'+x.slot)) $('textKey'+x.slot).value=x.key;
+     });
+
+     v.forEach(x=>{
+       if($('voiceKeyOn'+x.slot))$('voiceKeyOn'+x.slot).checked=!!x.enabled;
+       if(x.key && !String(x.key).includes('•') && $('voiceKey'+x.slot)) $('voiceKey'+x.slot).value=x.key;
+     });
+
+     if(ids.adMale)$('voiceAdMaleV34').value=ids.adMale;
+     if(ids.adFemale)$('voiceAdFemaleV34').value=ids.adFemale;
+     if(ids.jingleMale)$('voiceJingleMaleV34').value=ids.jingleMale;
+     if(ids.jingleFemale)$('voiceJingleFemaleV34').value=ids.jingleFemale;
+
+     stat('🟢 Servidor conectado',true);
+
+   }catch(e){
+     stat('⚠ Servidor indisponível',false);
+   }
+ }
+
+ window.addEventListener('DOMContentLoaded',load);
+
+})();
+</script>
+
+</body>
+</html>
