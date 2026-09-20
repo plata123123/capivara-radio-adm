@@ -2674,3 +2674,1079 @@ async function generateVinhetaAudioV16(btn){
   }catch(e){}
 
   const voiceId=sex==='female'
+    ?(jv.jingleFemaleVoice||jv.female||cfg.jingleFemaleVoice)
+    :(jv.jingleMaleVoice||jv.male||cfg.jingleMaleVoice);
+
+  if(!cfg.eleven||!voiceId){
+    alert('Configure a chave ElevenLabs e os IDs de voz em Configuração Geral.');
+    return;
+  }
+
+  const original=btn.textContent;
+  btn.disabled=true;
+  btn.textContent='⏳ GERANDO...';
+
+  try{
+    const r=await fetch(
+      'https://api.elevenlabs.io/v1/text-to-speech/'+encodeURIComponent(voiceId),
+      {
+        method:'POST',
+        headers:{
+          'xi-api-key':cfg.eleven,
+          'Content-Type':'application/json',
+          'Accept':'audio/mpeg'
+        },
+        body:JSON.stringify({
+          text,
+          model_id:'eleven_multilingual_v2'
+        })
+      }
+    );
+
+    if(!r.ok){
+      const t=await r.text();
+      throw new Error('HTTP '+r.status+' — '+t)
+    }
+
+    const blob=await r.blob(),
+          url=URL.createObjectURL(blob);
+
+    const old=capVinhetaAudioV16.get(row);
+
+    if(old?.url) URL.revokeObjectURL(old.url);
+
+    capVinhetaAudioV16.set(row,{
+      url,
+      blob,
+      text,
+      voiceId
+    });
+
+    row.dataset.capAudioReady='1';
+    btn.textContent='✅ ÁUDIO PRONTO';
+
+    const listen=[...row.querySelectorAll('button')]
+      .find(b=>(b.textContent||'').toLowerCase().includes('ouvir'));
+
+    if(listen){
+      listen.disabled=false;
+      listen.onclick=()=>{
+        const d=capVinhetaAudioV16.get(row);
+        if(d?.url)new Audio(d.url).play()
+      };
+    }
+
+  }catch(e){
+
+    btn.textContent=original;
+
+    const msg='ElevenLabs / vinheta: '+e.message;
+
+    try{
+      navigator.clipboard.writeText(msg)
+    }catch(_){}
+
+    alert(msg+'\n\nO erro foi preparado para copiar.');
+
+  }finally{
+    btn.disabled=false
+  }
+}
+
+
+// V16.1 — hook real esperado pelos dois módulos de vinhetas.
+window.generateElevenLabsAudio=async function(text,voice,ramo,cat){
+
+  let cfg={};
+
+  try{
+    cfg=JSON.parse(
+      localStorage.getItem('capivara_admin_settings')||'{}'
+    )
+  }catch(e){}
+
+  let jv={};
+
+  try{
+    jv=JSON.parse(
+      localStorage.getItem('capivara_vinheta_voice_ids_v2')||'{}'
+    )
+  }catch(e){}
+
+  const isFemale=(voice==='female'||voice==='feminina');
+
+  const voiceId=isFemale
+    ?(jv.jingleFemaleVoice||jv.female||cfg.jingleFemaleVoice)
+    :(jv.jingleMaleVoice||jv.male||cfg.jingleMaleVoice);
+
+  if(!cfg.eleven)
+    throw new Error(
+      'Chave ElevenLabs não configurada em Configuração Geral.'
+    );
+
+  if(!voiceId)
+    throw new Error(
+      'Voice ID de vinheta '+
+      (isFemale?'feminina':'masculina')+
+      ' não configurado.'
+    );
+
+  const r=await fetch(
+    'https://api.elevenlabs.io/v1/text-to-speech/'+encodeURIComponent(voiceId),
+    {
+      method:'POST',
+      headers:{
+        'xi-api-key':cfg.eleven,
+        'Content-Type':'application/json',
+        'Accept':'audio/mpeg'
+      },
+      body:JSON.stringify({
+        text:String(text||'').trim(),
+        model_id:'eleven_multilingual_v2'
+      })
+    }
+  );
+
+  if(!r.ok){
+    const t=await r.text();
+    throw new Error(
+      'ElevenLabs HTTP '+r.status+' — '+t
+    )
+  }
+
+  return await r.blob();
+};
+
+
+// V16.2 — garante visualmente e na geração:
+// 01 homem, 02 mulher, 03 homem, 04 mulher...
+function capFixAlternatingLabelsV162(){
+
+  document
+    .querySelectorAll('input[type="text"],textarea')
+    .forEach(inp=>{
+
+      const row=
+        inp.closest('.vinheta-row,.vinheta,.slot,.vitem')||
+        inp.parentElement;
+
+      if(!row)return;
+
+      const txt=row.textContent||'';
+      const m=txt.match(/Vinheta\s*0*(\d+)/i);
+
+      if(!m)return;
+
+      const n=parseInt(m[1],10),
+            female=n%2===0;
+
+      [...row.querySelectorAll('button,span,b,strong,small')]
+        .forEach(el=>{
+
+          const t=el.textContent||'';
+
+          if(/homem|mulher/i.test(t))
+            el.textContent=female?'👩 Mulher':'👨 Homem';
+
+          else if(
+            t.trim()==='👨'||
+            t.trim()==='👩'
+          )
+            el.textContent=female?'👩':'👨';
+        });
+
+      row.dataset.capVoice=female?'female':'male';
+    });
+}
+
+const capAltObsV162=
+  new MutationObserver(
+    ()=>capFixAlternatingLabelsV162()
+  );
+
+capAltObsV162.observe(
+  document.documentElement,
+  {
+    subtree:true,
+    childList:true
+  }
+);
+
+window.addEventListener(
+  'load',
+  ()=>setTimeout(capFixAlternatingLabelsV162,100)
+);
+
+</script>
+
+
+<script id="cap-v23-extra-jingle-voices">
+
+(()=>{
+ const K='capivara_vinheta_voice_ids_v2',
+       I=[
+        'jingleMaleVoice',
+        'jingleFemaleVoice'
+       ];
+
+ function load(){
+
+  let v={};
+
+  try{
+   v=JSON.parse(
+    localStorage.getItem(K)||'{}'
+   )
+  }catch{}
+
+  I.forEach(i=>{
+   const e=document.getElementById(i);
+   if(e)e.value=v[i]||''
+  })
+ }
+
+ function save(){
+
+  let v={};
+
+  I.forEach(i=>{
+   const e=document.getElementById(i);
+   if(e)v[i]=e.value.trim()
+  });
+
+  localStorage.setItem(
+   K,
+   JSON.stringify(v)
+  )
+ }
+
+ document.addEventListener(
+  'DOMContentLoaded',
+  ()=>{
+
+   load();
+
+   I.forEach(i=>
+    document
+     .getElementById(i)
+     ?.addEventListener('change',save)
+   );
+
+   document
+    .querySelectorAll('button')
+    .forEach(b=>{
+      /salvar/i.test(b.textContent||'')&&
+      b.addEventListener('click',save)
+    })
+  }
+ )
+})();
+
+</script>
+
+
+<script>
+
+/* V26 — mapa oficial de vozes por função */
+
+(function(){
+
+ function capVoiceMapV26(){
+
+   let cfg={};
+
+   try{
+    cfg=JSON.parse(
+      localStorage.getItem('capivara_admin_settings')||'{}'
+    )
+   }catch(e){}
+
+   let jv={};
+
+   try{
+    jv=JSON.parse(
+      localStorage.getItem('capivara_vinheta_voice_ids_v2')||'{}'
+    )
+   }catch(e){}
+
+   const map={
+
+     adMale:String(
+      document.getElementById('maleVoice')?.value ||
+      cfg.male ||
+      cfg.maleVoice ||
+      ''
+     ).trim(),
+
+     adFemale:String(
+      document.getElementById('femaleVoice')?.value ||
+      cfg.female ||
+      cfg.femaleVoice ||
+      ''
+     ).trim(),
+
+     jingleMale:String(
+      document.getElementById('jingleMaleVoice')?.value ||
+      jv.jingleMaleVoice ||
+      ''
+     ).trim(),
+
+     jingleFemale:String(
+      document.getElementById('jingleFemaleVoice')?.value ||
+      jv.jingleFemaleVoice ||
+      ''
+     ).trim()
+
+   };
+
+   localStorage.setItem(
+    'capivara_voice_map_v26',
+    JSON.stringify(map)
+   );
+
+   return map;
+ }
+
+ window.capVoiceMapV26=capVoiceMapV26;
+
+ document.addEventListener(
+  'input',
+  e=>{
+   if([
+    'maleVoice',
+    'femaleVoice',
+    'jingleMaleVoice',
+    'jingleFemaleVoice'
+   ].includes(e.target?.id))
+    capVoiceMapV26();
+  }
+ );
+
+ document.addEventListener(
+  'change',
+  e=>{
+   if([
+    'maleVoice',
+    'femaleVoice',
+    'jingleMaleVoice',
+    'jingleFemaleVoice'
+   ].includes(e.target?.id))
+    capVoiceMapV26();
+  }
+ );
+
+ window.addEventListener(
+  'DOMContentLoaded',
+  ()=>setTimeout(capVoiceMapV26,100)
+ );
+
+})();
+
+</script>
+
+
+<script id="capVoiceSaveV30">
+
+(function(){
+
+ const MAIN='capivara_admin_settings';
+ const JKEY='capivara_vinheta_voice_ids_v2';
+ const MAP='capivara_voice_map_v26';
+
+ function val(id){
+  return (
+   document.getElementById(id)?.value||''
+  ).trim()
+ }
+
+ function persistFourVoiceIdsV30(){
+
+   const adMale=
+    val('maleVoice')||
+    val('maleVoiceId')||
+    val('voiceMale');
+
+   const adFemale=
+    val('femaleVoice')||
+    val('femaleVoiceId')||
+    val('voiceFemale');
+
+   const jingleMale=
+    val('jingleMaleVoice');
+
+   const jingleFemale=
+    val('jingleFemaleVoice');
+
+   let cfg={};
+
+   try{
+    cfg=JSON.parse(
+      localStorage.getItem(MAIN)||'{}'
+    )
+   }catch(e){}
+
+   if(adMale){
+    cfg.maleVoice=adMale;
+    cfg.male=adMale;
+   }
+
+   if(adFemale){
+    cfg.femaleVoice=adFemale;
+    cfg.female=adFemale;
+   }
+
+   if(jingleMale){
+    cfg.jingleMaleVoice=jingleMale;
+   }
+
+   if(jingleFemale){
+    cfg.jingleFemaleVoice=jingleFemale;
+   }
+
+   localStorage.setItem(
+    MAIN,
+    JSON.stringify(cfg)
+   );
+
+   localStorage.setItem(
+    JKEY,
+    JSON.stringify({
+      jingleMaleVoice:jingleMale,
+      jingleFemaleVoice:jingleFemale,
+      male:jingleMale,
+      female:jingleFemale
+    })
+   );
+
+   localStorage.setItem(
+    MAP,
+    JSON.stringify({
+      adMale:adMale,
+      adFemale:adFemale,
+      jingleMale:jingleMale,
+      jingleFemale:jingleFemale
+    })
+   );
+
+   return {
+    adMale,
+    adFemale,
+    jingleMale,
+    jingleFemale
+   };
+ }
+
+ window.capPersistFourVoiceIdsV30=
+  persistFourVoiceIdsV30;
+
+ document.addEventListener(
+  'click',
+  function(e){
+
+   const b=e.target.closest('button');
+
+   if(!b)return;
+
+   const t=
+    (b.textContent||'').toUpperCase();
+
+   if(
+    t.includes('SALVAR') &&
+    t.includes('TESTAR')
+   ){
+
+     persistFourVoiceIdsV30();
+
+     setTimeout(
+      persistFourVoiceIdsV30,
+      0
+     );
+
+     setTimeout(
+      function(){
+
+       const ids=
+        persistFourVoiceIdsV30();
+
+       const out=
+        document.querySelector(
+         '#testResult, #testOutput, .test-result, [data-test-result]'
+        );
+
+       if(
+        out &&
+        ids.jingleMale &&
+        ids.jingleFemale
+       ){
+
+         const line=
+          '\n✅ IDs das vinhetas salvas: Homem e Mulher.';
+
+         if(
+          !String(out.textContent||'')
+           .includes('IDs das vinhetas salvas')
+         )
+          out.textContent+=line;
+       }
+
+      },
+      300
+     );
+   }
+
+  },
+  true
+ );
+
+ document.addEventListener(
+  'DOMContentLoaded',
+  function(){
+
+   let j={};
+
+   try{
+    j=JSON.parse(
+      localStorage.getItem(JKEY)||'{}'
+    )
+   }catch(e){}
+
+   const m=
+    document.getElementById('jingleMaleVoice');
+
+   const f=
+    document.getElementById('jingleFemaleVoice');
+
+   if(m && !m.value)
+    m.value=
+     j.jingleMaleVoice||
+     j.male||
+     '';
+
+   if(f && !f.value)
+    f.value=
+     j.jingleFemaleVoice||
+     j.female||
+     '';
+
+  }
+ );
+
+})();
+
+</script>
+
+
+<script id="capivaraCentralServerV33">
+
+/* CAPIVARA RÁDIO ADM V33 — ponte com o servidor central.
+   O servidor passa a ser a fonte principal dos CLIENTES.
+   O localStorage fica somente como cache de segurança da interface.
+   Chaves secretas continuam no Render e NÃO são enviadas por este bloco.
+*/
+
+(function(){
+
+  const SERVER=
+   'https://capivara-radio-server.onrender.com';
+
+  const CACHE_KEY=
+   'capivara_admin_clients';
+
+  function statusBox(){
+
+    let el=
+     document.getElementById(
+      'capServerStatusV33'
+     );
+
+    if(el)return el;
+
+    el=document.createElement('div');
+
+    el.id='capServerStatusV33';
+
+    el.style.cssText=
+     'position:fixed;right:16px;bottom:16px;z-index:10000;padding:9px 12px;border-radius:999px;font:800 12px system-ui;background:#173b2c;color:#bff7d2;border:1px solid #2f684d;box-shadow:0 8px 24px #0005';
+
+    el.textContent=
+     'SERVIDOR • CONECTANDO';
+
+    document.body.appendChild(el);
+
+    return el;
+  }
+
+  function setStatus(ok,msg){
+
+    const el=statusBox();
+
+    el.textContent=
+     msg||
+     (ok
+      ?'SERVIDOR • ONLINE'
+      :'SERVIDOR • OFFLINE');
+
+    el.style.background=
+     ok?'#173b2c':'#442323';
+
+    el.style.color=
+     ok?'#bff7d2':'#ffc1c1';
+
+    el.style.borderColor=
+     ok?'#2f684d':'#754040';
+  }
+
+  async function api(path,options={}){
+
+    const controller=
+     new AbortController();
+
+    const timer=
+     setTimeout(
+      ()=>controller.abort(),
+      20000
+     );
+
+    try{
+
+      const r=await fetch(
+       SERVER+path,
+       {
+        ...options,
+        signal:controller.signal,
+        headers:{
+         'Content-Type':'application/json',
+         ...(options.headers||{})
+        }
+       }
+      );
+
+      const text=
+       await r.text();
+
+      let data=null;
+
+      try{
+       data=text
+        ?JSON.parse(text)
+        :null;
+      }catch(_){
+       data=text;
+      }
+
+      if(!r.ok)
+       throw new Error(
+        'HTTP '+r.status+
+        (text?' — '+text:'')
+       );
+
+      return data;
+
+    }finally{
+      clearTimeout(timer);
+    }
+  }
+
+  function normalizeClients(data){
+
+    const list=
+     Array.isArray(data)
+      ?data
+      :Array.isArray(data?.clients)
+       ?data.clients
+       :Array.isArray(data?.data)
+        ?data.data
+        :[];
+
+    return list.map(c=>({
+
+      name:String(
+       c.name||
+       c.nome||
+       c.storeName||
+       ''
+      ).trim(),
+
+      ramo:String(
+       c.ramo||
+       c.activity||
+       c.segment||
+       ''
+      ).trim() || 'Açougue',
+
+      code:String(
+       c.code||
+       c.codigo||
+       ''
+      ).trim(),
+
+      active:
+       c.active!==false &&
+       c.ativo!==false
+
+    })).filter(
+     c=>c.name && c.code
+    );
+  }
+
+  function cacheAndRender(){
+
+    try{
+     localStorage.setItem(
+      CACHE_KEY,
+      JSON.stringify(clients)
+     );
+    }catch(_){}
+
+    if(
+     typeof renderClients==='function'
+    )
+     renderClients();
+  }
+
+  async function loadCentralClients(){
+
+    try{
+
+      setStatus(
+       true,
+       'SERVIDOR • CARREGANDO'
+      );
+
+      const data=
+       await api('/api/admin/clients');
+
+      clients=
+       normalizeClients(data);
+
+      cacheAndRender();
+
+      setStatus(
+       true,
+       'SERVIDOR • ONLINE'
+      );
+
+      return true;
+
+    }catch(err){
+
+      console.error(
+       'Capivara Server:',
+       err
+      );
+
+      setStatus(
+       false,
+       'SERVIDOR • SEM CONEXÃO'
+      );
+
+      return false;
+    }
+  }
+
+
+  window.saveClient=
+   async function(){
+
+    const name=
+     (
+      document.getElementById('newName')
+       ?.value||''
+     ).trim();
+
+    const ramo=
+     (
+      document.getElementById('newRamo')
+       ?.value||''
+     ).trim();
+
+    const code=
+     (
+      document.getElementById('newCode')
+       ?.value||''
+     ).trim();
+
+    if(!name)
+     return alert(
+      'Digite o nome da loja.'
+     );
+
+    if(!code)
+     return alert(
+      'Gere o código de acesso.'
+     );
+
+    if(
+     clients.some(
+      c=>String(c.code)===code
+     )
+    )
+     return alert(
+      'Este código já existe. Gere outro.'
+     );
+
+    const btn=
+     document.querySelector(
+      '#clientModal button[onclick="saveClient()"]'
+     );
+
+    const old=
+     btn?.textContent;
+
+    if(btn){
+     btn.disabled=true;
+     btn.textContent=
+      'SALVANDO NO SERVIDOR...';
+    }
+
+    try{
+
+      await api(
+       '/api/admin/client',
+       {
+        method:'POST',
+        body:JSON.stringify({
+         name,
+         ramo,
+         code,
+         active:true
+        })
+       }
+      );
+
+      await loadCentralClients();
+
+      document
+       .getElementById('newName')
+       .value='';
+
+      if(
+       typeof closeClient==='function'
+      )
+       closeClient();
+
+    }catch(err){
+
+      setStatus(
+       false,
+       'SERVIDOR • ERRO AO SALVAR'
+      );
+
+      alert(
+       'Não foi possível cadastrar no servidor.\n\n'+
+       err.message
+      );
+
+    }finally{
+
+      if(btn){
+       btn.disabled=false;
+       btn.textContent=
+        old||
+        'CADASTRAR CLIENTE';
+      }
+    }
+  };
+
+
+  window.toggleClient=
+   async function(code){
+
+    const c=
+     clients.find(
+      x=>String(x.code)===
+         String(code)
+     );
+
+    if(!c)return;
+
+    const updated={
+     ...c,
+     active:!c.active
+    };
+
+    try{
+
+      setStatus(
+       true,
+       'SERVIDOR • SALVANDO'
+      );
+
+      await api(
+       '/api/admin/client',
+       {
+        method:'POST',
+        body:JSON.stringify(updated)
+       }
+      );
+
+      await loadCentralClients();
+
+    }catch(err){
+
+      setStatus(
+       false,
+       'SERVIDOR • ERRO AO SALVAR'
+      );
+
+      alert(
+       'Não foi possível alterar o cliente no servidor.\n\n'+
+       err.message
+      );
+    }
+  };
+
+
+  window.persist=function(){
+
+    try{
+     localStorage.setItem(
+      CACHE_KEY,
+      JSON.stringify(clients)
+     );
+    }catch(_){}
+
+    if(
+     typeof renderClients==='function'
+    )
+     renderClients();
+  };
+
+
+  window.CapivaraCentralV33={
+
+    server:SERVER,
+    api,
+
+    reloadClients:
+     loadCentralClients,
+
+    async health(){
+
+      try{
+
+        const d=
+         await api(
+          '/health',
+          {method:'GET'}
+         );
+
+        setStatus(
+         true,
+         'SERVIDOR • ONLINE'
+        );
+
+        return d;
+
+      }catch(e){
+
+        setStatus(
+         false,
+         'SERVIDOR • OFFLINE'
+        );
+
+        throw e;
+      }
+    }
+  };
+
+
+  if(
+   document.readyState==='loading'
+  ){
+
+    document.addEventListener(
+     'DOMContentLoaded',
+     loadCentralClients,
+     {once:true}
+    );
+
+  }else{
+
+    loadCentralClients();
+  }
+
+})();
+
+</script>
+
+
+<script id="capivaraCentralSaveTestV38">
+
+(function(){
+
+ const SERVER=
+  'https://capivara-radio-server.onrender.com';
+
+ const $=id=>
+  document.getElementById(id);
+
+ const val=id=>
+  ($(id)?.value||'').trim();
+
+ const on=id=>
+  !!$(id)?.checked;
+
+
+ function stat(t,ok){
+
+   const e=
+    $('centralStatusV34');
+
+   if(!e)return;
+
+   e.textContent=t;
+
+   e.style.background=
+    ok?'#173b2c':'#442323';
+
+   e.style.color=
+    ok?'#bff7d2':'#ffc1c1';
+
+   e.style.borderColor=
+    ok?'#2f684d':'#754040';
+ }
+
+
+ function payload(){
+
+   return {
+
+     apiPool:{
+
+       text:[1,2,3].map(
+        i=>({
+         slot:i,
+         enabled:on('textKeyOn'+i),
+         key:val('textKey'+i)
+        })
+       ),
+
+       voice:[1,2,3].map(
+        i=>({
+         slot:i,
+         enabled:on('voiceKeyOn'+i),
+         key:val('voiceKey'+i)
+        })
+       )
+
+     },
+
+     voices:{
+
+       adMale:
+        val('voiceAdMaleV34'),
+
+       adFemale:
+        val('voiceAdFemaleV34'),
+
+       jingleMale:
+        val('voiceJingleMaleV34'),
+
+       jingleFemale:
+        val('voiceJingleFemaleV34')
+
+     }
+
+   };
+ }
