@@ -1,0 +1,1149 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Capivara Rádio • Administrador</title>
+<style>
+:root{--bg:#07110d;--panel:#0d1b15;--panel2:#12241c;--line:#234233;--txt:#f5fbf7;--muted:#92aa9d;--green:#42e07f;--green2:#20b963;--gold:#ffc857;--red:#ff6868}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Arial;background:linear-gradient(135deg,#06100c,#0a1812 55%,#07110d);color:var(--txt)}
+button,input,select,textarea{font:inherit}.app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+aside{padding:24px 16px;border-right:1px solid var(--line);background:#08130f;position:sticky;top:0;height:100vh}
+.logo{font-weight:900;font-size:22px;margin:4px 10px 28px}.logo b{color:var(--green)}nav button{width:100%;text-align:left;border:0;background:transparent;color:#b9c9c0;padding:13px 14px;border-radius:12px;margin:3px 0;cursor:pointer;font-weight:700}
+nav button:hover,nav button.active{background:#153023;color:#fff}.dot{display:inline-block;width:8px;height:8px;background:var(--green);border-radius:50%;margin-right:8px}
+main{padding:30px;max-width:1500px;width:100%}.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}.top h1{margin:0;font-size:28px}.sub{color:var(--muted);font-size:14px}
+.btn{border:0;border-radius:12px;padding:11px 16px;font-weight:800;cursor:pointer;background:var(--green);color:#04200e}.btn.secondary{background:#183327;color:#dff7e7}.btn.danger{background:#3a1c1c;color:#ffb8b8}.btn.gold{background:var(--gold);color:#2b2100}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{background:rgba(14,29,22,.92);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 12px 30px #0003}.metric strong{display:block;font-size:30px;margin-top:8px}.metric span{color:var(--muted)}
+.section{display:none}.section.active{display:block}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px}.toolbar input,.toolbar select,.field input,.field select,.field textarea{background:#091710;color:#fff;border:1px solid #2c4b3a;border-radius:11px;padding:11px 12px;outline:none}.toolbar input{min-width:280px}
+table{width:100%;border-collapse:collapse}th,td{padding:13px 10px;border-bottom:1px solid #203b2e;text-align:left;font-size:14px}th{color:#8da99a}.badge{display:inline-block;padding:5px 9px;border-radius:999px;background:#163c27;color:#7cf0a7;font-size:12px;font-weight:800}.badge.off{background:#3a2323;color:#ffabab}
+.ramos{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}.ramo{cursor:pointer;transition:.15s}.ramo:hover{transform:translateY(-2px);border-color:#3f7558}.ramo h3{margin:0 0 8px}.ramo p{margin:0;color:var(--muted);font-size:13px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}.field{display:flex;flex-direction:column;gap:6px;margin:10px 0}.field label{color:#a9bdb2;font-size:13px;font-weight:700}
+.slot{display:flex;align-items:center;justify-content:space-between;padding:12px;background:#0a1711;border:1px solid #244535;border-radius:12px;margin:8px 0}.slot small{color:var(--muted)}
+.products{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.product{padding:10px;border-radius:10px;background:#10251b;border:1px solid #2a4938}
+.player{max-width:720px;margin:auto}.player .hero{text-align:center;padding:20px}.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.chip{background:#153326;border:1px solid #31533f;padding:13px;border-radius:12px;text-align:center;font-weight:800}.price{font-size:24px;text-align:center;width:100%}
+.notice{padding:12px 14px;border-radius:12px;background:#13291e;border:1px solid #28533b;color:#bff7d2;margin-bottom:14px}
+.modal{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;padding:20px}.modal.show{display:flex}.modal .card{width:min(650px,100%);max-height:90vh;overflow:auto}
+hr{border:0;border-top:1px solid var(--line);margin:18px 0}
+@media(max-width:950px){.app{grid-template-columns:1fr}aside{height:auto;position:static}.grid,.ramos,.cols{grid-template-columns:1fr 1fr}nav{display:flex;overflow:auto}nav button{white-space:nowrap}main{padding:18px}}
+@media(max-width:600px){.grid,.ramos,.cols,.products,.chips{grid-template-columns:1fr}.toolbar input{min-width:0;width:100%}}
+
+.audio-manager{display:none;margin-top:16px;padding:16px;border:1px solid #29453a;border-radius:14px;background:#10251e}
+.audio-manager h3{margin:0 0 6px}.audio-manager .hint{opacity:.72;font-size:12px;margin-bottom:12px}
+.audio-slot{display:grid;grid-template-columns:1.1fr 1.7fr .7fr auto;gap:8px;align-items:center;padding:10px 0;border-top:1px solid #29453a}
+.audio-slot:first-of-type{border-top:0}
+.audio-slot input,.audio-slot select{width:100%;box-sizing:border-box}
+.audio-slot audio{width:100%;height:34px}
+.audio-actions{display:flex;gap:6px;flex-wrap:wrap}
+.audio-actions button{white-space:nowrap}
+.global-box{margin-top:18px;padding:14px;border:1px dashed #416657;border-radius:12px}
+@media(max-width:850px){.audio-slot{grid-template-columns:1fr}.audio-actions{justify-content:flex-start}}
+
+
+.ramo-audio-row{border:1px solid #24503d;border-radius:12px;padding:10px;margin:9px 0;background:#0b2118}
+.ramo-audio-row .rowtop{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px}
+.ramo-audio-row textarea{width:100%;min-height:66px;resize:vertical;box-sizing:border-box}
+.ramo-audio-row .controls{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.ramo-audio-row select{min-width:135px}
+
+.vig-section{border:1px solid #24503d;border-radius:14px;margin:12px 0;overflow:hidden;background:#0b2118}
+.vig-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;background:#102b20}
+.vig-head-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.vig-count{font-size:12px;padding:4px 8px;border-radius:999px;background:#173b2c;opacity:.9}
+.vig-list{padding:8px 12px}
+.vig-item{padding:10px 0;border-top:1px solid #234638}
+.vig-item:first-child{border-top:0}
+.vig-line{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center}
+.vig-num{font-weight:800;min-width:82px}
+.vig-line input{width:100%;box-sizing:border-box}
+.vig-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;margin-left:90px}
+.vig-empty{padding:12px;opacity:.65;font-size:13px}
+@media(max-width:800px){.vig-line{grid-template-columns:1fr}.vig-actions{margin-left:0}.vig-num{min-width:0}}
+.theme-grid-v11{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin:12px 0 18px}.theme-card-v11{border:1px solid #dce7df;background:#fff;border-radius:13px;padding:12px;text-align:left;cursor:pointer;color:#173b29}.theme-card-v11 b{display:block}.theme-card-v11 span{font-size:12px;color:#6d7d74}.theme-card-v11.active{outline:2px solid #198754;background:#eef9f2}.theme-select-v11{padding:10px;border:1px solid #d5dfd8;border-radius:10px;background:white;max-width:210px}
+.modal-v12{display:none;position:fixed;inset:0;background:#0008;z-index:9999;align-items:center;justify-content:center;padding:20px}.modal-v12.show{display:flex}.modalbox-v12{background:white;width:min(620px,96vw);max-height:90vh;overflow:auto;border-radius:18px;padding:24px;position:relative}.modalbox-v12 label{display:block;font-weight:700;margin:12px 0 5px}.modalbox-v12 input,.modalbox-v12 textarea{width:100%;box-sizing:border-box;padding:11px;border:1px solid #d7e0da;border-radius:10px}.close-v12{position:absolute;right:15px;top:12px;border:0;background:none;font-size:28px;cursor:pointer}
+
+.vinheta-pro-note{margin:10px 0 14px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:12px;background:#fafafa;font-size:12px;color:#667085}
+.vinheta-pro-note b{color:#344054}
+.vinheta-card textarea,.vinheta-card input[type="text"]{border-radius:10px!important}
+.vinheta-card button{border-radius:10px!important}
+</style>
+
+<style>
+.ac-row-v9{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:11px;border-top:1px solid var(--line)}
+.ac-row-v9:first-child{border-top:0}.ac-name-v9{font-weight:800}.ac-meta-v9{font-size:12px;color:var(--muted)}
+.ac-actions-v9{display:flex;gap:7px;flex-wrap:wrap}.ac-empty-v9{text-align:center;padding:34px;color:var(--muted)}
+.pl-card-v9{border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0;background:#0a1711}
+.pl-top-v9{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.pl-tags-v9{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+@media(max-width:800px){.ac-row-v9{grid-template-columns:30px 1fr}.ac-actions-v9{grid-column:2}.grid{grid-template-columns:1fr!important}}
+</style>
+
+<style id="vigSimpleV28Css">
+.vig-simple-v28{padding:0 0 18px!important}
+.vig-simple-v28 .vig-head{margin-bottom:10px}
+.vig-compose-v28{padding:12px;background:#0d3023;border:1px solid #24543f;border-radius:14px;margin-bottom:12px}
+.vig-compose-v28 textarea{display:block;width:100%;min-height:82px;box-sizing:border-box;resize:vertical;border:1px solid #b9c8c0;border-radius:10px;background:#fff;color:#14251d;padding:12px;font-size:16px}
+.vig-generate-v28{display:block;width:100%;margin-top:9px;background:#35df7f!important;color:#062414!important;font-weight:900!important;padding:13px!important}
+.vig-saved-v28{display:flex;flex-direction:column;gap:7px}
+.vig-saved-row-v28{display:grid;grid-template-columns:95px 92px minmax(120px,1fr) auto auto;gap:8px;align-items:center;background:#103a2b;border:1px solid #23543f;border-radius:11px;padding:9px 10px}
+.vig-saved-row-v28 .vig-num{font-weight:900}
+.vig-voice-v28{font-size:13px;white-space:nowrap}
+.vig-text-v28{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.92}
+.vig-trash-v28{border:0;background:transparent;color:#fff;font-size:18px;cursor:pointer;padding:7px}
+@media(max-width:800px){.vig-saved-row-v28{grid-template-columns:88px 82px 1fr auto}.vig-text-v28{grid-column:1/-1;grid-row:2}.vig-trash-v28{grid-column:4;grid-row:1}}
+</style>
+
+
+<style id="vigThemeColorsV29">
+/* V29 — cores por função das vinhetas em Ramos e Pacotes */
+.vig-simple-v28[data-vig-theme="entry"]{border-left:5px solid #2fd875!important;background:linear-gradient(90deg,rgba(47,216,117,.11),transparent 32%)}
+.vig-simple-v28[data-vig-theme="exit"]{border-left:5px solid #3ba7ff!important;background:linear-gradient(90deg,rgba(59,167,255,.11),transparent 32%)}
+.vig-simple-v28[data-vig-theme="top-entry"]{border-left:5px solid #ff9d2e!important;background:linear-gradient(90deg,rgba(255,157,46,.12),transparent 32%)}
+.vig-simple-v28[data-vig-theme="top-exit"]{border-left:5px solid #ad6cff!important;background:linear-gradient(90deg,rgba(173,108,255,.12),transparent 32%)}
+
+.vig-simple-v28[data-vig-theme="entry"] .vig-head b{color:#59e895!important}
+.vig-simple-v28[data-vig-theme="exit"] .vig-head b{color:#70bcff!important}
+.vig-simple-v28[data-vig-theme="top-entry"] .vig-head b{color:#ffb85f!important}
+.vig-simple-v28[data-vig-theme="top-exit"] .vig-head b{color:#c797ff!important}
+
+.vig-simple-v28[data-vig-theme="entry"] .vig-generate-v28{background:#35df7f!important;color:#062414!important}
+.vig-simple-v28[data-vig-theme="exit"] .vig-generate-v28{background:#3ba7ff!important;color:#071c2c!important}
+.vig-simple-v28[data-vig-theme="top-entry"] .vig-generate-v28{background:#ff9d2e!important;color:#2b1700!important}
+.vig-simple-v28[data-vig-theme="top-exit"] .vig-generate-v28{background:#ad6cff!important;color:#1e0a32!important}
+</style>
+
+</head>
+<body>
+<div class="app">
+<aside><div class="logo">CAPIVARA <b>RÁDIO</b><div class="sub">ADMINISTRADOR</div></div>
+<nav>
+<button class="active" data-go="painel">▦ Painel</button>
+<button data-go="clientes">🏪 Clientes</button>
+<button data-go="player">▶ Player do Cliente</button>
+<button data-go="ramos">🧩 Ramos e Pacotes</button>
+<button data-go="acervo">♫ Acervo da Rádio</button>
+<button data-go="sistema">⚙ Configuração Geral</button>
+</nav></aside>
+<main>
+<section id="painel" class="section active">
+<div class="top"><div><h1>Painel</h1><div class="sub">Visão rápida da operação</div></div><button class="btn" onclick="openClient()">+ Novo cliente</button></div>
+<div class="grid">
+<div class="card metric"><span>Clientes</span><strong id="mClients">1</strong></div>
+<div class="card metric"><span>Ativos</span><strong id="mActive">1</strong></div>
+<div class="card metric"><span>Ramos prontos</span><strong id="mRamos">23</strong></div>
+<div class="card metric"><span>Status das APIs</span><strong style="font-size:20px;color:var(--green)">● Configurável</strong></div>
+</div>
+<div class="card" style="margin-top:16px"><h3>Operação simples</h3><p class="sub">Cadastre a loja → escolha o ramo → o cliente herda automaticamente produtos, vinhetas e regras daquele pacote → use “Player do Cliente” quando precisar operar por ele.</p></div>
+</section>
+
+<section id="clientes" class="section">
+<div class="top"><div><h1>Clientes</h1><div class="sub">Cadastro, código e pacote de cada loja</div></div><button class="btn" onclick="openClient()">+ Novo cliente</button></div>
+<div class="card"><div class="toolbar"><input id="searchClient" placeholder="Buscar loja ou código..." oninput="renderClients()"><select id="statusFilter" onchange="renderClients()"><option>Todos</option><option>Ativos</option><option>Bloqueados</option></select></div>
+<table><thead><tr><th>Loja</th><th>Ramo</th><th>Código</th><th>Status</th><th>Ações</th></tr></thead><tbody id="clientRows"></tbody></table></div>
+</section>
+
+<section id="player" class="section">
+<div class="top"><div><h1>Player do Cliente</h1><div class="sub">Opere a rádio quando o cliente pedir ajuda</div></div></div>
+<div class="toolbar"><select id="playerClient" onchange="renderPlayer()"></select><span class="badge"><span class="dot"></span>Suporte administrando</span></div>
+<div class="card player">
+<div class="hero"><div class="sub">Criar anúncio para</div><h2 id="playerStore">Açougue Uberaba</h2></div>
+<div class="chips" id="playerProducts"></div>
+<div class="field"><label>Preço (opcional)</label><input class="price" inputmode="numeric" placeholder="0,00"></div>
+<button class="btn" style="width:100%;font-size:17px">✨ CRIAR ANÚNCIO</button>
+<hr><button class="btn gold" style="width:100%">🔥 TOP DO DIA</button>
+<div class="sub" style="text-align:center;margin-top:10px">Conta como 1 dos 15 anúncios do dia • máximo 1 TOP/dia</div>
+</div>
+</section>
+
+<section id="ramos" class="section">
+<div class="top"><div><h1>Ramos e Pacotes</h1><div class="sub">Um pacote pronto para cada tipo de comércio</div></div><button class="btn" onclick="addRamo()">+ Criar ramo</button></div>
+<div class="ramos" id="ramoGrid"></div>
+</section>
+
+<section id="acervo" class="section">
+<div class="top"><div><h1>Acervo da Rádio</h1><div class="sub">Acervo organizado em 10 temas. Cada tema já funciona como uma programação musical.</div></div>
+<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+<select id="uploadThemeV11" class="theme-select-v11"></select>
+<label class="btn" style="cursor:pointer">+ ADICIONAR MÚSICAS<input id="musicUploadV9" hidden type="file" accept="audio/*" multiple onchange="addMusicV9(this.files)"></label>
+</div></div>
+
+<div class="grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
+ <div class="card metric"><span>Músicas no acervo</span><strong id="musicCountV9">0</strong></div>
+ <div class="card metric"><span>Temas musicais</span><strong id="playlistCountV9">10</strong></div>
+ <div class="card metric"><span>Fundos de locução</span><strong id="bgCountV9">0</strong></div>
+</div>
+
+<div class="card">
+ <div class="toolbar" style="justify-content:space-between">
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+   <button class="btn secondary acTabV9" onclick="showAcTabV9('music')">🎵 MÚSICAS DO ACERVO</button>
+   
+   <button class="btn secondary acTabV9" onclick="showAcTabV9('backgrounds')">🎙️ FUNDOS DE LOCUÇÃO</button>
+  </div>
+ </div>
+
+ <div id="acMusicV9">
+  <div id="themeCardsV11" class="theme-grid-v11"></div>
+  <div class="toolbar">
+   <input id="musicSearchV9" placeholder="Buscar música..." oninput="renderAcervoV9()">
+   <button class="btn secondary" onclick="selectAllMusicV9()">Selecionar todas</button>
+   <button class="btn danger" onclick="deleteSelectedMusicV9()">🗑 Excluir selecionadas</button>
+  </div>
+  <div id="musicListV9"></div>
+ </div>
+
+ <div id="acPlaylistsV9" style="display:none">
+  <div class="toolbar"><button class="btn" onclick="newPlaylistV9()">+ CRIAR PLAYLIST</button></div>
+  <div id="playlistListV9"></div>
+ </div>
+
+ <div id="acBackgroundsV9" style="display:none">
+  <div class="notice">Instrumentais usados em volume baixo atrás das locuções. Ficam separados das músicas da programação.</div>
+  <label class="btn" style="display:inline-block;cursor:pointer;margin-bottom:12px">+ ADICIONAR FUNDOS<input hidden type="file" accept="audio/*" multiple onchange="addBackgroundV9(this.files)"></label>
+  <div id="backgroundListV9"></div>
+ </div>
+</div>
+</section>
+
+<section id="sistema" class="section">
+<div class="top"><div><h1>Configuração Geral</h1><div class="sub">Área técnica — não aparece para o cliente</div></div><button class="btn" id="saveTestBtn" onclick="saveAndTestSettings()">💾 SALVAR E TESTAR</button></div>
+<div class="cols">
+<div class="card"><h3>🤖 IA de texto + APIs</h3>
+<div class="field"><label>Modo de geração</label><select id="aiMode"><option value="hybrid" selected>Híbrido — Gemini → Capivara Vox AI</option><option value="gemini">Somente Gemini</option><option value="vox">Somente Capivara Vox AI</option></select></div>
+<div class="field"><label>Capivara Vox AI — servidor</label><input id="ownAiUrl" value="https://capivara-vox-ai.onrender.com/generate"></div>
+<div class="field"><label>Tempo máximo do Gemini (ms)</label><input id="geminiTimeout" type="number" value="5000" min="1000" step="500"></div>
+<div class="notice" style="margin-bottom:12px">No modo Híbrido, tenta Gemini primeiro e usa a Capivara Vox AI se falhar ou demorar. Em Somente Gemini, não usa a Vox.</div>
+<div class="field"><label>Gemini API Key</label><input id="gemini" type="password" placeholder="••••••••••••"></div>
+<div class="field"><label>Modelo Gemini</label><input id="geminiModel" value="gemini-3.6-flash"></div>
+<div class="field"><label>ElevenLabs API Key</label><input id="eleven" type="password" placeholder="••••••••••••"></div>
+<div class="notice">No sistema online final, chaves e IDs devem ficar protegidos no servidor da Capivara e não expostos ao Player.</div></div>
+<div class="card"><h3>🎙️ Vozes</h3><div class="field"><label>Voice ID — Masculina</label><input id="male"></div><div class="field"><label>Voice ID — Feminina</label><input id="female"></div>
+<div class="card" style="margin-top:14px">
+  <h3>🎙️ Vozes das vinhetas</h3>
+  <p class="muted">IDs exclusivos para as vinhetas. As vozes dos anúncios continuam separadas.</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <label>Vinhetas — Homem<input id="jingleMaleVoice" type="text" placeholder="Voice ID ElevenLabs"></label>
+    <label>Vinhetas — Mulher<input id="jingleFemaleVoice" type="text" placeholder="Voice ID ElevenLabs"></label>
+  </div>
+</div><div class="slot"><div>Alternância automática<br><small>Homem → Mulher → Homem → Mulher</small></div><span class="badge">ATIVA</span></div></div>
+<div class="card" style="grid-column:1/-1"><h3>🧪 Resultado do teste</h3><div id="apiTestResult" class="notice" style="white-space:pre-wrap;min-height:54px">O teste usa geração real de áudio, igual ao Player. Preencha chave, modelo e IDs; depois clique em SALVAR E TESTAR.</div><button class="btn secondary" id="copyApiError" onclick="copyApiTest()" style="display:none;margin-top:10px">📋 COPIAR ERRO</button></div>
+<div class="card"><h3>📻 Padrões de programação</h3><div class="field"><label>Anúncios por bloco — padrão</label><input id="defaultAdsPerBlock" value="3" type="number" min="1" step="1" inputmode="numeric"></div><div class="field"><label>Limite por dia</label><input id="dailyLimit" value="15" type="number" min="1" step="1" inputmode="numeric"></div>
+<div class="field"><label>Limite por semana</label><input id="weeklyLimit" value="75" type="number" min="1" step="1" inputmode="numeric"></div><div class="notice">Quantidade livre: digite qualquer número de anúncios por bloco.</div></div>
+<div class="card"><h3>🔥 TOP do Dia</h3><div class="field"><label>Máximo por dia</label><input id="topDailyLimit" value="1" type="number" min="0" step="1" inputmode="numeric"></div><div class="slot"><div id="topLimitLabel">Conta no limite diário configurado</div><span class="badge">SIM</span></div><p class="sub">Fluxo: música termina → vinheta TOP entrada → anúncio TOP → vinheta TOP saída → próxima música.</p></div>
+</div>
+</section>
+</main>
+</div>
+
+<div class="modal" id="clientModal"><div class="card"><div class="top"><h2>Novo cliente</h2><button class="btn secondary" onclick="closeClient()">✕</button></div>
+<div class="field"><label>Nome fantasia</label><input id="newName" placeholder="Ex.: Açougue Uberaba"></div>
+<div class="field"><label>Ramo</label><select id="newRamo"></select></div>
+<div class="field"><label>Código de acesso</label><div style="display:flex;gap:8px"><input id="newCode" readonly style="flex:1"><button class="btn secondary" onclick="genCode()">Gerar</button></div></div>
+<button class="btn" style="width:100%" onclick="saveClient()">CADASTRAR CLIENTE</button></div></div>
+
+<div class="modal" id="ramoModal"><div class="card">
+<div class="top"><div><h2 id="ramoTitle">Ramo</h2><div class="sub">Produtos, vinhetas e programação padrão deste ramo</div></div><button class="btn secondary" onclick="closeRamo()">✕</button></div>
+
+<div><h3>🛒 15 produtos padrão</h3><div class="products" id="ramoProducts"></div></div>
+<hr>
+
+<div>
+  <h3 id="ramoAudioHeading">🎧 Áudios do Ramo</h3>
+  <div class="sub">Crie quantas vinhetas quiser. Elas ficam numeradas e armazenadas por categoria.</div>
+  <div id="ramoVignettesV7"></div>
+</div>
+<hr>
+
+<div class="cols">
+ <div class="field"><label>Playlist padrão do ramo</label>
+  <select id="ramoPlaylist"><option>Playlist geral</option><option>Playlist própria do ramo</option></select>
+ </div>
+ <div class="field"><label>Anúncios por bloco — padrão do ramo</label>
+  <input id="ramoAdsPerBlock" type="number" min="1" step="1" value="3" inputmode="numeric">
+ </div>
+</div>
+<button class="btn" style="width:100%" onclick="saveRamoPackage()">SALVAR RAMO E PACOTE</button>
+</div></div>
+
+<script>
+const ramoNames=['Açougue','Supermercado','Farmácia','Padaria','Hortifruti','Pet Shop','Pizzaria','Lanchonete','Restaurante','Hotel / Pousada','Roupas','Calçados','Material de Construção','Autopeças','Oficina / Auto Center','Posto / Conveniência','Cosméticos / Perfumaria','Ótica','Papelaria','Móveis / Eletro','Agropecuária / Rações','Distribuidora de Bebidas','Utilidades / Variedades'];
+const productCatalogs={
+'Açougue':['Picanha','Alcatra','Contrafilé','Patinho','Acém','Costela','Frango','Linguiça','Pernil','Carne Moída','Maminha','Cupim','Coxão Mole','Coxão Duro','Fraldinha'],
+'Supermercado':['Arroz','Feijão','Açúcar','Café','Óleo','Leite','Macarrão','Farinha de Trigo','Carne','Frango','Ovos','Papel Higiênico','Sabão em Pó','Refrigerante','Cerveja'],
+'Farmácia':['Fraldas','Lenços Umedecidos','Shampoo','Condicionador','Sabonete','Desodorante','Protetor Solar','Hidratante','Creme Dental','Escova Dental','Absorvente','Preservativo','Vitaminas','Repelente','Algodão'],
+'Padaria':['Pão Francês','Pão de Queijo','Pão Doce','Bolo','Rosca','Sonho','Croissant','Salgados','Coxinha','Empada','Presunto','Muçarela','Leite','Café','Refrigerante'],
+'Hortifruti':['Banana','Maçã','Laranja','Mamão','Limão','Abacaxi','Manga','Uva','Tomate','Batata','Cebola','Cenoura','Alface','Couve','Ovos'],
+'Pet Shop':['Ração para Cães','Ração para Gatos','Petiscos','Areia para Gatos','Shampoo Pet','Antipulgas','Brinquedos','Coleiras','Guias','Camas','Tapete Higiênico','Comedouros','Sachês','Ossinhos','Banho e Tosa'],
+'Pizzaria':['Pizza Calabresa','Pizza Muçarela','Pizza Portuguesa','Pizza Frango com Catupiry','Pizza Marguerita','Pizza Quatro Queijos','Pizza Bacon','Pizza Carne Seca','Pizza Chocolate','Pizza Doce','Pizza Família','Combo Pizza + Refrigerante','Refrigerante','Borda Recheada','Delivery'],
+'Lanchonete':['X-Burguer','X-Salada','X-Bacon','X-Tudo','Hambúrguer Artesanal','Cachorro-Quente','Misto Quente','Batata Frita','Salgados','Coxinha','Pastel','Açaí','Suco','Refrigerante','Combo'],
+'Restaurante':['Prato Feito','Self-Service','Marmitex','Almoço Executivo','Feijoada','Churrasco','Frango','Peixe','Massas','Saladas','Sobremesa','Suco','Refrigerante','Delivery','Combo do Dia'],
+'Hotel / Pousada':['Diária','Suíte','Quarto Casal','Quarto Família','Café da Manhã','Pacote de Fim de Semana','Pacote Romântico','Feriado','Piscina','Restaurante','Estacionamento','Wi-Fi','Day Use','Evento','Reserva Antecipada'],
+'Roupas':['Camiseta','Camisa','Calça Jeans','Bermuda','Vestido','Blusa','Short','Saia','Conjunto','Jaqueta','Moletom','Roupa Infantil','Moda Íntima','Pijama','Promoção da Coleção'],
+'Calçados':['Tênis','Sapato Social','Sandália','Chinelo','Sapatilha','Bota','Tênis Infantil','Sandália Infantil','Sapato Infantil','Rasteirinha','Scarpin','Mocassim','Papete','Chuteira','Promoção de Calçados'],
+'Material de Construção':['Cimento','Areia','Brita','Tijolo','Telha','Argamassa','Tinta','Piso','Revestimento','Tubo PVC','Caixa d’Água','Ferramentas','Portas','Janelas','Material Elétrico'],
+'Autopeças':['Óleo do Motor','Filtro de Óleo','Filtro de Ar','Pastilha de Freio','Bateria','Palheta','Lâmpada','Correia','Vela de Ignição','Amortecedor','Pneu','Aditivo','Kit Embreagem','Rolamento','Acessórios'],
+'Oficina / Auto Center':['Troca de Óleo','Alinhamento','Balanceamento','Freios','Suspensão','Troca de Pneus','Revisão','Ar-Condicionado','Injeção Eletrônica','Embreagem','Bateria','Escapamento','Correia Dentada','Diagnóstico','Higienização'],
+'Posto / Conveniência':['Gasolina','Etanol','Diesel','Óleo Lubrificante','Aditivo','Calibragem','Lavagem','Café','Água','Refrigerante','Energético','Salgados','Sanduíche','Gelo','Carvão'],
+'Cosméticos / Perfumaria':['Perfume Feminino','Perfume Masculino','Hidratante','Shampoo','Condicionador','Maquiagem','Batom','Base','Protetor Solar','Desodorante','Kit Presente','Creme Facial','Esmalte','Sabonete','Produtos para Cabelo'],
+'Ótica':['Óculos de Grau','Óculos de Sol','Armação Feminina','Armação Masculina','Armação Infantil','Lentes','Lentes Multifocais','Lentes de Contato','Antirreflexo','Filtro de Luz Azul','Clip-on','Exame de Vista','Ajuste de Armação','Kit Limpeza','Promoção de Armações'],
+'Papelaria':['Caderno','Caneta','Lápis','Borracha','Mochila','Estojo','Papel A4','Impressão','Xerox','Material Escolar','Cartolina','Cola','Tesoura','Agenda','Kit Escolar'],
+'Móveis / Eletro':['Sofá','Cama','Colchão','Guarda-Roupa','Mesa','Cadeira','Rack','Geladeira','Fogão','Máquina de Lavar','Televisão','Micro-ondas','Ventilador','Air Fryer','Liquidificador'],
+'Agropecuária / Rações':['Ração para Cães','Ração para Gatos','Ração para Aves','Ração para Equinos','Ração para Bovinos','Milho','Sal Mineral','Sementes','Adubo','Ferramentas','Bebedouro','Comedouro','Produtos Veterinários','Selaria','Acessórios Rurais'],
+'Distribuidora de Bebidas':['Água','Refrigerante','Suco','Energético','Cerveja','Gelo','Água com Gás','Isotônico','Chá Gelado','Tônica','Carvão','Copos Descartáveis','Combo para Festa','Fardo de Água','Fardo de Refrigerante'],
+'Utilidades / Variedades':['Panelas','Potes','Copos','Pratos','Talheres','Baldes','Vassouras','Produtos de Limpeza','Organizadores','Toalhas','Tapetes','Ferramentas','Brinquedos','Material Escolar','Itens para Cozinha']
+};
+// V13: ramos personalizados entram no catálogo ANTES da tela ser montada.
+try{
+ const _customV13=JSON.parse(localStorage.getItem('capivara_custom_ramos_v12')||'{}');
+ Object.entries(_customV13).forEach(([nome,dados])=>{
+   if(nome && Array.isArray(dados.products)) productCatalogs[nome]=dados.products.slice(0,15);
+ });
+}catch(e){}
+let clients=JSON.parse(localStorage.getItem('capivara_admin_clients')||'null')||[{name:'Açougue Uberaba',ramo:'Açougue',code:'123456',active:true}];
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));document.getElementById(b.dataset.go).classList.add('active')});
+function productsFor(r){return productCatalogs[r]||Array.from({length:15},(_,i)=>`Produto ${i+1}`)}
+function renderClients(){let q=(document.getElementById('searchClient')?.value||'').toLowerCase(),f=document.getElementById('statusFilter')?.value||'Todos';let list=clients.filter(c=>(c.name+c.code+c.ramo).toLowerCase().includes(q)&&(f==='Todos'||(f==='Ativos'&&c.active)||(f==='Bloqueados'&&!c.active)));document.getElementById('clientRows').innerHTML=list.map((c,i)=>`<tr><td><b>${c.name}</b></td><td>${c.ramo}</td><td><b>${c.code}</b></td><td><span class="badge ${c.active?'':'off'}">${c.active?'ATIVO':'BLOQUEADO'}</span></td><td><button class="btn secondary" onclick="toggleClient('${c.code}')">${c.active?'Bloquear':'Ativar'}</button></td></tr>`).join('');updateMetrics();renderPlayerSelect()}
+function updateMetrics(){document.getElementById('mClients').textContent=clients.length;document.getElementById('mActive').textContent=clients.filter(x=>x.active).length}
+function toggleClient(code){let c=clients.find(x=>x.code===code);c.active=!c.active;persist()}
+function persist(){localStorage.setItem('capivara_admin_clients',JSON.stringify(clients));renderClients()}
+function genCode(){let code;do{code=String(Math.floor(100000+Math.random()*900000))}while(clients.some(c=>c.code===code));document.getElementById('newCode').value=code}
+function openClient(){document.getElementById('clientModal').classList.add('show');genCode()}
+function closeClient(){document.getElementById('clientModal').classList.remove('show')}
+function saveClient(){let name=document.getElementById('newName').value.trim(),ramo=document.getElementById('newRamo').value,code=document.getElementById('newCode').value;if(!name)return alert('Digite o nome da loja.');clients.push({name,ramo,code,active:true});document.getElementById('newName').value='';closeClient();persist()}
+function renderRamos(){document.getElementById('ramoGrid').innerHTML=ramoNames.map((r,i)=>`<div class="card ramo" onclick="openRamo('${r.replaceAll("'","\\'")}')"><h3>${r}</h3><p>15 produtos • abertura • fechamento • TOP • fundo • playlist</p></div>`).join('');document.getElementById('newRamo').innerHTML=ramoNames.map(r=>`<option>${r}</option>`).join('')}
+function openRamo(r){document.getElementById('ramoTitle').textContent='Pacote • '+r;document.getElementById('ramoProducts').innerHTML=productsFor(r).map((p,i)=>`<div class="product">${i+1}. ${p}</div>`).join('');document.getElementById('ramoModal').classList.add('show')}
+function closeRamo(){document.getElementById('ramoModal').classList.remove('show')}
+function addRamo(){let r=prompt('Nome do novo ramo:');if(r&&r.trim()){ramoNames.push(r.trim());renderRamos()}}
+function renderPlayerSelect(){let s=document.getElementById('playerClient');if(!s)return;s.innerHTML=clients.map(c=>`<option value="${c.code}">${c.name} • ${c.code}</option>`).join('');renderPlayer()}
+function renderPlayer(){let s=document.getElementById('playerClient'),c=clients.find(x=>x.code===s?.value)||clients[0];if(!c)return;document.getElementById('playerStore').textContent=c.name;document.getElementById('playerProducts').innerHTML=productsFor(c.ramo).map(p=>`<div class="chip">${p}</div>`).join('')}
+function apiSettings(){
+ return {aiMode:(document.getElementById('aiMode')?.value||'hybrid'),ownAiUrl:(document.getElementById('ownAiUrl')?.value||'https://capivara-vox-ai.onrender.com/generate').trim(),geminiTimeout:+(document.getElementById('geminiTimeout')?.value||5000),gemini:document.getElementById('gemini').value.trim(),geminiModel:(document.getElementById('geminiModel').value.trim()||'gemini-3.6-flash'),eleven:document.getElementById('eleven').value.trim(),male:document.getElementById('male').value.trim(),female:document.getElementById('female').value.trim()}
+}
+function saveSettings(){
+ const cfg=apiSettings();
+ cfg.defaultAdsPerBlock=Math.max(1,parseInt(document.getElementById('defaultAdsPerBlock')?.value||'3',10));
+ cfg.dailyLimit=Math.max(1,parseInt(document.getElementById('dailyLimit')?.value||'15',10));
+ cfg.weeklyLimit=Math.max(1,parseInt(document.getElementById('weeklyLimit')?.value||'75',10));
+ cfg.topDailyLimit=Math.max(0,parseInt(document.getElementById('topDailyLimit')?.value||'1',10));
+ localStorage.setItem('capivara_admin_settings',JSON.stringify(cfg));return cfg;
+}
+async function saveAndTestSettings(){
+ const cfg=saveSettings(), box=document.getElementById('apiTestResult'), copy=document.getElementById('copyApiError'), btn=document.getElementById('saveTestBtn');
+ // Salva também as IDs exclusivas de vinheta ANTES dos testes.
+ const jingleMale=(document.getElementById('jingleMaleVoice')?.value||'').trim();
+ const jingleFemale=(document.getElementById('jingleFemaleVoice')?.value||'').trim();
+ localStorage.setItem('capivara_vinheta_voice_ids_v2',JSON.stringify({
+   jingleMaleVoice:jingleMale,jingleFemaleVoice:jingleFemale,male:jingleMale,female:jingleFemale
+ }));
+ let main={};try{main=JSON.parse(localStorage.getItem('capivara_admin_settings')||'{}')}catch(e){}
+ main.jingleMaleVoice=jingleMale;main.jingleFemaleVoice=jingleFemale;
+ localStorage.setItem('capivara_admin_settings',JSON.stringify(main));
+
+ btn.disabled=true;btn.textContent='TESTANDO...';copy.style.display='none';
+ let lines=['✅ Configurações salvas neste protótipo.'], errors=[];
+
+ // Cada item é testado de forma INDEPENDENTE. Um erro em cima não impede os testes de baixo.
+ if(!cfg.gemini) errors.push('Gemini: chave não informada.');
+ else{
+   try{
+    const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(cfg.geminiModel)+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':cfg.gemini},body:JSON.stringify({contents:[{parts:[{text:'Responda apenas OK'}]}]})});
+    if(!r.ok){let t=await r.text();throw new Error('HTTP '+r.status+' — '+t)}
+    lines.push('✅ Gemini: conexão OK.');
+   }catch(e){errors.push('Gemini: '+e.message)}
+ }
+
+ async function testTTS(label,voiceId){
+   if(!cfg.eleven){errors.push(label+': chave ElevenLabs não informada.');return}
+   if(!voiceId){errors.push(label+': Voice ID não informado.');return}
+   try{
+     const r=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+encodeURIComponent(voiceId),{
+       method:'POST',
+       headers:{'xi-api-key':cfg.eleven,'Content-Type':'application/json','Accept':'audio/mpeg'},
+       body:JSON.stringify({text:'teste',model_id:'eleven_multilingual_v2'})
+     });
+     if(!r.ok){let t=await r.text();throw new Error('HTTP '+r.status+' — '+t)}
+     const blob=await r.blob();
+     if(!blob.size)throw new Error('áudio vazio');
+     lines.push('✅ '+label+': ID OK.');
+   }catch(e){errors.push(label+': '+e.message)}
+ }
+
+ // 4 testes separados: 2 anúncios + 2 vinhetas.
+ await testTTS('Anúncios / Homem',cfg.male);
+ await testTTS('Anúncios / Mulher',cfg.female);
+ await testTTS('Vinhetas / Homem',jingleMale);
+ await testTTS('Vinhetas / Mulher',jingleFemale);
+
+ if(errors.length){box.textContent=lines.concat(['','❌ ERROS:'],errors).join('\n');copy.style.display='inline-block'}
+ else box.textContent=lines.concat(['','🎉 TUDO CERTO.']).join('\n');
+ btn.disabled=false;btn.textContent='💾 SALVAR E TESTAR';
+}
+async function copyApiTest(){
+ const t=document.getElementById('apiTestResult').textContent;
+ try{await navigator.clipboard.writeText(t)}catch(e){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove()}
+ const b=document.getElementById('copyApiError');b.textContent='✓ ERRO COPIADO';setTimeout(()=>b.textContent='📋 COPIAR ERRO',1000);
+}
+(function loadApiSettings(){
+ try{const c=JSON.parse(localStorage.getItem('capivara_admin_settings')||'{}');['gemini','eleven','male','female'].forEach(k=>{const el=document.getElementById(k);if(el)el.value=c[k]||''});if(document.getElementById('ownAiUrl'))document.getElementById('ownAiUrl').value=c.ownAiUrl||'https://capivara-vox-ai.onrender.com/generate';if(document.getElementById('aiMode'))document.getElementById('aiMode').value=c.aiMode||'hybrid';if(document.getElementById('geminiTimeout'))document.getElementById('geminiTimeout').value=c.geminiTimeout||5000;if(document.getElementById('geminiModel'))document.getElementById('geminiModel').value=c.geminiModel||'gemini-3.6-flash';if(document.getElementById('defaultAdsPerBlock'))document.getElementById('defaultAdsPerBlock').value=c.defaultAdsPerBlock||3;if(document.getElementById('dailyLimit'))document.getElementById('dailyLimit').value=c.dailyLimit||15;if(document.getElementById('weeklyLimit'))document.getElementById('weeklyLimit').value=c.weeklyLimit||75;if(document.getElementById('topDailyLimit'))document.getElementById('topDailyLimit').value=(c.topDailyLimit??1)}catch(e){}
+})();
+renderRamos();renderClients();
+</script>
+
+<div class="audio-manager" id="audioManagerV3">
+  <h3 id="audioRamoTitleV5">🎧 Áudios do Ramo</h3>
+  <div class="hint">4 vinhetas próprias deste ramo. Escreva o texto, escolha a voz e gere quando a API estiver configurada.</div>
+  <div id="audioSlotsV3"></div>
+  
+</div>
+
+
+<script>
+(function(){
+ window.DEFAULT_PHRASES_V4={"Açougue": ["Prepare-se: vem aí uma seleção de ofertas fresquinhas para deixar sua compra ainda melhor!", "Obrigado pela atenção. Aproveite nossas ofertas e leve mais sabor e qualidade para sua mesa!", "Atenção! Chegou o TOP do Dia: uma oferta especial do açougue que merece sua atenção!", "Esse foi o TOP do Dia. Aproveite enquanto é tempo e continue curtindo nossa programação!"], "Supermercado": ["Atenção às ofertas! Preparamos oportunidades especiais para você economizar e encher o carrinho!", "Ofertas anunciadas! Continue aproveitando sua compra e fique ligado nas próximas oportunidades!", "Atenção! É hora do TOP do Dia: uma oferta especial para fazer valer ainda mais a sua compra!", "Esse foi o TOP do Dia. Aproveite a oportunidade e continue com a gente!"], "Farmácia": ["Fique atento: selecionamos ofertas especiais para cuidar de você e da sua família com mais economia!", "Obrigado pela atenção. Aproveite nossas ofertas e conte sempre com praticidade e cuidado!", "Atenção! Chegou o TOP do Dia: uma oportunidade especial selecionada para você!", "Esse foi o TOP do Dia. Aproveite a condição especial e continue acompanhando nossa programação!"], "Padaria": ["Tem coisa boa chegando! Confira agora ofertas especiais, fresquinhas e cheias de sabor!", "Gostou das ofertas? Aproveite, escolha seus favoritos e continue curtindo nossa programação!", "Atenção! Saiu quentinho o TOP do Dia: uma oferta especial que você não vai querer perder!", "Esse foi o TOP do Dia. Aproveite essa delícia e continue com a gente!"], "Hortifruti": ["Frescor e economia chegando! Confira agora as ofertas selecionadas do nosso hortifruti!", "Ofertas anunciadas! Aproveite para levar mais cor, sabor e frescor para sua casa!", "Atenção! Chegou o TOP do Dia: uma oportunidade fresquinha e especial para você aproveitar!", "Esse foi o TOP do Dia. Aproveite enquanto está fresquinho e continue nossa programação!"], "Pet Shop": ["Atenção, apaixonados por pets! Vêm aí ofertas especiais para cuidar ainda melhor do seu companheiro!", "Essas foram nossas ofertas. Aproveite para mimar seu pet e continue curtindo nossa programação!", "Atenção! Chegou o TOP do Dia: uma oferta especial para quem cuida do pet com carinho!", "Esse foi o TOP do Dia. Seu pet agradece, e nossa programação continua!"], "Pizzaria": ["Prepare o apetite! Vêm aí ofertas especiais para deixar seu momento ainda mais saboroso!", "Essas foram nossas ofertas. Escolha sua favorita, aproveite e bom apetite!", "Atenção! Chegou o TOP do Dia: uma oferta especial de dar água na boca!", "Esse foi o TOP do Dia. Aproveite a oportunidade e continue curtindo nossa programação!"], "Lanchonete": ["Bateu a fome? Então fique ligado nas ofertas especiais que preparamos para você!", "Essas foram nossas ofertas. Escolha seu lanche, aproveite e continue com a gente!", "Atenção! Chegou o TOP do Dia: uma oferta especial para matar a fome com muito sabor!", "Esse foi o TOP do Dia. Aproveite e continue curtindo nossa programação!"], "Restaurante": ["Abra o apetite! Confira agora nossas ofertas e sugestões especiais para uma refeição ainda melhor!", "Essas foram nossas ofertas. Aproveite, saboreie e tenha uma excelente refeição!", "Atenção! Chegou o TOP do Dia: uma escolha especial para deixar sua refeição ainda mais gostosa!", "Esse foi o TOP do Dia. Aproveite a oportunidade e bom apetite!"], "Hotel / Pousada": ["Seu conforto merece atenção especial. Confira agora nossas opções e condições selecionadas para sua estadia!", "Obrigado pela atenção. Aproveite nossas opções e tenha uma experiência ainda mais agradável!", "Atenção! Chegou o TOP do Dia: uma condição especial para tornar sua estadia ainda melhor!", "Esse foi o TOP do Dia. Aproveite a oportunidade e desfrute cada momento da sua estadia!"], "Roupas": ["Seu próximo look pode estar aqui! Confira agora as ofertas e novidades selecionadas para você!", "Essas foram nossas ofertas. Aproveite para renovar o visual e continue curtindo nossa programação!", "Atenção! Chegou o TOP do Dia: uma oportunidade especial para renovar seu estilo!", "Esse foi o TOP do Dia. Aproveite a oportunidade e continue com a gente!"], "Calçados": ["Estilo e conforto vêm aí! Confira agora as ofertas especiais selecionadas para você!", "Essas foram nossas ofertas. Escolha seu par favorito e continue curtindo nossa programação!", "Atenção! Chegou o TOP do Dia: uma oportunidade especial para você sair de calçado novo!", "Esse foi o TOP do Dia. Aproveite e siga com a gente!"], "Material de Construção": ["Vai construir ou reformar? Fique atento às ofertas especiais que preparamos para sua obra!", "Essas foram nossas ofertas. Aproveite para economizar na obra e continue com a gente!", "Atenção! Chegou o TOP do Dia: uma oferta especial para sua construção ou reforma!", "Esse foi o TOP do Dia. Aproveite a oportunidade e faça sua obra render mais!"], "Autopeças": ["Seu carro merece atenção! Confira agora ofertas especiais em peças e acessórios!", "Essas foram nossas ofertas. Aproveite, cuide do seu veículo e continue com a gente!", "Atenção! Chegou o TOP do Dia: uma oferta especial para cuidar do seu carro e do seu bolso!", "Esse foi o TOP do Dia. Aproveite a oportunidade e siga tranquilo!"], "Oficina / Auto Center": ["Hora de cuidar do seu veículo! Confira agora condições especiais em serviços para seu carro!", "Essas foram nossas condições especiais. Aproveite e mantenha seu veículo sempre em dia!", "Atenção! Chegou o TOP do Dia: uma condição especial para deixar seu carro em dia!", "Esse foi o TOP do Dia. Aproveite a oportunidade e boa viagem!"], "Posto / Conveniência": ["Enquanto você abastece, aproveite! Confira agora ofertas e oportunidades especiais para sua parada!", "Essas foram nossas ofertas. Aproveite sua parada e siga viagem com a gente!", "Atenção! Chegou o TOP do Dia: uma oportunidade especial para aproveitar agora!", "Esse foi o TOP do Dia. Aproveite e tenha uma ótima viagem!"], "Cosméticos / Perfumaria": ["Beleza, cuidado e boas oportunidades! Confira agora nossas ofertas especiais!", "Essas foram nossas ofertas. Aproveite para se cuidar e continue curtindo nossa programação!", "Atenção! Chegou o TOP do Dia: uma oferta especial para realçar ainda mais sua beleza!", "Esse foi o TOP do Dia. Aproveite essa oportunidade e continue com a gente!"], "Ótica": ["Seu estilo merece um novo olhar! Confira agora ofertas e condições especiais da nossa ótica!", "Essas foram nossas ofertas. Aproveite para renovar seu visual e continue com a gente!", "Atenção! Chegou o TOP do Dia: uma condição especial que merece o seu olhar!", "Esse foi o TOP do Dia. Aproveite a oportunidade e continue nossa programação!"], "Papelaria": ["Organização, estudo e criatividade com economia! Confira agora nossas ofertas especiais!", "Essas foram nossas ofertas. Aproveite para completar sua lista e continue com a gente!", "Atenção! Chegou o TOP do Dia: uma oferta especial para sua lista ficar ainda melhor!", "Esse foi o TOP do Dia. Aproveite a oportunidade e continue nossa programação!"], "Móveis / Eletro": ["Sua casa pode ficar ainda melhor! Confira agora ofertas especiais em móveis e eletros!", "Essas foram nossas ofertas. Aproveite para renovar sua casa e continue com a gente!", "Atenção! Chegou o TOP do Dia: uma oportunidade especial para transformar sua casa!", "Esse foi o TOP do Dia. Aproveite a oportunidade e continue curtindo nossa programação!"], "Agropecuária / Rações": ["Quem cuida bem do campo e dos animais aproveita boas oportunidades. Confira nossas ofertas especiais!", "Essas foram nossas ofertas. Aproveite, cuide bem do que é seu e continue com a gente!", "Atenção! Chegou o TOP do Dia: uma oferta especial para o campo, os animais e o seu bolso!", "Esse foi o TOP do Dia. Aproveite a oportunidade e continue nossa programação!"], "Distribuidora de Bebidas": ["Vai gelar? Então fique ligado! Confira agora ofertas especiais para abastecer sua casa, festa ou evento!", "Essas foram nossas ofertas. Aproveite, garanta suas bebidas e continue com a gente!", "Atenção! Chegou o TOP do Dia: uma oferta especial para você aproveitar bem gelada!", "Esse foi o TOP do Dia. Aproveite a oportunidade e continue curtindo nossa programação!"], "Utilidades / Variedades": ["Tem novidade e economia chegando! Confira agora ofertas especiais para facilitar o seu dia a dia!", "Essas foram nossas ofertas. Aproveite para encontrar o que precisa e continue com a gente!", "Atenção! Chegou o TOP do Dia: uma oportunidade especial entre nossas variedades!", "Esse foi o TOP do Dia. Aproveite a oportunidade e continue nossa programação!"]};
+ const SLOT_DEFS=[
+   ['offerOpen','Vinheta de Entrada','male'],
+   ['offerClose','Vinheta de Saída','female'],
+   ['topOpen','TOP — entrada','male'],
+   ['topClose','TOP — saída','female']
+ ];
+ const K='capivara_audio_ramos_v3', BG='capivara_bg_playlist_v3';
+ const load=()=>{try{return JSON.parse(localStorage.getItem(K)||'{}')}catch(e){return {}}};
+ const save=o=>localStorage.setItem(K,JSON.stringify(o));
+ let currentRamoV3='Açougue';
+ function detectRamo(){
+   const e=document.getElementById('mRamo');
+   if(e && e.textContent.trim()) currentRamoV3=e.textContent.trim();
+   return currentRamoV3;
+ }
+ function renderSlots(){
+   const box=document.getElementById('audioSlotsV3'); if(!box)return;
+   const ramo=detectRamo(), all=load(); all[ramo]=all[ramo]||{};
+   SLOT_DEFS.forEach((slot,i)=>{ const [id,,voice]=slot; if(!all[ramo][id]) all[ramo][id]={text:((DEFAULT_PHRASES_V4[ramo]||[])[i]||''),voice:voice,audioName:''}; });
+   save(all);
+   box.innerHTML='';
+   SLOT_DEFS.forEach(([id,label,voice])=>{
+     const defaultIndex=SLOT_DEFS.findIndex(x=>x[0]===id); const d=all[ramo][id]||{text:((DEFAULT_PHRASES_V4[ramo]||[])[defaultIndex]||''),voice:voice,audioName:''};
+     const row=document.createElement('div'); row.className='audio-slot';
+     row.innerHTML=`
+       <b>${label}</b>
+       <input data-text="${id}" placeholder="Texto da vinheta" value="${(d.text||'').replace(/"/g,'&quot;')}">
+       <select data-voice="${id}">
+         <option value="male" ${d.voice==='male'?'selected':''}>👨 Homem</option>
+         <option value="female" ${d.voice==='female'?'selected':''}>👩 Mulher</option>
+       </select>
+       <div class="audio-actions">
+         <button type="button" data-gen="${id}">✨ Gerar áudio</button>
+         <label class="btn" style="cursor:pointer">🔄 Trocar<input data-file="${id}" type="file" accept="audio/*" hidden></label>
+         <button type="button" data-clear="${id}">🗑 Limpar</button>
+       </div>`;
+     if(d.audioName){
+       const note=document.createElement('div'); note.className='hint'; note.style.gridColumn='1/-1';
+       note.textContent='Áudio selecionado: '+d.audioName+' (arquivo local precisa ser selecionado novamente após recarregar a página).';
+       row.appendChild(note);
+     }
+     box.appendChild(row);
+   });
+ }
+ function persistField(id,field,value){
+   const ramo=detectRamo(), all=load(); all[ramo]=all[ramo]||{};
+   all[ramo][id]=all[ramo][id]||{};
+   all[ramo][id][field]=value; save(all);
+ }
+ document.addEventListener('input',e=>{
+   if(e.target.dataset.text) persistField(e.target.dataset.text,'text',e.target.value);
+ });
+ document.addEventListener('change',e=>{
+   if(e.target.dataset.voice) persistField(e.target.dataset.voice,'voice',e.target.value);
+   if(e.target.dataset.file && e.target.files[0]){
+      const id=e.target.dataset.file, f=e.target.files[0];
+      persistField(id,'audioName',f.name);
+      const row=e.target.closest('.audio-slot');
+      let a=row.querySelector('audio'); if(!a){a=document.createElement('audio');a.controls=true;a.style.gridColumn='1/-1';row.appendChild(a)}
+      a.src=URL.createObjectURL(f);
+      renderBgInfo();
+   }
+   if(e.target.id==='bgFilesV3'){
+      const names=[...e.target.files].map(f=>f.name);
+      localStorage.setItem(BG,JSON.stringify(names)); renderBgInfo();
+   }
+ });
+ document.addEventListener('click',e=>{
+   const gen=e.target.dataset.gen, clear=e.target.dataset.clear;
+   if(gen){
+      const ramo=detectRamo(), all=load(), d=((all[ramo]||{})[gen]||{});
+      if(!d.text){alert('Escreva o texto da vinheta primeiro.');return}
+      // Prepared hook: uses an existing ElevenLabs generator if the ADM later exposes one.
+      if(typeof window.generateElevenLabsAudio==='function'){
+         window.generateElevenLabsAudio(d.text,d.voice,ramo,gen).then(blob=>{
+           const row=e.target.closest('.v3row,.slot,.card')||e.target.parentElement;
+           let a=row.querySelector('audio');if(!a){a=document.createElement('audio');a.controls=true;row.appendChild(a)}
+           a.src=URL.createObjectURL(blob);a.play();
+           e.target.textContent='✅ ÁUDIO PRONTO';
+         }).catch(err=>{const msg=String(err&&err.message||err);try{navigator.clipboard.writeText(msg)}catch(_){};alert(msg+'\n\nErro pronto para copiar.')});
+      }else{
+         alert('Vinheta preparada. O gerador de voz será acionado aqui quando a API ElevenLabs estiver conectada no ADM.');
+      }
+   }
+   if(clear){
+      const ramo=detectRamo(), all=load(); all[ramo]=all[ramo]||{}; delete all[ramo][clear]; save(all); renderSlots();
+   }
+ });
+ function renderBgInfo(){
+   const e=document.getElementById('bgListV3'); if(!e)return;
+   let n=[]; try{n=JSON.parse(localStorage.getItem(BG)||'[]')}catch(_){}
+   e.textContent=n.length?('Faixas cadastradas: '+n.join(' • ')):'Nenhuma faixa de fundo selecionada.';
+ }
+ // Keep panel aligned to whichever ramo modal is opened.
+ const observer=new MutationObserver(()=>{detectRamo();renderSlots()});
+ const mr=document.getElementById('mRamo'); if(mr) observer.observe(mr,{childList:true,subtree:true,characterData:true});
+ renderSlots(); renderBgInfo();
+})();
+</script>
+
+
+<div id="acervoExtraV5" style="display:none">
+  <div class="global-box">
+    <h3>🎙️ Playlist de Fundo Geral</h3>
+    <div class="hint">Músicas instrumentais usadas baixinho atrás das locuções. Esta playlist é geral para todos os ramos.</div>
+    <input id="bgFilesV3" type="file" accept="audio/*" multiple>
+    <div id="bgListV3" class="hint"></div>
+  </div>
+  <div class="global-box">
+    <h3>🎵 Playlists da Rádio</h3>
+    <div class="hint">Cadastre várias playlists. Depois, em cada ramo, escolha quais playlists ficam disponíveis para os clientes daquele ramo.</div>
+  </div>
+</div>
+
+
+
+
+
+
+
+<script>
+window.DEFAULT_VIGNETTES_V8={"Açougue": {"open": ["Atenção! Chegou a hora de conferir ofertas especiais para levar mais sabor e qualidade à sua mesa!", "Prepare a lista: selecionamos ofertas do açougue que combinam qualidade, sabor e economia!", "Tem oferta boa chegando! Confira nossa seleção especial de carnes e aproveite as oportunidades!", "Seu churrasco e suas refeições podem ficar ainda melhores. Fique ligado nas ofertas do açougue!"], "close": ["Essas foram nossas ofertas. Aproveite as oportunidades e leve qualidade e sabor para sua mesa!", "Ofertas anunciadas! Escolha seus cortes favoritos, aproveite e continue curtindo nossa programação!", "Aproveite enquanto é tempo. Boas compras e muito sabor para suas próximas refeições!", "Obrigado pela atenção. Continue com a gente e fique ligado nas próximas ofertas do açougue!"], "topin": ["Atenção! Chegou o TOP do Dia do açougue: uma oferta especial que merece destaque!", "Prepare-se para o destaque do dia! Vem aí uma oportunidade especial do nosso açougue!", "Agora é TOP do Dia! Uma oferta selecionada para quem gosta de qualidade e economia!", "Olha a oportunidade! Chegou o TOP do Dia do açougue. Confira e aproveite!"], "topout": ["Esse foi o TOP do Dia. Aproveite a oportunidade e continue curtindo nossa programação!", "TOP do Dia apresentado! Garanta sua oferta e fique ligado nas próximas novidades!", "Aproveite o destaque de hoje enquanto está disponível. Nossa programação continua!", "Esse foi o nosso destaque especial. Boas compras e continue com a gente!"]}, "Supermercado": {"open": ["Atenção às ofertas! Preparamos oportunidades especiais para você economizar e encher o carrinho!", "Hora de economizar! Confira agora uma seleção de ofertas para deixar sua compra ainda melhor!", "Carrinho pronto? Vêm aí ofertas especiais em produtos para o seu dia a dia!", "Fique ligado! Selecionamos boas oportunidades para você comprar mais e aproveitar melhor seu orçamento!"], "close": ["Essas foram nossas ofertas. Aproveite, economize e continue curtindo sua compra!", "Ofertas anunciadas! Garanta seus produtos e fique ligado nas próximas oportunidades!", "Aproveite as condições especiais e faça uma ótima compra. Nossa programação continua!", "Obrigado pela atenção. Boas compras e continue com a gente para mais ofertas!"], "topin": ["Atenção! Chegou o TOP do Dia: uma oferta especial para fazer valer ainda mais sua compra!", "É hora do destaque! Confira agora o TOP do Dia do supermercado!", "Oferta em destaque chegando! Este é o TOP do Dia, selecionado especialmente para você!", "Prepare o carrinho! Vem aí o TOP do Dia com uma oportunidade que merece sua atenção!"], "topout": ["Esse foi o TOP do Dia. Aproveite a oportunidade e continue com a gente!", "Destaque apresentado! Garanta sua oferta e siga aproveitando sua compra!", "O TOP do Dia passou por aqui. Aproveite enquanto está disponível e boas compras!", "Essa foi nossa oferta em destaque. Continue ligado na programação e nas próximas oportunidades!"]}, "Farmácia": {"open": ["Fique atento! Selecionamos ofertas especiais para cuidar de você e da sua família com mais economia!", "Cuidado e economia combinam. Confira agora as ofertas selecionadas da farmácia!", "Tem oportunidade especial chegando! Aproveite nossas ofertas em itens para seu cuidado e bem-estar!", "Hora das ofertas! Confira condições especiais em produtos para sua rotina de cuidados!"], "close": ["Essas foram nossas ofertas. Aproveite e continue cuidando de você e da sua família!", "Ofertas apresentadas. Faça suas escolhas e continue acompanhando nossa programação!", "Obrigado pela atenção. Aproveite as oportunidades e conte com praticidade no seu dia a dia!", "Aproveite as condições especiais e fique ligado nas próximas ofertas da farmácia!"], "topin": ["Atenção! Chegou o TOP do Dia da farmácia: uma oportunidade especial selecionada para você!", "É hora do destaque! Confira agora uma condição especial no TOP do Dia!", "TOP do Dia no ar! Uma oferta especial para cuidar bem e economizar!", "Fique ligado! Vem aí o destaque do dia com uma oportunidade que merece sua atenção!"], "topout": ["Esse foi o TOP do Dia. Aproveite a condição especial e continue acompanhando nossa programação!", "Destaque apresentado! Aproveite a oportunidade e continue com a gente!", "O TOP do Dia fica por aqui. Garanta sua oferta enquanto estiver disponível!", "Essa foi nossa oferta em destaque. Continue ligado nas próximas oportunidades!"]}, "Padaria": {"open": ["Tem coisa boa chegando! Confira agora ofertas especiais, fresquinhas e cheias de sabor!", "Sinta o clima de padaria! Vêm aí ofertas deliciosas para deixar seu momento ainda melhor!", "Acabou de sair uma seleção de ofertas especiais. Fique ligado e aproveite!", "Hora de abrir o apetite! Confira as ofertas que preparamos para você!"], "close": ["Essas foram nossas ofertas. Escolha seus favoritos, aproveite e continue com a gente!", "Ofertas servidas! Aproveite cada oportunidade e continue curtindo nossa programação!", "Obrigado pela atenção. Boas compras e muito sabor para o seu dia!", "Aproveite as delícias em oferta e fique ligado nas próximas novidades da padaria!"], "topin": ["Atenção! Saiu quentinho o TOP do Dia: uma oferta especial que você não vai querer perder!", "Chegou o destaque mais gostoso do dia! Confira agora o nosso TOP do Dia!", "TOP do Dia no ar! Uma oportunidade especial, fresquinha e cheia de sabor!", "Prepare o apetite! Vem aí a oferta em destaque da nossa padaria!"], "topout": ["Esse foi o TOP do Dia. Aproveite essa delícia e continue com a gente!", "Destaque servido! Garanta sua oferta e siga curtindo nossa programação!", "O TOP do Dia passou por aqui. Aproveite enquanto está fresquinho!", "Essa foi nossa oferta especial. Bom apetite e continue ligado!"]}, "Hortifruti": {"open": ["Frescor e economia chegando! Confira agora as ofertas selecionadas do nosso hortifruti!", "Mais cor e sabor para sua compra! Fique ligado nas ofertas fresquinhas de hoje!", "Hora de escolher bem! Vêm aí ofertas especiais em frutas, verduras e muito mais!", "Do frescor para sua cesta: confira agora oportunidades especiais do hortifruti!"], "close": ["Essas foram nossas ofertas. Aproveite para levar mais cor, sabor e frescor para casa!", "Ofertas apresentadas! Faça suas escolhas e continue curtindo nossa programação!", "Aproveite as oportunidades fresquinhas de hoje e tenha uma excelente compra!", "Obrigado pela atenção. Boas compras e fique ligado nas próximas ofertas!"], "topin": ["Atenção! Chegou o TOP do Dia: uma oportunidade fresquinha e especial para você aproveitar!", "É hora do destaque mais fresco do dia! Confira agora o nosso TOP do Dia!", "TOP do Dia no ar! Uma oferta selecionada para colocar mais economia na sua cesta!", "Fique ligado! Vem aí uma oportunidade especial do nosso hortifruti!"], "topout": ["Esse foi o TOP do Dia. Aproveite enquanto está fresquinho e continue nossa programação!", "Destaque apresentado! Garanta sua oferta e continue com a gente!", "O TOP do Dia passou por aqui. Aproveite a oportunidade e boas compras!", "Essa foi nossa oferta especial. Mais frescor para você e nossa programação continua!"]}, "Pet Shop": {"open": ["Atenção, apaixonados por pets! Vêm aí ofertas especiais para cuidar ainda melhor do seu companheiro!", "Seu pet merece carinho e boas escolhas. Confira agora nossas ofertas especiais!", "Hora de cuidar de quem faz parte da família! Fique ligado nas ofertas do pet shop!", "Tem oportunidade boa para o seu melhor amigo! Confira nossa seleção de ofertas!"], "close": ["Essas foram nossas ofertas. Aproveite para cuidar e mimar ainda mais o seu pet!", "Ofertas apresentadas! Faça seu pet feliz e continue curtindo nossa programação!", "Obrigado pela atenção. Boas compras para você e muito carinho para o seu companheiro!", "Aproveite as oportunidades e fique ligado nas próximas novidades do pet shop!"], "topin": ["Atenção! Chegou o TOP do Dia: uma oferta especial para quem cuida do pet com carinho!", "É hora do destaque pet! Confira agora uma oportunidade especial no TOP do Dia!", "TOP do Dia no ar! Uma oferta selecionada para o seu companheiro e para o seu bolso!", "Seu pet vai gostar dessa! Vem aí a oferta em destaque do dia!"], "topout": ["Esse foi o TOP do Dia. Aproveite a oportunidade e continue com a gente!", "Destaque pet apresentado! Garanta sua oferta e siga curtindo nossa programação!", "O TOP do Dia passou por aqui. Aproveite e faça seu pet feliz!", "Essa foi nossa oferta especial. Continue ligado nas próximas novidades!"]}, "Pizzaria": {"open": ["Prepare o apetite! Vêm aí ofertas especiais para deixar seu momento ainda mais saboroso!", "Atenção, apaixonados por pizza! Confira agora ofertas de dar água na boca!", "O sabor está no ar! Fique ligado nas ofertas especiais da pizzaria!", "Hora de escolher sua favorita! Vêm aí oportunidades deliciosas para você aproveitar!"], "close": ["Essas foram nossas ofertas. Escolha sua favorita, aproveite e bom apetite!", "Ofertas apresentadas! Agora é só escolher, saborear e continuar com a gente!", "Obrigado pela atenção. Aproveite as oportunidades e tenha um momento delicioso!", "Aproveite nossas ofertas e fique ligado nas próximas novidades da pizzaria!"], "topin": ["Atenção! Chegou o TOP do Dia: uma oferta especial de dar água na boca!", "É hora do destaque mais saboroso do dia! Confira agora o TOP do Dia!", "TOP do Dia no ar! Uma oportunidade especial para quem ama uma boa pizza!", "Prepare o apetite! Vem aí a oferta em destaque da nossa pizzaria!"], "topout": ["Esse foi o TOP do Dia. Aproveite a oportunidade e continue curtindo nossa programação!", "Destaque servido! Garanta sua oferta e bom apetite!", "O TOP do Dia passou por aqui. Aproveite enquanto está disponível!", "Essa foi nossa oferta especial. Continue com a gente e aproveite cada sabor!"]}, "Lanchonete": {"open": ["Bateu a fome? Então fique ligado nas ofertas especiais que preparamos para você!", "Hora do lanche! Confira agora oportunidades saborosas para aproveitar!", "Tem sabor e economia chegando! Fique atento às ofertas da lanchonete!", "Prepare o apetite: selecionamos ofertas especiais para deixar seu lanche ainda melhor!"], "close": ["Essas foram nossas ofertas. Escolha seu lanche, aproveite e continue com a gente!", "Ofertas apresentadas! Agora é só escolher seu favorito e saborear!", "Obrigado pela atenção. Aproveite as oportunidades e bom apetite!", "Aproveite nossas ofertas e fique ligado nas próximas novidades da lanchonete!"], "topin": ["Atenção! Chegou o TOP do Dia: uma oferta especial para matar a fome com muito sabor!", "É hora do destaque! Confira agora o TOP do Dia da lanchonete!", "TOP do Dia no ar! Uma oportunidade saborosa que merece sua atenção!", "Bateu a fome? Vem aí a oferta em destaque do dia!"], "topout": ["Esse foi o TOP do Dia. Aproveite e continue curtindo nossa programação!", "Destaque apresentado! Garanta sua oferta e bom apetite!", "O TOP do Dia passou por aqui. Aproveite a oportunidade e continue com a gente!", "Essa foi nossa oferta especial. Saboreie e fique ligado nas próximas!"]}, "Restaurante": {"open": ["Abra o apetite! Confira agora nossas ofertas e sugestões especiais para uma refeição ainda melhor!", "Hora de saborear boas oportunidades! Fique ligado nas ofertas do restaurante!", "Tem sabor especial chegando. Confira agora nossas sugestões e ofertas selecionadas!", "Sua refeição merece um destaque. Conheça agora as oportunidades que preparamos para você!"], "close": ["Essas foram nossas ofertas. Aproveite, saboreie e tenha uma excelente refeição!", "Ofertas apresentadas! Escolha sua opção favorita e bom apetite!", "Obrigado pela atenção. Aproveite nossas sugestões e tenha um ótimo momento à mesa!", "Aproveite as oportunidades e continue acompanhando nossa programação!"], "topin": ["Atenção! Chegou o TOP do Dia: uma escolha especial para deixar sua refeição ainda mais gostosa!", "É hora do destaque do restaurante! Confira agora o nosso TOP do Dia!", "TOP do Dia no ar! Uma oportunidade especial para quem aprecia sabor e qualidade!", "Prepare o apetite! Vem aí a sugestão em destaque de hoje!"], "topout": ["Esse foi o TOP do Dia. Aproveite a oportunidade e bom apetite!", "Destaque apresentado! Saboreie essa oportunidade e continue com a gente!", "O TOP do Dia passou por aqui. Aproveite e tenha uma excelente refeição!", "Essa foi nossa sugestão especial. Bom apetite e continue acompanhando nossa programação!"]}, "Hotel / Pousada": {"open": ["Seu conforto merece atenção especial. Confira agora opções e condições selecionadas para sua estadia!", "Torne sua experiência ainda melhor. Conheça agora nossas oportunidades e serviços em destaque!", "Bem-estar e hospitalidade também combinam com boas oportunidades. Confira nossas condições especiais!", "Aproveite cada momento da sua estadia. Vêm aí opções e serviços selecionados para você!"], "close": ["Essas foram nossas opções especiais. Aproveite e tenha uma experiência ainda mais agradável!", "Obrigado pela atenção. Desejamos conforto, tranquilidade e excelentes momentos durante sua estadia!", "Condições apresentadas. Aproveite sua estadia e continue acompanhando nossa programação!", "Esperamos que aproveite cada momento. Fique ligado nas próximas novidades e serviços!"], "topin": ["Atenção! Chegou o TOP do Dia: uma condição especial para tornar sua estadia ainda melhor!", "É hora do destaque! Confira uma oportunidade especial preparada para nossos hóspedes!", "TOP do Dia no ar! Uma experiência ou condição especial merece sua atenção agora!", "Seu momento merece um destaque. Conheça agora o TOP do Dia do hotel!"], "topout": ["Esse foi o TOP do Dia. Aproveite a oportunidade e desfrute cada momento da sua estadia!", "Destaque apresentado. Aproveite a condição especial e tenha uma excelente experiência!", "O TOP do Dia fica por aqui. Continue aproveitando sua estadia com conforto e tranquilidade!", "Essa foi nossa oportunidade especial. Obrigado pela atenção e aproveite sua estadia!"]}, "Roupas": {"open": ["Seu próximo look pode estar aqui! Confira agora ofertas e novidades selecionadas para você!", "Estilo e boas oportunidades chegando! Fique ligado nas ofertas da loja!", "Hora de renovar o visual! Confira peças e condições especiais selecionadas para você!", "Moda, estilo e economia no ar. Conheça agora nossas ofertas especiais!"], "close": ["Essas foram nossas ofertas. Aproveite para renovar o visual e continue com a gente!", "Ofertas apresentadas! Escolha seu estilo, aproveite e continue curtindo nossa programação!", "Obrigado pela atenção. Boas compras e aproveite para encontrar seu próximo look!", "Aproveite as oportunidades e fique ligado nas próximas novidades da loja!"], "topin": ["Atenção! Chegou o TOP do Dia: uma oportunidade especial para renovar seu estilo!", "É hora do destaque fashion! Confira agora o nosso TOP do Dia!", "TOP do Dia no ar! Uma peça ou condição especial selecionada para você!", "Seu look ganhou destaque! Vem aí a oferta TOP do Dia!"], "topout": ["Esse foi o TOP do Dia. Aproveite a oportunidade e continue com a gente!", "Destaque apresentado! Garanta seu estilo e siga curtindo nossa programação!", "O TOP do Dia passou por aqui. Aproveite enquanto está disponível!", "Essa foi nossa oferta especial. Boas compras e continue ligado nas novidades!"]}, "Calçados": {"open": ["Estilo e conforto vêm aí! Confira agora as ofertas especiais selecionadas para você!", "Seu próximo passo pode começar com uma boa oferta. Confira nossas oportunidades!", "Hora de encontrar o par ideal! Fique ligado nas ofertas da loja!", "Conforto, estilo e economia no mesmo passo. Conheça agora nossas ofertas especiais!"], "close": ["Essas foram nossas ofertas. Escolha seu par favorito e continue curtindo nossa programação!", "Ofertas apresentadas! Aproveite para caminhar com mais estilo e economia!", "Obrigado pela atenção. Boas compras e encontre o calçado ideal para você!", "Aproveite as oportunidades e fique ligado nas próximas novidades da loja!"], "topin": ["Atenção! Chegou o TOP do Dia: uma oportunidade especial para você sair de calçado novo!", "É hora do destaque! Confira agora o TOP do Dia da nossa loja!", "TOP do Dia no ar! Um par especial com uma oportunidade que merece atenção!", "Dê um passo em direção à oferta do dia. Vem aí o nosso TOP!"], "topout": ["Esse foi o TOP do Dia. Aproveite e siga com a gente!", "Destaque apresentado! Garanta sua oportunidade e continue nossa programação!", "O TOP do Dia passou por aqui. Aproveite enquanto está disponível!", "Essa foi nossa oferta especial. Continue caminhando com estilo e boas oportunidades!"]}, "Material de Construção": {"open": ["Vai construir ou reformar? Fique atento às ofertas especiais que preparamos para sua obra!", "Sua obra pode render mais! Confira agora materiais e condições especiais!", "Construção e economia começam com boas escolhas. Fique ligado nas nossas ofertas!", "Do alicerce ao acabamento, vêm aí oportunidades especiais para sua construção ou reforma!"], "close": ["Essas foram nossas ofertas. Aproveite para economizar na obra e continue com a gente!", "Ofertas apresentadas! Faça boas escolhas e deixe sua obra avançar com economia!", "Obrigado pela atenção. Aproveite as condições especiais e mãos à obra!", "Aproveite as oportunidades e fique ligado nas próximas ofertas para sua construção!"], "topin": ["Atenção! Chegou o TOP do Dia: uma oferta especial para sua construção ou reforma!", "É hora do destaque da obra! Confira agora o nosso TOP do Dia!", "TOP do Dia no ar! Uma oportunidade especial para fazer sua obra render mais!", "Construtor e reformador, atenção! Vem aí a oferta em destaque de hoje!"], "topout": ["Esse foi o TOP do Dia. Aproveite a oportunidade e faça sua obra render mais!", "Destaque apresentado! Garanta sua oferta e continue com a gente!", "O TOP do Dia passou por aqui. Aproveite enquanto a condição estiver disponível!", "Essa foi nossa oferta especial. Boa obra e continue ligado nas próximas oportunidades!"]}, "Autopeças": {"open": ["Seu carro merece atenção! Confira agora ofertas especiais em peças e acessórios!", "Hora de cuidar do seu veículo e do seu bolso. Fique ligado nas ofertas da autopeças!", "Desempenho, segurança e economia começam com boas peças. Confira nossas oportunidades!", "Motorista, atenção! Vêm aí ofertas selecionadas para manter seu veículo em dia!"], "close": ["Essas foram nossas ofertas. Aproveite, cuide do seu veículo e continue com a gente!", "Ofertas apresentadas! Faça boas escolhas para seu carro e siga tranquilo!", "Obrigado pela atenção. Aproveite as oportunidades e mantenha seu veículo sempre em dia!", "Aproveite nossas ofertas e fique ligado nas próximas novidades da autopeças!"], "topin": ["Atenção! Chegou o TOP do Dia: uma oferta especial para cuidar do seu carro e do seu bolso!", "É hora do destaque automotivo! Confira agora o nosso TOP do Dia!", "TOP do Dia no ar! Uma peça ou condição especial que merece sua atenção!", "Motorista, fique ligado! Vem aí a oferta em destaque de hoje!"], "topout": ["Esse foi o TOP do Dia. Aproveite a oportunidade e siga tranquilo!", "Destaque apresentado! Garanta sua oferta e continue com a gente!", "O TOP do Dia passou por aqui. Aproveite e mantenha seu veículo em dia!", "Essa foi nossa oferta especial. Boa compra e continue ligado nas próximas oportunidades!"]}, "Oficina / Auto Center": {"open": ["Hora de cuidar do seu veículo! Confira agora condições especiais em serviços para seu carro!", "Segurança e desempenho começam com manutenção em dia. Conheça nossas condições especiais!", "Seu carro pede cuidado? Fique ligado nos serviços e oportunidades do auto center!", "Motorista, atenção! Vêm aí condições especiais para deixar seu veículo pronto para rodar!"], "close": ["Essas foram nossas condições especiais. Aproveite e mantenha seu veículo sempre em dia!", "Serviços apresentados! Cuide do seu carro e siga com mais tranquilidade!", "Obrigado pela atenção. Aproveite as oportunidades e boa viagem!", "Aproveite nossas condições e fique ligado nas próximas novidades do auto center!"], "topin": ["Atenção! Chegou o TOP do Dia: uma condição especial para deixar seu carro em dia!", "É hora do destaque do auto center! Confira agora o nosso TOP do Dia!", "TOP do Dia no ar! Um serviço especial para cuidar do seu veículo e do seu bolso!", "Motorista, fique ligado! Vem aí a condição em destaque de hoje!"], "topout": ["Esse foi o TOP do Dia. Aproveite a oportunidade e boa viagem!", "Destaque apresentado! Cuide do seu veículo e continue com a gente!", "O TOP do Dia passou por aqui. Aproveite a condição e rode tranquilo!", "Essa foi nossa condição especial. Continue ligado nas próximas oportunidades!"]}, "Posto / Conveniência": {"open": ["Enquanto você abastece, aproveite! Confira agora ofertas e oportunidades especiais para sua parada!", "Sua parada pode render mais. Fique ligado nas ofertas da conveniência!", "Abasteceu? Então aproveite também nossas oportunidades especiais para seguir viagem!", "Uma pausa rápida, boas ofertas e mais praticidade. Confira nossos destaques!"], "close": ["Essas foram nossas ofertas. Aproveite sua parada e siga viagem com a gente!", "Ofertas apresentadas! Faça uma boa parada e tenha uma excelente viagem!", "Obrigado pela atenção. Aproveite as oportunidades e siga com segurança!", "Aproveite nossas ofertas e fique ligado nas próximas novidades da conveniência!"], "topin": ["Atenção! Chegou o TOP do Dia: uma oportunidade especial para aproveitar agora!", "É hora do destaque da sua parada! Confira o nosso TOP do Dia!", "TOP do Dia no ar! Uma oferta especial para quem abastece e aproveita!", "Antes de seguir viagem, confira a oferta em destaque de hoje!"], "topout": ["Esse foi o TOP do Dia. Aproveite e tenha uma ótima viagem!", "Destaque apresentado! Garanta sua oferta e siga tranquilo!", "O TOP do Dia passou por aqui. Aproveite a oportunidade antes de pegar a estrada!", "Essa foi nossa oferta especial. Obrigado pela atenção e boa viagem!"]}, "Cosméticos / Perfumaria": {"open": ["Beleza, cuidado e boas oportunidades! Confira agora nossas ofertas especiais!", "Seu momento de cuidado merece destaque. Fique ligado nas ofertas de beleza e perfumaria!", "Realce seu estilo com boas escolhas. Conheça agora nossas oportunidades especiais!", "Perfumes, beleza e autocuidado entram em cena. Confira as ofertas selecionadas para você!"], "close": ["Essas foram nossas ofertas. Aproveite para se cuidar e continue curtindo nossa programação!", "Ofertas apresentadas! Escolha seus favoritos e valorize ainda mais seu estilo!", "Obrigado pela atenção. Aproveite as oportunidades e tenha um ótimo momento de cuidado!", "Aproveite nossas ofertas e fique ligado nas próximas novidades de beleza e perfumaria!"], "topin": ["Atenção! Chegou o TOP do Dia: uma oferta especial para realçar ainda mais sua beleza!", "É hora do destaque de beleza! Confira agora o nosso TOP do Dia!", "TOP do Dia no ar! Uma oportunidade especial em cuidado, beleza ou perfumaria!", "Seu momento de cuidado ganhou destaque. Vem aí a oferta TOP do Dia!"], "topout": ["Esse foi o TOP do Dia. Aproveite essa oportunidade e continue com a gente!", "Destaque apresentado! Garanta sua oferta e siga curtindo nossa programação!", "O TOP do Dia passou por aqui. Aproveite para cuidar de você!", "Essa foi nossa oferta especial. Continue ligado nas próximas novidades de beleza!"]}, "Ótica": {"open": ["Seu estilo merece um novo olhar! Confira agora ofertas e condições especiais da nossa ótica!", "Veja boas oportunidades de perto. Fique ligado nas ofertas selecionadas para você!", "Estilo, conforto visual e boas escolhas. Conheça agora nossos destaques!", "Hora de renovar o olhar! Confira armações, lentes e condições especiais!"], "close": ["Essas foram nossas ofertas. Aproveite para renovar seu visual e continue com a gente!", "Ofertas apresentadas! Escolha seu estilo e fique ligado nas próximas oportunidades!", "Obrigado pela atenção. Aproveite nossas condições e veja seu próximo visual com outros olhos!", "Aproveite as oportunidades e continue acompanhando nossa programação!"], "topin": ["Atenção! Chegou o TOP do Dia: uma condição especial que merece o seu olhar!", "É hora do destaque da ótica! Confira agora o nosso TOP do Dia!", "TOP do Dia no ar! Uma oportunidade especial para renovar seu visual!", "Olhe só essa oportunidade! Vem aí a oferta em destaque de hoje!"], "topout": ["Esse foi o TOP do Dia. Aproveite a oportunidade e continue nossa programação!", "Destaque apresentado! Garanta sua condição especial e continue com a gente!", "O TOP do Dia passou por aqui. Aproveite enquanto está disponível!", "Essa foi nossa oferta especial. Continue de olho nas próximas oportunidades!"]}, "Papelaria": {"open": ["Organização, estudo e criatividade com economia! Confira agora nossas ofertas especiais!", "Sua lista pode ficar completa gastando melhor. Fique ligado nas ofertas da papelaria!", "Hora de colocar as ideias no papel! Confira produtos e oportunidades selecionadas para você!", "Estudo, trabalho e criatividade entram em cena. Conheça agora nossas ofertas!"], "close": ["Essas foram nossas ofertas. Aproveite para completar sua lista e continue com a gente!", "Ofertas apresentadas! Faça boas escolhas e deixe tudo pronto para estudar, criar ou trabalhar!", "Obrigado pela atenção. Aproveite as oportunidades e boas compras!", "Aproveite nossas ofertas e fique ligado nas próximas novidades da papelaria!"], "topin": ["Atenção! Chegou o TOP do Dia: uma oferta especial para sua lista ficar ainda melhor!", "É hora do destaque da papelaria! Confira agora o nosso TOP do Dia!", "TOP do Dia no ar! Uma oportunidade especial para estudar, trabalhar ou criar!", "Anote essa! Vem aí a oferta em destaque de hoje!"], "topout": ["Esse foi o TOP do Dia. Aproveite a oportunidade e continue nossa programação!", "Destaque apresentado! Garanta sua oferta e continue com a gente!", "O TOP do Dia passou por aqui. Aproveite e complete sua lista!", "Essa foi nossa oferta especial. Continue ligado nas próximas oportunidades!"]}, "Móveis / Eletro": {"open": ["Sua casa pode ficar ainda melhor! Confira agora ofertas especiais em móveis e eletros!", "Conforto, praticidade e boas oportunidades para o seu lar. Fique ligado nas ofertas!", "Hora de renovar a casa! Conheça agora móveis, eletros e condições especiais!", "Seu lar merece novidades. Confira uma seleção de ofertas preparada para você!"], "close": ["Essas foram nossas ofertas. Aproveite para renovar sua casa e continue com a gente!", "Ofertas apresentadas! Escolha seus favoritos e deixe seu lar ainda melhor!", "Obrigado pela atenção. Aproveite as oportunidades e boas compras para sua casa!", "Aproveite nossas condições e fique ligado nas próximas novidades!"], "topin": ["Atenção! Chegou o TOP do Dia: uma oportunidade especial para transformar sua casa!", "É hora do destaque para o seu lar! Confira agora o nosso TOP do Dia!", "TOP do Dia no ar! Um móvel ou eletro em condição especial merece sua atenção!", "Sua casa ganhou um destaque. Vem aí a oferta TOP do Dia!"], "topout": ["Esse foi o TOP do Dia. Aproveite a oportunidade e continue curtindo nossa programação!", "Destaque apresentado! Garanta sua oferta e deixe sua casa ainda melhor!", "O TOP do Dia passou por aqui. Aproveite enquanto a condição estiver disponível!", "Essa foi nossa oferta especial. Continue ligado nas próximas oportunidades para o seu lar!"]}, "Agropecuária / Rações": {"open": ["Quem cuida bem do campo e dos animais aproveita boas oportunidades. Confira nossas ofertas especiais!", "Campo forte começa com boas escolhas. Fique ligado nas ofertas da agropecuária!", "Para a criação, a propriedade e o dia a dia rural: vêm aí oportunidades selecionadas!", "Produtor e criador, atenção! Confira agora produtos e condições especiais para você!"], "close": ["Essas foram nossas ofertas. Aproveite, cuide bem do que é seu e continue com a gente!", "Ofertas apresentadas! Boas compras e muito resultado no campo e na criação!", "Obrigado pela atenção. Aproveite as oportunidades e continue acompanhando nossa programação!", "Aproveite nossas condições e fique ligado nas próximas novidades da agropecuária!"], "topin": ["Atenção! Chegou o TOP do Dia: uma oferta especial para o campo, os animais e o seu bolso!", "É hora do destaque rural! Confira agora o nosso TOP do Dia!", "TOP do Dia no ar! Uma oportunidade selecionada para quem vive e trabalha no campo!", "Produtor e criador, fique ligado! Vem aí a oferta em destaque de hoje!"], "topout": ["Esse foi o TOP do Dia. Aproveite a oportunidade e continue nossa programação!", "Destaque apresentado! Garanta sua oferta e siga cuidando bem do que é seu!", "O TOP do Dia passou por aqui. Aproveite enquanto está disponível!", "Essa foi nossa oferta especial. Continue ligado nas próximas oportunidades do campo!"]}, "Distribuidora de Bebidas": {"open": ["Vai gelar? Então fique ligado! Confira agora ofertas especiais para abastecer sua casa, festa ou evento!", "Bebida gelada e boa oportunidade combinam. Conheça agora nossas ofertas!", "Hora de abastecer! Fique ligado nas condições especiais da distribuidora!", "Sua festa, encontro ou fim de semana merece boas escolhas. Confira nossas ofertas!"], "close": ["Essas foram nossas ofertas. Aproveite, garanta suas bebidas e continue com a gente!", "Ofertas apresentadas! Abasteça com praticidade e fique ligado nas próximas oportunidades!", "Obrigado pela atenção. Aproveite nossas condições e boas compras!", "Aproveite as ofertas e continue acompanhando nossa programação!"], "topin": ["Atenção! Chegou o TOP do Dia: uma oferta especial para você aproveitar bem gelada!", "É hora do destaque da distribuidora! Confira agora o nosso TOP do Dia!", "TOP do Dia no ar! Uma oportunidade especial para abastecer e economizar!", "Prepare o gelo! Vem aí a oferta em destaque de hoje!"], "topout": ["Esse foi o TOP do Dia. Aproveite a oportunidade e continue curtindo nossa programação!", "Destaque apresentado! Garanta sua oferta e continue com a gente!", "O TOP do Dia passou por aqui. Aproveite enquanto estiver disponível!", "Essa foi nossa oferta especial. Boas compras e continue ligado nas próximas!"]}, "Utilidades / Variedades": {"open": ["Tem novidade e economia chegando! Confira agora ofertas especiais para facilitar o seu dia a dia!", "De tudo um pouco e boas oportunidades para você. Fique ligado nas nossas ofertas!", "Praticidade e economia entram em cena. Conheça agora produtos selecionados em oferta!", "Sempre tem algo útil esperando por você. Confira nossos destaques e oportunidades!"], "close": ["Essas foram nossas ofertas. Aproveite para encontrar o que precisa e continue com a gente!", "Ofertas apresentadas! Boas compras e fique ligado nas próximas novidades!", "Obrigado pela atenção. Aproveite as oportunidades para facilitar seu dia a dia!", "Aproveite nossas ofertas e continue acompanhando nossa programação!"], "topin": ["Atenção! Chegou o TOP do Dia: uma oportunidade especial entre nossas variedades!", "É hora do destaque! Confira agora o nosso TOP do Dia!", "TOP do Dia no ar! Um produto útil com uma condição que merece sua atenção!", "Olha a oportunidade! Vem aí a oferta em destaque de hoje!"], "topout": ["Esse foi o TOP do Dia. Aproveite a oportunidade e continue nossa programação!", "Destaque apresentado! Garanta sua oferta e continue com a gente!", "O TOP do Dia passou por aqui. Aproveite enquanto está disponível!", "Essa foi nossa oferta especial. Continue ligado nas próximas novidades!"]}};
+</script>
+<script>
+(function(){
+ const CATS=[
+  ['offerOpen','Vinheta de Entrada','male','👨'],
+  ['offerClose','Vinheta de Saída','female','👩'],
+  ['topOpen','🔥 TOP — entrada','male','👨'],
+  ['topClose','🔥 TOP — saída','female','👩']
+ ];
+ const KEY='capivara_vignettes_v8';
+ let currentRamo='';
+ const load=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){return {}}};
+ const save=o=>localStorage.setItem(KEY,JSON.stringify(o));
+ const esc=v=>String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+ function ensure(r){
+   const all=applyAlternatingVoicesV162(load()); all[r]=all[r]||{};
+   CATS.forEach((c,i)=>{
+     if(!Array.isArray(all[r][c[0]])){
+       const map={offerOpen:'open',offerClose:'close',topOpen:'topin',topClose:'topout'};
+       const phrases=(((window.DEFAULT_VIGNETTES_V8||{})[r]||{})[map[c[0]]]||[]);
+       all[r][c[0]]=phrases.map(text=>({text:text,voice:c[2],audioName:''}));
+     }
+   }); save(all); return all;
+ }
+ function applyAlternatingVoicesV162(all){
+  try{Object.values(all||{}).forEach(arr=>Array.isArray(arr)&&arr.forEach((v,i)=>v.voice=(i%2===0?'male':'female')))}catch(e){}
+  return all;
+}
+function render(){
+   if(!currentRamo)return;
+   const all=ensure(currentRamo), d=all[currentRamo], host=document.getElementById('ramoVignettesV7');
+   document.getElementById('ramoAudioHeading').textContent='🎧 '+currentRamo.toUpperCase()+' — VINHETAS';
+   host.innerHTML=CATS.map(c=>{
+     const arr=d[c[0]], nextVoice=arr.length%2===0?'male':'female';
+     const theme=id=>id==='offerOpen'?'entry':id==='offerClose'?'exit':id==='topOpen'?'top-entry':'top-exit';
+     return `<section class="vig-section vig-simple-v28" data-vig-theme="${theme(c[0])}">
+       <div class="vig-head">
+        <div class="vig-head-left"><b>${c[1]}</b><span class="vig-count">${arr.length} ${arr.length===1?'vinheta':'vinhetas'} salvas</span></div>
+       </div>
+       <div class="vig-compose-v28">
+        <textarea id="newVig_${c[0]}" placeholder="Digite a frase da próxima vinheta"></textarea>
+        <button class="btn vig-generate-v28" type="button" onclick="createVigV28('${c[0]}')">✨ GERAR ÁUDIO E SALVAR</button>
+       </div>
+       <div class="vig-saved-v28">
+       ${arr.length?arr.map((v,i)=>`
+        <div class="vig-saved-row-v28">
+          <span class="vig-num">Vinheta ${String(i+1).padStart(2,'0')}</span>
+          <span class="vig-voice-v28">${v.voice==='female'?'👩 Mulher':'👨 Homem'}</span>
+          <span class="vig-text-v28">${esc(v.text)}</span>
+          <button class="btn secondary" type="button" onclick="listenVigV7('${c[0]}',${i})">▶ Ouvir</button>
+          <button class="vig-trash-v28" type="button" title="Excluir" onclick="deleteVigV7('${c[0]}',${i})">🗑️</button>
+        </div>`).join(''):`<div class="vig-empty">Nenhuma vinheta salva.</div>`}
+       </div>
+      </section>`;
+   }).join('');
+ }
+ window.createVigV28=async function(cat){
+   const ta=document.getElementById('newVig_'+cat), text=(ta?.value||'').trim();
+   if(!text)return alert('Digite a frase da vinheta.');
+   const all=ensure(currentRamo), c=CATS.find(x=>x[0]===cat), arr=all[currentRamo][cat];
+   // Regra geral: próxima voz é definida pela quantidade JÁ SALVA.
+   const voice=arr.length%2===0?'male':'female';
+   if(typeof window.generateElevenLabsAudio!=='function')return alert('Gerador ElevenLabs não encontrado.');
+   const btn=ta?.nextElementSibling;
+   try{
+     if(btn){btn.disabled=true;btn.textContent='GERANDO ÁUDIO...'}
+     const result=await window.generateElevenLabsAudio(text,voice,currentRamo,cat);
+     if(!(result instanceof Blob)||!result.size)throw new Error('ElevenLabs não retornou áudio.');
+     // Só adiciona à lista e, portanto, só avança Homem/Mulher DEPOIS do sucesso.
+     const key='vig|'+currentRamo+'|'+cat+'|'+Date.now();
+     await idbPut(key,result);
+     arr.push({text,voice,audioKey:key,audioName:'Vinheta '+String(arr.length+1).padStart(2,'0')+'.mp3'});
+     save(all);
+     render();
+   }catch(e){
+     const msg=String(e&&e.message||e);
+     try{navigator.clipboard.writeText(msg)}catch(_){}
+     alert(msg+'\n\nErro pronto para copiar.');
+   }finally{
+     if(btn){btn.disabled=false;btn.textContent='✨ GERAR ÁUDIO E SALVAR'}
+   }
+ };
+ window.addVigV7=function(cat){
+   const all=ensure(currentRamo), c=CATS.find(x=>x[0]===cat);
+   all[currentRamo][cat].push({text:'',voice:c[2],audioName:''}); save(all); render();
+   setTimeout(()=>{const inputs=document.querySelectorAll('.vig-section input[type=text]'); if(inputs.length) inputs[inputs.length-1].focus()},0);
+ };
+ window.editVigV7=function(cat,i,val){const all=ensure(currentRamo); all[currentRamo][cat][i].text=val; save(all)};
+ window.deleteVigV7=function(cat,i){
+   const all=ensure(currentRamo), v=all[currentRamo][cat][i];
+   if(!confirm('Excluir '+String(i+1).padStart(2,'0')+' desta categoria?'))return;
+   if(v&&v.audioKey) idbDelete(v.audioKey);
+   all[currentRamo][cat].splice(i,1); save(all); render();
+ };
+ function dbOpen(){
+   return new Promise((res,rej)=>{const q=indexedDB.open('CapivaraRadioAudio',1);q.onupgradeneeded=()=>q.result.createObjectStore('audios');q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)});
+ }
+ async function idbPut(k,b){const db=await dbOpen();return new Promise((res,rej)=>{const t=db.transaction('audios','readwrite');t.objectStore('audios').put(b,k);t.oncomplete=res;t.onerror=()=>rej(t.error)})}
+ async function idbGet(k){const db=await dbOpen();return new Promise((res,rej)=>{const q=db.transaction('audios').objectStore('audios').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}
+ async function idbDelete(k){const db=await dbOpen();db.transaction('audios','readwrite').objectStore('audios').delete(k)}
+ window.storeAudioV7=async function(input,cat,i){
+   const f=input.files&&input.files[0]; if(!f)return;
+   const all=ensure(currentRamo), key='vig|'+currentRamo+'|'+cat+'|'+Date.now();
+   await idbPut(key,f); const v=all[currentRamo][cat][i]; v.audioKey=key;v.audioName=f.name;save(all);render();
+ };
+ window.listenVigV7=async function(cat,i){
+   const all=ensure(currentRamo),v=all[currentRamo][cat][i];
+   if(!v.audioKey)return alert('Esta vinheta ainda não tem áudio. Gere ou selecione um arquivo de áudio.');
+   const blob=await idbGet(v.audioKey); if(!blob)return alert('Áudio não encontrado.');
+   const a=new Audio(URL.createObjectURL(blob));a.play();
+ };
+ window.generateVigV7=async function(cat,i){
+   const all=ensure(currentRamo),v=all[currentRamo][cat][i];
+   if(!v.text.trim())return alert('Digite a frase primeiro.');
+   if(typeof window.generateElevenLabsAudio==='function'){
+     try{
+       const result=await window.generateElevenLabsAudio(v.text,v.voice,currentRamo,cat);
+       if(result instanceof Blob){
+         const key='vig|'+currentRamo+'|'+cat+'|'+Date.now();await idbPut(key,result);
+         v.audioKey=key;v.audioName='Vinheta '+String(i+1).padStart(2,'0')+'.mp3';save(all);render();
+       }
+     }catch(e){
+       const msg=String(e&&e.message||e);try{navigator.clipboard.writeText(msg)}catch(_){}
+       alert(msg+'\n\nErro pronto para copiar.');
+     }
+   }else generateVinhetaAudioV16(this);
+ };
+ window.openRamo=function(r){
+   currentRamo=r;
+   document.getElementById('ramoTitle').textContent='📦 '+r+' — RAMO E PACOTE';
+   document.getElementById('ramoProducts').innerHTML=productsFor(r).map((p,i)=>`<div class="product">${i+1}. ${p}</div>`).join('');
+   render();
+   const old=JSON.parse(localStorage.getItem('capivara_ramo_packages_v6')||'{}')[r]||{};
+   document.getElementById('ramoPlaylist').value=old.playlist||'Playlist geral';
+   document.getElementById('ramoAdsPerBlock').value=old.adsPerBlock||({Leve:2,'Médio':3,'Frenético':5}[old.mode]||3);
+   document.getElementById('ramoModal').classList.add('show');
+ };
+ window.saveRamoPackage=function(){
+   const old=JSON.parse(localStorage.getItem('capivara_ramo_packages_v6')||'{}');old[currentRamo]=old[currentRamo]||{};
+   old[currentRamo].playlist=document.getElementById('ramoPlaylist').value;old[currentRamo].adsPerBlock=Math.max(1,parseInt(document.getElementById('ramoAdsPerBlock').value||'3',10));
+   localStorage.setItem('capivara_ramo_packages_v6',JSON.stringify(old));alert('Ramo e pacote salvos.');closeRamo();
+ };
+})();
+</script>
+
+<script>
+(function(){
+ const META='capivara_acervo_v9', PLS='capivara_playlists_v9', BGM='capivara_backgrounds_v9';
+ const jget=(k,d)=>{try{return JSON.parse(localStorage.getItem(k)||JSON.stringify(d))}catch(e){return d}};
+ const jset=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+ const esc9=x=>String(x||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+ const uid9=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+ let tab9='music', playing9=null, selected9=new Set();
+
+ function db9(){
+  return new Promise((ok,no)=>{
+   const r=indexedDB.open('CapivaraAcervoV9',1);
+   r.onupgradeneeded=()=>{let d=r.result;if(!d.objectStoreNames.contains('files'))d.createObjectStore('files')};
+   r.onsuccess=()=>ok(r.result); r.onerror=()=>no(r.error);
+  });
+ }
+ async function put9(id,blob){let d=await db9();return new Promise((ok,no)=>{let t=d.transaction('files','readwrite');t.objectStore('files').put(blob,id);t.oncomplete=ok;t.onerror=()=>no(t.error)})}
+ async function get9(id){let d=await db9();return new Promise((ok,no)=>{let r=d.transaction('files').objectStore('files').get(id);r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)})}
+ async function del9(id){let d=await db9();return new Promise((ok,no)=>{let t=d.transaction('files','readwrite');t.objectStore('files').delete(id);t.oncomplete=ok;t.onerror=()=>no(t.error)})}
+ function size9(n){if(n<1048576)return (n/1024).toFixed(0)+' KB';return (n/1048576).toFixed(1)+' MB'}
+
+ window.showAcTabV9=function(t){tab9=t;document.getElementById('acMusicV9').style.display=t==='music'?'block':'none';document.getElementById('acPlaylistsV9').style.display=t==='playlists'?'block':'none';document.getElementById('acBackgroundsV9').style.display=t==='backgrounds'?'block':'none';renderAcervoV9()}
+
+ const THEMES_V11=["Jazz & Lounge", "Sertanejo", "MPB & Brasilidades", "Flashback", "Dance & Pop", "Moderno / Hits", "Rock & Clássicos", "Instrumental & Ambiente", "Leve & Relax", "Popular & Animada"];
+ function initThemesV11(){
+  const sel=document.getElementById('uploadThemeV11'); if(sel&&!sel.options.length)sel.innerHTML=THEMES_V11.map(t=>`<option>${t}</option>`).join('');
+ }
+ window.addMusicV9=async function(files){
+  let meta=jget(META,[]), theme=document.getElementById('uploadThemeV11')?.value||THEMES_V11[0];
+  for(const f of [...files]){
+   const id=uid9(); await put9('music:'+id,f);
+   meta.push({id,name:f.name.replace(/\.[^.]+$/,''),fileName:f.name,size:f.size,added:new Date().toLocaleDateString('pt-BR'),theme});
+  }
+  jset(META,meta); document.getElementById('musicUploadV9').value=''; renderAcervoV9();
+ }
+ window.addBackgroundV9=async function(files){
+  let bg=jget(BGM,[]);
+  for(const f of [...files]){const id=uid9();await put9('bg:'+id,f);bg.push({id,name:f.name.replace(/\.[^.]+$/,''),fileName:f.name,size:f.size})}
+  jset(BGM,bg); renderAcervoV9();
+ }
+ window.playFileV9=async function(kind,id){
+  const blob=await get9(kind+':'+id); if(!blob)return alert('Arquivo não encontrado neste computador.');
+  if(playing9){playing9.pause();playing9=null}
+  const u=URL.createObjectURL(blob); playing9=new Audio(u); playing9.onended=()=>URL.revokeObjectURL(u); playing9.play();
+ }
+ window.toggleMusicV9=function(id,on){on?selected9.add(id):selected9.delete(id)}
+ window.selectAllMusicV9=function(){jget(META,[]).forEach(x=>selected9.add(x.id));renderAcervoV9()}
+ window.deleteSelectedMusicV9=async function(){
+  if(!selected9.size)return alert('Selecione pelo menos uma música.');
+  let pls=jget(PLS,[]), used=pls.filter(p=>p.musicIds.some(id=>selected9.has(id)));
+  if(used.length&&!confirm('Algumas músicas estão em playlists. Excluir mesmo assim?'))return;
+  for(const id of selected9)await del9('music:'+id);
+  jset(META,jget(META,[]).filter(x=>!selected9.has(x.id)));
+  pls.forEach(p=>p.musicIds=p.musicIds.filter(id=>!selected9.has(id)));jset(PLS,pls);selected9.clear();renderAcervoV9();
+ }
+ window.deleteMusicV9=async function(id){
+  selected9=new Set([id]); await deleteSelectedMusicV9();
+ }
+ window.deleteBgV9=async function(id){if(!confirm('Excluir este fundo de locução?'))return;await del9('bg:'+id);jset(BGM,jget(BGM,[]).filter(x=>x.id!==id));renderAcervoV9()}
+
+ window.newPlaylistV9=function(){
+  const name=prompt('Nome da nova playlist:','Nova Playlist'); if(!name||!name.trim())return;
+  const pls=jget(PLS,[]);pls.push({id:uid9(),name:name.trim(),destination:'Geral',ramo:'',client:'',musicIds:[],active:true});jset(PLS,pls);renderAcervoV9();editPlaylistV9(pls[pls.length-1].id);
+ }
+ window.editPlaylistV9=function(id){
+  let pls=jget(PLS,[]),p=pls.find(x=>x.id===id);if(!p)return;
+  const mus=jget(META,[]);
+  const dest=prompt('Destino: digite GERAL, RAMO ou CLIENTE',p.destination.toUpperCase());if(dest===null)return;
+  const d=dest.trim().toUpperCase();
+  if(d==='RAMO'){let r=prompt('Digite exatamente o ramo:\\n'+ramoNames.join(' | '),p.ramo||'Farmácia');if(!r)return;p.destination='Ramo';p.ramo=r;p.client=''}
+  else if(d==='CLIENTE'){let c=prompt('Digite o nome do cliente:',p.client||'');if(!c)return;p.destination='Cliente';p.client=c;p.ramo=''}
+  else {p.destination='Geral';p.ramo='';p.client=''}
+  const current=new Set(p.musicIds);
+  const names=mus.map((m,i)=>`${i+1}. ${current.has(m.id)?'✓ ':''}${m.name}`).join('\\n');
+  let choice=prompt('MÚSICAS DO ACERVO\\nDigite números separados por vírgula.\\nEx.: 1,2,5\\n\\n'+names,
+    mus.map((m,i)=>current.has(m.id)?i+1:null).filter(Boolean).join(','));
+  if(choice!==null){
+   p.musicIds=choice.split(',').map(x=>parseInt(x.trim(),10)-1).filter(i=>i>=0&&i<mus.length).map(i=>mus[i].id);
+  }
+  jset(PLS,pls);renderAcervoV9();
+ }
+ window.duplicatePlaylistV9=function(id){let pls=jget(PLS,[]),p=pls.find(x=>x.id===id);if(!p)return;pls.push({...p,id:uid9(),name:p.name+' — Cópia',active:false});jset(PLS,pls);renderAcervoV9()}
+ window.deletePlaylistV9=function(id){if(!confirm('Excluir esta playlist? As músicas continuarão no Acervo.'))return;jset(PLS,jget(PLS,[]).filter(x=>x.id!==id));renderAcervoV9()}
+ window.togglePlaylistV9=function(id){let pls=jget(PLS,[]),p=pls.find(x=>x.id===id);if(p)p.active=!p.active;jset(PLS,pls);renderAcervoV9()}
+ window.testPlaylistV9=async function(id){let p=jget(PLS,[]).find(x=>x.id===id);if(!p||!p.musicIds.length)return alert('Essa playlist ainda não tem músicas.');playFileV9('music',p.musicIds[0])}
+
+ window.renderAcervoV9=function(){
+  const mus=jget(META,[]),pls=jget(PLS,[]),bg=jget(BGM,[]);
+  const mc=document.getElementById('musicCountV9'); if(!mc)return;
+  mc.textContent=mus.length;document.getElementById('playlistCountV9').textContent=THEMES_V11.length;document.getElementById('bgCountV9').textContent=bg.length;
+  const q=(document.getElementById('musicSearchV9')?.value||'').toLowerCase();
+  const activeTheme=window.activeThemeV11||'TODOS';
+  const filtered=mus.filter(m=>m.name.toLowerCase().includes(q)&&(activeTheme==='TODOS'||(m.theme||THEMES_V11[0])===activeTheme));
+  const cards=document.getElementById('themeCardsV11');
+  if(cards)cards.innerHTML=['TODOS',...THEMES_V11].map(t=>{const n=t==='TODOS'?mus.length:mus.filter(m=>(m.theme||THEMES_V11[0])===t).length;return `<button class="theme-card-v11 ${activeTheme===t?'active':''}" onclick="window.activeThemeV11='${t.replace("'","&#39;")}';renderAcervoV9()"><b>${t==='TODOS'?'🎵 Todo o Acervo':t}</b><span>${n} música${n===1?'':'s'}</span></button>`}).join('');
+  document.getElementById('musicListV9').innerHTML=filtered.length?filtered.map(m=>{
+   const use=pls.filter(p=>p.musicIds.includes(m.id)).map(p=>p.name);
+   return `<div class="ac-row-v9"><input type="checkbox" ${selected9.has(m.id)?'checked':''} onchange="toggleMusicV9('${m.id}',this.checked)">
+    <div><div class="ac-name-v9">🎵 ${esc9(m.name)}</div><div class="ac-meta-v9">${size9(m.size)} • Tema: <b>${esc9(m.theme||THEMES_V11[0])}</b></div></div>
+    <div class="ac-actions-v9"><select class="theme-select-v11" onchange="changeMusicThemeV11('${m.id}',this.value)">${THEMES_V11.map(t=>`<option ${t===(m.theme||THEMES_V11[0])?'selected':''}>${t}</option>`).join('')}</select><button class="btn secondary" onclick="playFileV9('music','${m.id}')">▶ Ouvir</button><button class="btn danger" onclick="deleteMusicV9('${m.id}')">🗑</button></div></div>`
+  }).join(''):`<div class="ac-empty-v9">Nenhuma música no acervo.<br><b>Use “+ ADICIONAR MÚSICAS” para buscar no seu PC.</b></div>`;
+  document.getElementById('playlistListV9').innerHTML=pls.length?pls.map(p=>{
+   let dest=p.destination==='Ramo'?'🏪 '+p.ramo:p.destination==='Cliente'?'👤 '+p.client:'🌐 Geral';
+   return `<div class="pl-card-v9"><div class="pl-top-v9"><div><b style="font-size:17px">📻 ${esc9(p.name)}</b><div class="pl-tags-v9"><span class="badge">${esc9(dest)}</span><span class="badge">${p.musicIds.length} músicas</span><span class="badge ${p.active?'':'off'}">${p.active?'ATIVA':'PAUSADA'}</span></div></div>
+    <div class="ac-actions-v9"><button class="btn secondary" onclick="testPlaylistV9('${p.id}')">▶ Testar</button><button class="btn secondary" onclick="editPlaylistV9('${p.id}')">✏ Editar / Direcionar</button><button class="btn secondary" onclick="duplicatePlaylistV9('${p.id}')">⧉ Duplicar</button><button class="btn secondary" onclick="togglePlaylistV9('${p.id}')">${p.active?'⏸ Pausar':'▶ Ativar'}</button><button class="btn danger" onclick="deletePlaylistV9('${p.id}')">🗑 Excluir</button></div></div></div>`
+  }).join(''):`<div class="ac-empty-v9">Nenhuma playlist criada.<br><b>Clique em “+ CRIAR PLAYLIST”.</b></div>`;
+  document.getElementById('backgroundListV9').innerHTML=bg.length?bg.map(x=>`<div class="ac-row-v9"><span>🎙️</span><div><div class="ac-name-v9">${esc9(x.name)}</div><div class="ac-meta-v9">${size9(x.size)} • Fundo de locução</div></div><div class="ac-actions-v9"><button class="btn secondary" onclick="playFileV9('bg','${x.id}')">▶ Ouvir</button><button class="btn danger" onclick="deleteBgV9('${x.id}')">🗑 Excluir</button></div></div>`).join(''):`<div class="ac-empty-v9">Nenhum fundo de locução cadastrado.</div>`;
+ }
+ window.changeMusicThemeV11=function(id,theme){let mus=jget(META,[]),m=mus.find(x=>x.id===id);if(m){m.theme=theme;jset(META,mus);renderAcervoV9()}}
+ document.addEventListener('DOMContentLoaded',()=>{initThemesV11();renderAcervoV9()}); setTimeout(()=>{initThemesV11();renderAcervoV9()},100);
+})();
+</script>
+
+<div id="playlistModalV10" class="modal" style="display:none">
+ <div class="modalbox" style="max-width:820px">
+  <div class="modalhead"><div><h2 id="plTitleV10">📻 Criar Playlist</h2><div class="sub">Escolha as músicas do Acervo e onde esta playlist será usada.</div></div><button class="x" onclick="closePlaylistV10()">×</button></div>
+  <div class="formgrid">
+   <label>Nome da playlist<input id="plNameV10" placeholder="Ex.: Farmácia 1"></label>
+   <label>Destino<select id="plDestV10" onchange="destChangeV10()"><option value="Geral">🌐 Geral</option><option value="Ramo">🏪 Ramo</option><option value="Cliente">👤 Cliente específico</option></select></label>
+   <label id="plRamoWrapV10" style="display:none">Ramo<select id="plRamoV10"></select></label>
+   <label id="plClientWrapV10" style="display:none">Cliente<input id="plClientV10" placeholder="Nome do cliente"></label>
+  </div>
+  <div class="toolbar" style="margin-top:14px">
+   <input id="plSearchV10" placeholder="🔎 Buscar música..." oninput="renderPlaylistPickerV10()">
+   <button class="btn secondary" onclick="selectAllPickerV10(true)">☑ Selecionar todas</button>
+   <button class="btn secondary" onclick="selectAllPickerV10(false)">☐ Limpar</button>
+   <span class="badge" id="plSelectedCountV10">0 selecionadas</span>
+  </div>
+  <div id="plPickerV10" style="max-height:390px;overflow:auto;border:1px solid var(--line);border-radius:12px"></div>
+  <div class="toolbar" style="justify-content:flex-end;margin-top:14px">
+   <button class="btn secondary" onclick="closePlaylistV10()">Cancelar</button>
+   <button class="btn" onclick="savePlaylistV10()">💾 SALVAR PLAYLIST</button>
+  </div>
+ </div>
+</div>
+<style>
+#playlistModalV10{position:fixed;inset:0;background:#000a;z-index:99999;align-items:center;justify-content:center;padding:20px}
+#playlistModalV10 .modalbox{width:100%;max-height:92vh;overflow:auto;background:#0c1b13;border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 24px 80px #0008}
+#playlistModalV10 .modalhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+#playlistModalV10 .x{background:transparent;border:0;color:#fff;font-size:30px;cursor:pointer}
+#playlistModalV10 .formgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+#playlistModalV10 label{font-size:12px;color:var(--muted);font-weight:800}
+#playlistModalV10 label input,#playlistModalV10 label select{display:block;width:100%;margin-top:6px}
+.pick-v10{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:11px;border-bottom:1px solid var(--line);cursor:pointer}
+.pick-v10:last-child{border-bottom:0}.pick-v10:hover{background:#10251a}.pick-v10 input{width:19px;height:19px}
+@media(max-width:700px){#playlistModalV10 .formgrid{grid-template-columns:1fr}.pick-v10{grid-template-columns:30px 1fr}.pick-v10 button{grid-column:2}}
+</style>
+<script>
+let editPlV10=null, pickV10=new Set();
+
+function openPlaylistV10(id){
+ const pls=JSON.parse(localStorage.getItem('capivara_playlists_v9')||'[]');
+ const p=id?pls.find(x=>x.id===id):null;
+ editPlV10=id||null; pickV10=new Set(p?p.musicIds:[]);
+ document.getElementById('plTitleV10').textContent=p?'✏️ Editar Playlist':'📻 Criar Playlist';
+ document.getElementById('plNameV10').value=p?p.name:'';
+ document.getElementById('plDestV10').value=p?p.destination:'Geral';
+ document.getElementById('plClientV10').value=p?p.client||'':'';
+ const sel=document.getElementById('plRamoV10');
+ sel.innerHTML=(window.ramoNames||[]).map(r=>'<option>'+r+'</option>').join('');
+ if(p&&p.ramo)sel.value=p.ramo;
+ destChangeV10(); renderPlaylistPickerV10();
+ document.getElementById('playlistModalV10').style.display='flex';
+}
+function closePlaylistV10(){document.getElementById('playlistModalV10').style.display='none'}
+function destChangeV10(){
+ const d=document.getElementById('plDestV10').value;
+ document.getElementById('plRamoWrapV10').style.display=d==='Ramo'?'block':'none';
+ document.getElementById('plClientWrapV10').style.display=d==='Cliente'?'block':'none';
+}
+function renderPlaylistPickerV10(){
+ const mus=JSON.parse(localStorage.getItem('capivara_acervo_v9')||'[]');
+ const q=(document.getElementById('plSearchV10').value||'').toLowerCase();
+ const arr=mus.filter(m=>m.name.toLowerCase().includes(q));
+ document.getElementById('plPickerV10').innerHTML=arr.length?arr.map(m=>`<label class="pick-v10"><input type="checkbox" ${pickV10.has(m.id)?'checked':''} onchange="togglePickV10('${m.id}',this.checked)"><div><b>🎵 ${String(m.name).replace(/</g,'&lt;')}</b><div class="ac-meta-v9">${pickV10.has(m.id)?'Selecionada para esta playlist':'Clique para adicionar à playlist'}</div></div><button type="button" class="btn secondary" onclick="event.preventDefault();event.stopPropagation();playFileV9('music','${m.id}')">▶ Ouvir</button></label>`).join(''):'<div class="ac-empty-v9">Nenhuma música encontrada no Acervo.</div>';
+ document.getElementById('plSelectedCountV10').textContent=pickV10.size+' selecionada'+(pickV10.size===1?'':'s');
+}
+function togglePickV10(id,on){on?pickV10.add(id):pickV10.delete(id);renderPlaylistPickerV10()}
+function selectAllPickerV10(on){
+ const mus=JSON.parse(localStorage.getItem('capivara_acervo_v9')||'[]');
+ const q=(document.getElementById('plSearchV10').value||'').toLowerCase();
+ mus.filter(m=>m.name.toLowerCase().includes(q)).forEach(m=>on?pickV10.add(m.id):pickV10.delete(m.id));
+ renderPlaylistPickerV10();
+}
+function savePlaylistV10(){
+ const name=document.getElementById('plNameV10').value.trim();
+ if(!name)return alert('Digite um nome para a playlist.');
+ if(!pickV10.size)return alert('Marque pelo menos uma música.');
+ const d=document.getElementById('plDestV10').value;
+ const ramo=d==='Ramo'?document.getElementById('plRamoV10').value:'';
+ const client=d==='Cliente'?document.getElementById('plClientV10').value.trim():'';
+ if(d==='Cliente'&&!client)return alert('Informe o cliente.');
+ let pls=JSON.parse(localStorage.getItem('capivara_playlists_v9')||'[]');
+ if(editPlV10){
+   const p=pls.find(x=>x.id===editPlV10); if(!p)return;
+   Object.assign(p,{name,destination:d,ramo,client,musicIds:[...pickV10]});
+ } else {
+   pls.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,8),name,destination:d,ramo,client,musicIds:[...pickV10],active:true});
+ }
+ localStorage.setItem('capivara_playlists_v9',JSON.stringify(pls));
+ closePlaylistV10(); if(window.renderAcervoV9)renderAcervoV9();
+}
+window.newPlaylistV9=function(){openPlaylistV10(null)}
+window.editPlaylistV9=function(id){openPlaylistV10(id)}
+</script>
+
+<div id="newRamoModalV12" class="modal-v12">
+ <div class="modalbox-v12">
+  <button class="close-v12" onclick="closeNewRamoV12()">×</button>
+  <h2>＋ Novo Ramo de Atividade</h2>
+  <p>Digite o ramo. A Capivara prepara os agregados iniciais para você revisar.</p>
+  <label>Nome do ramo</label>
+  <input id="newRamoNameV12" placeholder="Ex.: Clínica Veterinária">
+  <label>15 produtos/serviços</label>
+  <textarea id="newRamoProductsV12" rows="8" placeholder="Um por linha"></textarea>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+   <button class="btn secondary" onclick="suggestRamoV12()">✨ SUGERIR AGREGADOS</button>
+   <button class="btn" onclick="saveNewRamoV12()">💾 SALVAR NOVO RAMO</button>
+  </div>
+  <small id="newRamoMsgV12"></small>
+ </div>
+</div>
+
+<script>
+const CUSTOM_RAMO_KEY_V12='capivara_custom_ramos_v12';
+function customRamosV12(){try{return JSON.parse(localStorage.getItem(CUSTOM_RAMO_KEY_V12)||'{}')}catch(e){return {}}}
+function mergeCustomRamosV12(){
+ const c=customRamosV12();
+ Object.entries(c).forEach(([k,v])=>{if(window.productCatalogs && !productCatalogs[k]) productCatalogs[k]=v.products||[]});
+}
+function openNewRamoV12(){document.getElementById('newRamoModalV12').classList.add('show');document.getElementById('newRamoNameV12').focus()}
+function closeNewRamoV12(){document.getElementById('newRamoModalV12').classList.remove('show')}
+const ramoSuggestionsV12={
+ 'clínica veterinária':['Consulta veterinária','Vacinação','Exames','Ultrassom','Raio-X','Cirurgia','Internação','Castração','Check-up','Odontologia veterinária','Microchipagem','Curativos','Atendimento emergencial','Farmácia veterinária','Retorno'],
+ 'barbearia':['Corte masculino','Barba','Corte infantil','Pezinho','Sobrancelha','Pigmentação','Hidratação','Relaxamento','Luzes','Platinado','Camuflagem de fios brancos','Barboterapia','Limpeza de pele','Pacote corte e barba','Agendamento'],
+ 'academia':['Musculação','Avaliação física','Treino personalizado','Personal trainer','Funcional','Spinning','Alongamento','Pilates','Dança','Aula experimental','Plano mensal','Plano trimestral','Plano semestral','Plano anual','Matrícula'],
+ 'salão de beleza':['Corte feminino','Escova','Hidratação','Coloração','Mechas','Progressiva','Penteado','Manicure','Pedicure','Design de sobrancelha','Maquiagem','Reconstrução capilar','Cauterização','Cronograma capilar','Pacote de beleza']
+};
+function norm12(x){return String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()}
+function bestKnownRamoV13(name){
+ const n=norm12(name);
+ const aliases={
+  'clinica veternaria':'clínica veterinária','clinica veterinaria':'clínica veterinária',
+  'veterinaria':'clínica veterinária','barberia':'barbearia','barbearia':'barbearia',
+  'academia':'academia','salao beleza':'salão de beleza','salao de beleza':'salão de beleza'
+ };
+ return aliases[n]||null;
+}
+function suggestRamoV12(){
+ const inp=document.getElementById('newRamoNameV12'), raw=inp.value.trim(), msg=document.getElementById('newRamoMsgV12');
+ if(!raw){msg.textContent='Digite primeiro o nome do ramo.';return}
+ const corrected=bestKnownRamoV13(raw);
+ if(corrected && norm12(corrected)!==norm12(raw)){inp.value=corrected;msg.textContent='✍️ Corrigi o nome para “'+corrected+'”. Revise antes de salvar.'}
+ const finalName=corrected||raw;
+ const exact=Object.entries(ramoSuggestionsV12).find(([k])=>norm12(k)===norm12(finalName));
+ if(exact){
+   document.getElementById('newRamoProductsV12').value=exact[1].join('\n');
+   msg.textContent=(corrected?'✍️ Nome ajustado. ':'')+'✨ 15 produtos/serviços sugeridos. Revise e salve.';
+   return;
+ }
+ // Se o ramo já existir entre os 23 padrões, usa o catálogo profissional existente.
+ const known=Object.keys(productCatalogs).find(k=>norm12(k)===norm12(finalName));
+ if(known){
+   inp.value=known;
+   document.getElementById('newRamoProductsV12').value=productCatalogs[known].slice(0,15).join('\n');
+   msg.textContent='✨ Ramo reconhecido. Carreguei os 15 produtos/serviços.';
+   return;
+ }
+ document.getElementById('newRamoProductsV12').value='';
+ msg.textContent='⚠️ Ramo não reconhecido automaticamente. Informe/revise os 15 produtos ou serviços antes de salvar. Na versão online, a IA fará essa interpretação.';
+}
+function saveNewRamoV12(){
+ const inp=document.getElementById('newRamoNameV12'), msg=document.getElementById('newRamoMsgV12');
+ let name=inp.value.trim();
+ const corrected=bestKnownRamoV13(name); if(corrected){name=corrected;inp.value=corrected}
+ const products=document.getElementById('newRamoProductsV12').value.split(/\n+/).map(x=>x.trim()).filter(Boolean).slice(0,15);
+ if(!name){msg.textContent='Informe o nome do ramo.';return}
+ if(products.length!==15){msg.textContent='⚠️ Para salvar, confirme exatamente 15 produtos/serviços.';return}
+ const existing=Object.keys(productCatalogs).find(k=>norm12(k)===norm12(name));
+ if(existing && !customRamosV12()[existing]){msg.textContent='Esse ramo já existe na Capivara.';return}
+ const c=customRamosV12();
+ const oldKey=Object.keys(c).find(k=>norm12(k)===norm12(name));
+ if(oldKey && oldKey!==name) delete c[oldKey];
+ c[name]={products,createdAt:new Date().toISOString()};
+ localStorage.setItem(CUSTOM_RAMO_KEY_V12,JSON.stringify(c));
+ productCatalogs[name]=products;
+ msg.textContent='✅ Ramo salvo com os 15 produtos. Abrindo na lista...';
+ setTimeout(()=>location.reload(),450);
+}
+
+
+// V16 — geração real das vinhetas com ElevenLabs.
+const capVinhetaAudioV16=new WeakMap();
+
+function capVinhetaVoiceV16(btn){
+  const row=btn.closest('.vinheta-row,.vinheta,.slot,.vitem')||btn.parentElement;
+  const siblings=row?.parentElement ? [...row.parentElement.children].filter(x=>x.querySelector && x.querySelector('input[type="text"],textarea')) : [];
+  const i=Math.max(0,siblings.indexOf(row));
+  return i%2===0?'male':'female';
+}
+function capVinhetaPhraseV16(btn){
+  const row=btn.closest('.vinheta-row,.vinheta,.slot,.vitem')||btn.parentElement;
+  const inp=row?.querySelector('input[type="text"],textarea') || btn.parentElement?.querySelector('input[type="text"],textarea');
+  return {row,inp,text:(inp?.value||'').trim()};
+}
+async function generateVinhetaAudioV16(btn){
+  const {row,inp,text}=capVinhetaPhraseV16(btn);
+  if(!text){alert('Digite a frase da vinheta.');return}
+  let cfg={};try{cfg=JSON.parse(localStorage.getItem('capivara_admin_settings')||'{}')}catch(e){}
+  const sex=capVinhetaVoiceV16(btn);
+  let jv={};try{jv=JSON.parse(localStorage.getItem('capivara_vinheta_voice_ids_v2')||'{}')}catch(e){}
+  const voiceId=sex==='female'
+    ?(jv.jingleFemaleVoice||jv.female||cfg.jingleFemaleVoice)
+    :(jv.jingleMaleVoice||jv.male||cfg.jingleMaleVoice);
+  if(!cfg.eleven||!voiceId){
+    alert('Configure a chave ElevenLabs e os IDs de voz em Configuração Geral.');
+    return;
+  }
+  const original=btn.textContent; btn.disabled=true; btn.textContent='⏳ GERANDO...';
+  try{
+    const r=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+encodeURIComponent(voiceId),{
+      method:'POST',
+      headers:{'xi-api-key':cfg.eleven,'Content-Type':'application/json','Accept':'audio/mpeg'},
+      body:JSON.stringify({text,model_id:'eleven_multilingual_v2'})
+    });
+    if(!r.ok){const t=await r.text();throw new Error('HTTP '+r.status+' — '+t)}
+    const blob=await r.blob(), url=URL.createObjectURL(blob);
+    const old=capVinhetaAudioV16.get(row); if(old?.url) URL.revokeObjectURL(old.url);
+    capVinhetaAudioV16.set(row,{url,blob,text,voiceId});
+    row.dataset.capAudioReady='1';
+    btn.textContent='✅ ÁUDIO PRONTO';
+    // Wire the existing Ouvir button in this same vinheta.
+    const listen=[...row.querySelectorAll('button')].find(b=>(b.textContent||'').toLowerCase().includes('ouvir'));
+    if(listen){
+      listen.disabled=false;
+      listen.onclick=()=>{const d=capVinhetaAudioV16.get(row);if(d?.url)new Audio(d.url).play()};
+    }
+  }catch(e){
+    btn.textContent=original;
+    const msg='ElevenLabs / vinheta: '+e.message;
+    try{navigator.clipboard.writeText(msg)}catch(_){}
+    alert(msg+'\\n\\nO erro foi preparado para copiar.');
+  }finally{btn.disabled=false}
+}
+
+// V16.1 — hook real esperado pelos dois módulos de vinhetas.
+window.generateElevenLabsAudio=async function(text,voice,ramo,cat){
+  let cfg={};try{cfg=JSON.parse(localStorage.getItem('capivara_admin_settings')||'{}')}catch(e){}
+  let jv={};try{jv=JSON.parse(localStorage.getItem('capivara_vinheta_voice_ids_v2')||'{}')}catch(e){}
+  const isFemale=(voice==='female'||voice==='feminina');
+  const voiceId=isFemale
+    ?(jv.jingleFemaleVoice||jv.female||cfg.jingleFemaleVoice)
+    :(jv.jingleMaleVoice||jv.male||cfg.jingleMaleVoice);
+  if(!cfg.eleven) throw new Error('Chave ElevenLabs não configurada em Configuração Geral.');
+  if(!voiceId) throw new Error('Voice ID de vinheta '+(isFemale?'feminina':'masculina')+' não configurado.');
+  const r=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+encodeURIComponent(voiceId),{
+    method:'POST',
+    headers:{'xi-api-key':cfg.eleven,'Content-Type':'application/json','Accept':'audio/mpeg'},
+    body:JSON.stringify({text:String(text||'').trim(),model_id:'eleven_multilingual_v2'})
+  });
+  if(!r.ok){const t=await r.text();throw new Error('ElevenLabs HTTP '+r.status+' — '+t)}
+  return await r.blob();
+};
+
+// V16.2 — garante visualmente e na geração: 01 homem, 02 mulher, 03 homem, 04 mulher...
+function capFixAlternatingLabelsV162(){
+  document.querySelectorAll('input[type="text"],textarea').forEach(inp=>{
+    const row=inp.closest('.vinheta-row,.vinheta,.slot,.vitem')||inp.parentElement;
+    if(!row)return;
+    const txt=row.textContent||'';
+    const m=txt.match(/Vinheta\s*0*(\d+)/i); if(!m)return;
+    const n=parseInt(m[1],10), female=n%2===0;
+    // update small emoji/name buttons/spans if present
+    [...row.querySelectorAll('button,span,b,strong,small')].forEach(el=>{
+      const t=el.textContent||'';
+      if(/homem|mulher/i.test(t)) el.textContent=female?'👩 Mulher':'👨 Homem';
+      else if((t.trim()==='👨'||t.trim()==='👩')) el.textContent=female?'👩':'👨';
+    });
+    row.dataset.capVoice=female?'female':'male';
+  });
+}
+const capAltObsV162=new MutationObserver(()=>capFixAlternatingLabelsV162());
+capAltObsV162.observe(document.documentElement,{subtree:true,childList:true});
+window.addEventListener('load',()=>setTimeout(capFixAlternatingLabelsV162,100));
+</script>
+<script id="cap-v23-extra-jingle-voices">
+(()=>{const K='capivara_vinheta_voice_ids_v2',I=['jingleMaleVoice','jingleFemaleVoice'];
+function load(){let v={};try{v=JSON.parse(localStorage.getItem(K)||'{}')}catch{};I.forEach(i=>{const e=document.getElementById(i);if(e)e.value=v[i]||''})}
+function save(){let v={};I.forEach(i=>{const e=document.getElementById(i);if(e)v[i]=e.value.trim()});localStorage.setItem(K,JSON.stringify(v))}
+document.addEventListener('DOMContentLoaded',()=>{load();I.forEach(i=>document.getElementById(i)?.addEventListener('change',save));document.querySelectorAll('button').forEach(b=>{/salvar/i.test(b.textContent||'')&&b.addEventListener('click',save)})})})();
+</script>
+<script>
+/* V26 — mapa oficial de vozes por função */
+(function(){
+ function capVoiceMapV26(){
+   let cfg={}; try{cfg=JSON.parse(localStorage.getItem('capivara_admin_settings')||'{}')}catch(e){}
+   let jv={}; try{jv=JSON.parse(localStorage.getItem('capivara_vinheta_voice_ids_v2')||'{}')}catch(e){}
+   const map={
+     adMale: String(document.getElementById('maleVoice')?.value || cfg.male || cfg.maleVoice || '').trim(),
+     adFemale: String(document.getElementById('femaleVoice')?.value || cfg.female || cfg.femaleVoice || '').trim(),
+     jingleMale: String(document.getElementById('jingleMaleVoice')?.value || jv.jingleMaleVoice || '').trim(),
+     jingleFemale: String(document.getElementById('jingleFemaleVoice')?.value || jv.jingleFemaleVoice || '').trim()
+   };
+   localStorage.setItem('capivara_voice_map_v26',JSON.stringify(map));
+   return map;
+ }
+ window.capVoiceMapV26=capVoiceMapV26;
+ document.addEventListener('input',e=>{
+   if(['maleVoice','femaleVoice','jingleMaleVoice','jingleFemaleVoice'].includes(e.target?.id))capVoiceMapV26();
+ });
+ document.addEventListener('change',e=>{
+   if(['maleVoice','femaleVoice','jingleMaleVoice','jingleFemaleVoice'].includes(e.target?.id))capVoiceMapV26();
+ });
+ window.addEventListener('DOMContentLoaded',()=>setTimeout(capVoiceMapV26,100));
+})();
+</script>
+
+
+<script id="capVoiceSaveV30">
+(function(){
+ const MAIN='capivara_admin_settings';
+ const JKEY='capivara_vinheta_voice_ids_v2';
+ const MAP='capivara_voice_map_v26';
+ function val(id){return (document.getElementById(id)?.value||'').trim()}
+ function persistFourVoiceIdsV30(){
+   const adMale=val('maleVoice')||val('maleVoiceId')||val('voiceMale');
+   const adFemale=val('femaleVoice')||val('femaleVoiceId')||val('voiceFemale');
+   const jingleMale=val('jingleMaleVoice');
+   const jingleFemale=val('jingleFemaleVoice');
+
+   let cfg={}; try{cfg=JSON.parse(localStorage.getItem(MAIN)||'{}')}catch(e){}
+   // manter aliases existentes sem apagar configuração anterior
+   if(adMale){ cfg.maleVoice=adMale; cfg.male=adMale; }
+   if(adFemale){ cfg.femaleVoice=adFemale; cfg.female=adFemale; }
+   if(jingleMale){ cfg.jingleMaleVoice=jingleMale; }
+   if(jingleFemale){ cfg.jingleFemaleVoice=jingleFemale; }
+   localStorage.setItem(MAIN,JSON.stringify(cfg));
+
+   localStorage.setItem(JKEY,JSON.stringify({
+     jingleMaleVoice:jingleMale,
+     jingleFemaleVoice:jingleFemale,
+     male:jingleMale,
+     female:jingleFemale
+   }));
+   localStorage.setItem(MAP,JSON.stringify({
+     adMale:adMale, adFemale:adFemale,
+     jingleMale:jingleMale, jingleFemale:jingleFemale
+   }));
+   return {adMale,adFemale,jingleMale,jingleFemale};
+ }
+ window.capPersistFourVoiceIdsV30=persistFourVoiceIdsV30;
+
+ document.addEventListener('click',function(e){
+   const b=e.target.closest('button');
+   if(!b)return;
+   const t=(b.textContent||'').toUpperCase();
+   if(t.includes('SALVAR') && t.includes('TESTAR')){
+     // captura valores imediatamente e novamente após rotina original
+     persistFourVoiceIdsV30();
+     setTimeout(persistFourVoiceIdsV30,0);
+     setTimeout(function(){
+       const ids=persistFourVoiceIdsV30();
+       const out=document.querySelector('#testResult, #testOutput, .test-result, [data-test-result]');
+       if(out && ids.jingleMale && ids.jingleFemale){
+         const line='\n✅ IDs das vinhetas salvas: Homem e Mulher.';
+         if(!String(out.textContent||'').includes('IDs das vinhetas salvas')) out.textContent+=line;
+       }
+     },300);
+   }
+ },true);
+
+ // ao abrir/recarregar, preencher os campos pelas IDs persistidas
+ document.addEventListener('DOMContentLoaded',function(){
+   let j={};try{j=JSON.parse(localStorage.getItem(JKEY)||'{}')}catch(e){}
+   const m=document.getElementById('jingleMaleVoice'), f=document.getElementById('jingleFemaleVoice');
+   if(m && !m.value)m.value=j.jingleMaleVoice||j.male||'';
+   if(f && !f.value)f.value=j.jingleFemaleVoice||j.female||'';
+ });
+})();
+</script>
+
+</body></html>

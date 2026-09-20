@@ -1,0 +1,11 @@
+ADM V30 — SALVAMENTO OFICIAL DAS 4 IDs
+
+Base: V29 aprovada.
+
+Correção:
+- SALVAR E TESTAR agora inclui as 4 IDs.
+- Voz Homem e Mulher de anúncios continuam salvas.
+- Voz Homem e Mulher das vinhetas agora também são persistidas.
+- IDs de vinheta são gravadas na chave usada pelo gerador de vinhetas.
+- Também mantém mapa por função para impedir mistura entre anúncio e vinheta.
+- Não altera o visual aprovado da V29.

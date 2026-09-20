@@ -1,0 +1,5 @@
+CAPIVARA RÁDIO — nova base a partir do ADM V23
+Única alteração:
+- +2 Voice IDs exclusivos para vinhetas: Homem e Mulher.
+- V23 preservado no restante.
+Esta passa a ser a base para as próximas alterações do ADM.

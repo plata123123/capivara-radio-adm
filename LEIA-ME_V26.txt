@@ -1,0 +1,6 @@
+ADM V26 — IDs POR FUNÇÃO
+Base: ADM V24 BASE V23 + 2 IDs VINHETAS.
+Publica um mapa oficial:
+- adMale / adFemale = anúncios, texto digitado e TOP;
+- jingleMale / jingleFemale = somente vinhetas.
+As quatro IDs continuam persistidas no ADM.

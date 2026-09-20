@@ -1,0 +1,16 @@
+ADM V29 — CORES POR TEMA
+Base: V28 aprovada.
+
+Mudança SOMENTE visual em Ramos e Pacotes:
+- Entrada: verde
+- Saída: azul
+- TOP Entrada: laranja
+- TOP Saída: roxo
+
+Preservados sem alteração:
+- campo único;
+- Gerar áudio e salvar;
+- lista compacta;
+- Ouvir e lixeira;
+- alternância Homem/Mulher;
+- IDs e armazenamento.

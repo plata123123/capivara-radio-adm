@@ -1,0 +1,10 @@
+V31 — TESTE INDEPENDENTE DAS 4 IDs
+Agora SALVAR E TESTAR:
+1. salva as duas IDs de anúncios;
+2. salva as duas IDs de vinhetas;
+3. testa Homem anúncio;
+4. testa Mulher anúncio;
+5. testa Homem vinheta;
+6. testa Mulher vinheta.
+Um ID errado NÃO impede os demais testes.
+Assim, se as duas IDs de cima estiverem erradas e as duas de vinheta corretas, o resultado mostra erro nas duas de cima e OK nas duas de baixo.

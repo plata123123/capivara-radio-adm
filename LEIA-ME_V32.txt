@@ -1,0 +1,12 @@
+V32 — VINHETA PUXA A ID CERTA
+
+Causa encontrada no código:
+o gerador real das vinhetas ainda usava cfg.male e cfg.female,
+que são as vozes dos anúncios.
+
+Corrigido nas duas rotas de geração:
+- Homem da vinheta -> jingleMaleVoice
+- Mulher da vinheta -> jingleFemaleVoice
+- lê diretamente capivara_vinheta_voice_ids_v2
+- não usa mais as IDs de anúncio para gerar vinheta
+- alternância e interface V29/V31 preservadas.

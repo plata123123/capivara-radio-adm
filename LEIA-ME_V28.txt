@@ -1,0 +1,13 @@
+ADM V28 — CORREÇÃO SOMENTE EM RAMOS E PACOTES
+
+Alterado exatamente o painel de vinhetas dentro da janela de cada ramo:
+- removido + Nova vinheta;
+- removidos vários campos abertos;
+- cada categoria tem UM campo para a próxima frase;
+- botão GERAR ÁUDIO E SALVAR;
+- abaixo ficam apenas as vinhetas já salvas;
+- cada salva mostra número, Homem/Mulher, texto, Ouvir e lixeira;
+- exclusão continua individual;
+- regra fixa: Homem -> Mulher -> Homem -> Mulher;
+- a voz só avança após geração e gravação bem-sucedidas;
+- demais áreas do ADM foram preservadas.
