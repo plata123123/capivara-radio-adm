@@ -1146,4 +1146,155 @@ document.addEventListener('DOMContentLoaded',()=>{load();I.forEach(i=>document.g
 })();
 </script>
 
+
+<script id="capivaraCentralServerV33">
+/* CAPIVARA RÁDIO ADM V33 — ponte com o servidor central.
+   O servidor passa a ser a fonte principal dos CLIENTES.
+   O localStorage fica somente como cache de segurança da interface.
+   Chaves secretas continuam no Render e NÃO são enviadas por este bloco. */
+(function(){
+  const SERVER = 'https://capivara-radio-server.onrender.com';
+  const CACHE_KEY = 'capivara_admin_clients';
+
+  function statusBox(){
+    let el=document.getElementById('capServerStatusV33');
+    if(el) return el;
+    el=document.createElement('div');
+    el.id='capServerStatusV33';
+    el.style.cssText='position:fixed;right:16px;bottom:16px;z-index:10000;padding:9px 12px;border-radius:999px;font:800 12px system-ui;background:#173b2c;color:#bff7d2;border:1px solid #2f684d;box-shadow:0 8px 24px #0005';
+    el.textContent='SERVIDOR • CONECTANDO';
+    document.body.appendChild(el);
+    return el;
+  }
+  function setStatus(ok,msg){
+    const el=statusBox();
+    el.textContent=msg || (ok?'SERVIDOR • ONLINE':'SERVIDOR • OFFLINE');
+    el.style.background=ok?'#173b2c':'#442323';
+    el.style.color=ok?'#bff7d2':'#ffc1c1';
+    el.style.borderColor=ok?'#2f684d':'#754040';
+  }
+  async function api(path,options={}){
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),20000);
+    try{
+      const r=await fetch(SERVER+path,{
+        ...options,
+        signal:controller.signal,
+        headers:{'Content-Type':'application/json',...(options.headers||{})}
+      });
+      const text=await r.text();
+      let data=null;
+      try{ data=text?JSON.parse(text):null; }catch(_){ data=text; }
+      if(!r.ok) throw new Error('HTTP '+r.status+(text?' — '+text:''));
+      return data;
+    }finally{ clearTimeout(timer); }
+  }
+  function normalizeClients(data){
+    const list=Array.isArray(data)?data:
+      Array.isArray(data?.clients)?data.clients:
+      Array.isArray(data?.data)?data.data:[];
+    return list.map(c=>({
+      name:String(c.name||c.nome||c.storeName||'').trim(),
+      ramo:String(c.ramo||c.activity||c.segment||'').trim() || 'Açougue',
+      code:String(c.code||c.codigo||'').trim(),
+      active:c.active!==false && c.ativo!==false
+    })).filter(c=>c.name && c.code);
+  }
+  function cacheAndRender(){
+    try{ localStorage.setItem(CACHE_KEY,JSON.stringify(clients)); }catch(_){}
+    if(typeof renderClients==='function') renderClients();
+  }
+  async function loadCentralClients(){
+    try{
+      setStatus(true,'SERVIDOR • CARREGANDO');
+      const data=await api('/api/admin/clients');
+      clients=normalizeClients(data);
+      cacheAndRender();
+      setStatus(true,'SERVIDOR • ONLINE');
+      return true;
+    }catch(err){
+      console.error('Capivara Server:',err);
+      setStatus(false,'SERVIDOR • SEM CONEXÃO');
+      return false;
+    }
+  }
+
+  // Substitui o cadastro local: primeiro salva no servidor; só depois atualiza a tela.
+  window.saveClient = async function(){
+    const name=(document.getElementById('newName')?.value||'').trim();
+    const ramo=(document.getElementById('newRamo')?.value||'').trim();
+    const code=(document.getElementById('newCode')?.value||'').trim();
+    if(!name) return alert('Digite o nome da loja.');
+    if(!code) return alert('Gere o código de acesso.');
+    if(clients.some(c=>String(c.code)===code)) return alert('Este código já existe. Gere outro.');
+
+    const btn=document.querySelector('#clientModal button[onclick="saveClient()"]');
+    const old=btn?.textContent;
+    if(btn){btn.disabled=true;btn.textContent='SALVANDO NO SERVIDOR...';}
+    try{
+      await api('/api/admin/client',{
+        method:'POST',
+        body:JSON.stringify({name,ramo,code,active:true})
+      });
+      await loadCentralClients();
+      document.getElementById('newName').value='';
+      if(typeof closeClient==='function') closeClient();
+    }catch(err){
+      setStatus(false,'SERVIDOR • ERRO AO SALVAR');
+      alert('Não foi possível cadastrar no servidor.\n\n'+err.message);
+    }finally{
+      if(btn){btn.disabled=false;btn.textContent=old||'CADASTRAR CLIENTE';}
+    }
+  };
+
+  // Ativar/Bloquear também é gravado no servidor.
+  window.toggleClient = async function(code){
+    const c=clients.find(x=>String(x.code)===String(code));
+    if(!c) return;
+    const updated={...c,active:!c.active};
+    try{
+      setStatus(true,'SERVIDOR • SALVANDO');
+      await api('/api/admin/client',{
+        method:'POST',
+        body:JSON.stringify(updated)
+      });
+      await loadCentralClients();
+    }catch(err){
+      setStatus(false,'SERVIDOR • ERRO AO SALVAR');
+      alert('Não foi possível alterar o cliente no servidor.\n\n'+err.message);
+    }
+  };
+
+  // Mantém compatibilidade com rotinas antigas, sem transformar o navegador na fonte principal.
+  window.persist = function(){
+    try{ localStorage.setItem(CACHE_KEY,JSON.stringify(clients)); }catch(_){}
+    if(typeof renderClients==='function') renderClients();
+  };
+
+  // Funções disponíveis para próximos passos da integração.
+  window.CapivaraCentralV33={
+    server:SERVER,
+    api,
+    reloadClients:loadCentralClients,
+    async health(){
+      try{
+        const d=await api('/health',{method:'GET'});
+        setStatus(true,'SERVIDOR • ONLINE');
+        return d;
+      }catch(e){
+        setStatus(false,'SERVIDOR • OFFLINE');
+        throw e;
+      }
+    }
+  };
+
+  // Ao abrir o ADM, busca os clientes do servidor e substitui a lista local.
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',loadCentralClients,{once:true});
+  }else{
+    loadCentralClients();
+  }
+})();
+</script>
+
 </body></html>
