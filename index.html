@@ -1,4309 +1,3719 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-
-<script id="capivaraAdminAuthV38">
+<script id="capivaraAdminSecurityV37">
 (function(){
   const SERVER='https://capivara-radio-server.onrender.com';
-  const STORAGE='capivara_admin_password_v38';
-  const nativeFetch=window.fetch.bind(window);
+  const KEY='capivara_admin_password_v37';
 
-  function getPassword(){
-    let p=sessionStorage.getItem(STORAGE)||'';
-
-    if(!p){
-      p=window.prompt('Senha do Administrador:')||'';
-      if(p) sessionStorage.setItem(STORAGE,p);
+  let senha=sessionStorage.getItem(KEY)||'';
+  while(!senha){
+    senha=prompt('Digite a senha do Administrador:')||'';
+    if(!senha){
+      alert('A senha do Administrador é obrigatória.');
     }
-
-    return p;
   }
+  sessionStorage.setItem(KEY,senha);
 
-  window.capivaraAdminLogout=function(){
-    sessionStorage.removeItem(STORAGE);
-    location.reload();
-  };
+  const originalFetch=window.fetch.bind(window);
 
-  window.fetch=async function(input,options={}){
-    const url=
-      typeof input==='string'
-        ? input
-        : (input && input.url)||'';
-
-    const isAdmin=
-      url.startsWith(SERVER) &&
-      url.includes('/api/admin/');
-
-    if(!isAdmin){
-      return nativeFetch(input,options);
+  window.fetch=async function(input,opt={}){
+    const url=typeof input==='string' ? input : (input?.url||'');
+    if(!(url.startsWith(SERVER) && url.includes('/api/admin/'))){
+      return originalFetch(input,opt);
     }
 
-    const password=getPassword();
+    const headers=new Headers(opt.headers||{});
+    headers.set('X-Admin-Password',sessionStorage.getItem(KEY)||senha);
 
-    if(!password){
-      throw new Error(
-        'Senha do administrador não informada.'
-      );
-    }
-
-    const headers=
-      new Headers(options.headers||{});
-
-    headers.set(
-      'X-Admin-Password',
-      password
-    );
-
-    if(
-      options.body &&
-      !headers.has('Content-Type')
-    ){
-      headers.set(
-        'Content-Type',
-        'application/json'
-      );
-    }
-
-    let response=
-      await nativeFetch(
-        input,
-        {
-          ...options,
-          headers
-        }
-      );
+    const response=await originalFetch(input,{...opt,headers});
 
     if(response.status===401){
-
-      sessionStorage.removeItem(STORAGE);
-
-      const novo=
-        window.prompt(
-          'Senha incorreta. Digite a senha do Administrador:'
-        )||'';
-
-      if(!novo){
-        return response;
-      }
-
-      sessionStorage.setItem(
-        STORAGE,
-        novo
-      );
-
-      const retryHeaders=
-        new Headers(
-          options.headers||{}
-        );
-
-      retryHeaders.set(
-        'X-Admin-Password',
-        novo
-      );
-
-      if(
-        options.body &&
-        !retryHeaders.has('Content-Type')
-      ){
-        retryHeaders.set(
-          'Content-Type',
-          'application/json'
-        );
-      }
-
-      response=
-        await nativeFetch(
-          input,
-          {
-            ...options,
-            headers:retryHeaders
-          }
-        );
+      sessionStorage.removeItem(KEY);
+      alert('Senha do Administrador incorreta. Digite novamente.');
+      location.reload();
     }
-
     return response;
   };
 
-  async function validate(){
-
-    const password=getPassword();
-
-    if(!password){
-      return;
-    }
-
-    try{
-
-      const r=
-        await nativeFetch(
-          SERVER+'/api/admin/login',
-          {
-            method:'POST',
-            headers:{
-              'X-Admin-Password':
-                password
-            }
-          }
-        );
-
-      if(r.status===401){
-
-        sessionStorage.removeItem(
-          STORAGE
-        );
-
-        alert(
-          'Senha do Administrador incorreta.'
-        );
-
-        location.reload();
-      }
-
-    }catch(e){
-
-      console.warn(
-        'Falha ao validar login do ADM:',
-        e
-      );
-    }
-  }
-
-  /*
-    CORREÇÃO:
-    o ADM abre normalmente.
-
-    A senha será solicitada somente
-    quando uma rota protegida
-    /api/admin/ for utilizada.
-
-    Isso evita o loop que fazia
-    o ADM não abrir.
-  */
-
-  window.capivaraAdminValidate=
-    validate;
-
+  window.capivaraAdminLogout=function(){
+    sessionStorage.removeItem(KEY);
+    location.reload();
+  };
 })();
 </script>
 
 <meta charset="utf-8">
-
-<meta
-  name="viewport"
-  content="width=device-width,initial-scale=1"
->
-
-<title>
-Capivara Rádio • Administrador
-</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Capivara Rádio • Administrador</title>
 
 <style>
-
 :root{
-  --bg:#07110d;
-  --panel:#0d1b15;
-  --panel2:#12241c;
-  --line:#234233;
-  --txt:#f5fbf7;
-  --muted:#92aa9d;
-  --green:#42e07f;
-  --green2:#20b963;
-  --gold:#ffc857;
-  --red:#ff6868;
+ --bg:#07110d;--panel:#0d1b15;--panel2:#12241c;
+ --line:#234233;--txt:#f5fbf7;--muted:#92aa9d;
+ --green:#42e07f;--green2:#20b963;--gold:#ffc857;--red:#ff6868
 }
-
-*{
-  box-sizing:border-box;
-}
-
+*{box-sizing:border-box}
 body{
-  margin:0;
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    Segoe UI,
-    Arial;
-  background:
-    linear-gradient(
-      135deg,
-      #06100c,
-      #0a1812 55%,
-      #07110d
-    );
-  color:var(--txt);
+ margin:0;
+ font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Arial;
+ background:linear-gradient(135deg,#06100c,#0a1812 55%,#07110d);
+ color:var(--txt)
 }
-
-button,
-input,
-select,
-textarea{
-  font:inherit;
-}
-
-.app{
-  display:grid;
-  grid-template-columns:
-    260px 1fr;
-  min-height:100vh;
-}
-
+button,input,select,textarea{font:inherit}
+.app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
 aside{
-  padding:24px 16px;
-  border-right:
-    1px solid var(--line);
-  background:#08130f;
-  position:sticky;
-  top:0;
-  height:100vh;
+ padding:24px 16px;border-right:1px solid var(--line);
+ background:#08130f;position:sticky;top:0;height:100vh
 }
-
-.logo{
-  font-weight:900;
-  font-size:22px;
-  margin:4px 10px 28px;
-}
-
-.logo b{
-  color:var(--green);
-}
-
+.logo{font-weight:900;font-size:22px;margin:4px 10px 28px}
+.logo b{color:var(--green)}
 nav button{
-  width:100%;
-  text-align:left;
-  border:0;
-  background:transparent;
-  color:#b9c9c0;
-  padding:13px 14px;
-  border-radius:12px;
-  margin:3px 0;
-  cursor:pointer;
-  font-weight:700;
+ width:100%;text-align:left;border:0;background:transparent;
+ color:#b9c9c0;padding:13px 14px;border-radius:12px;
+ margin:3px 0;cursor:pointer;font-weight:700
 }
-
-nav button:hover,
-nav button.active{
-  background:#153023;
-  color:#fff;
-}
-
+nav button:hover,nav button.active{background:#153023;color:#fff}
 .dot{
-  display:inline-block;
-  width:8px;
-  height:8px;
-  background:var(--green);
-  border-radius:50%;
-  margin-right:8px;
+ display:inline-block;width:8px;height:8px;background:var(--green);
+ border-radius:50%;margin-right:8px
 }
-
-main{
-  padding:30px;
-  max-width:1500px;
-  width:100%;
-}
-
+main{padding:30px;max-width:1500px;width:100%}
 .top{
-  display:flex;
-  align-items:center;
-  justify-content:
-    space-between;
-  margin-bottom:24px;
+ display:flex;align-items:center;justify-content:space-between;
+ margin-bottom:24px
 }
-
-.top h1{
-  margin:0;
-  font-size:28px;
-}
-
-.sub{
-  color:var(--muted);
-  font-size:14px;
-}
-
+.top h1{margin:0;font-size:28px}
+.sub{color:var(--muted);font-size:14px}
 .btn{
-  border:0;
-  border-radius:12px;
-  padding:11px 16px;
-  font-weight:800;
-  cursor:pointer;
-  background:var(--green);
-  color:#04200e;
+ border:0;border-radius:12px;padding:11px 16px;
+ font-weight:800;cursor:pointer;background:var(--green);color:#04200e
 }
-
-.btn.secondary{
-  background:#183327;
-  color:#dff7e7;
-}
-
-.btn.danger{
-  background:#3a1c1c;
-  color:#ffb8b8;
-}
-
-.btn.gold{
-  background:var(--gold);
-  color:#2b2100;
-}
-
-.grid{
-  display:grid;
-  grid-template-columns:
-    repeat(4,1fr);
-  gap:14px;
-}
-
+.btn.secondary{background:#183327;color:#dff7e7}
+.btn.danger{background:#3a1c1c;color:#ffb8b8}
+.btn.gold{background:var(--gold);color:#2b2100}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
 .card{
-  background:
-    rgba(14,29,22,.92);
-  border:
-    1px solid var(--line);
-  border-radius:18px;
-  padding:18px;
-  box-shadow:
-    0 12px 30px #0003;
+ background:rgba(14,29,22,.92);border:1px solid var(--line);
+ border-radius:18px;padding:18px;box-shadow:0 12px 30px #0003
 }
-
-.metric strong{
-  display:block;
-  font-size:30px;
-  margin-top:8px;
+.metric strong{display:block;font-size:30px;margin-top:8px}
+.metric span{color:var(--muted)}
+.section{display:none}
+.section.active{display:block}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px}
+.toolbar input,.toolbar select,.field input,.field select,.field textarea{
+ background:#091710;color:#fff;border:1px solid #2c4b3a;
+ border-radius:11px;padding:11px 12px;outline:none
 }
-
-.metric span{
-  color:var(--muted);
+.toolbar input{min-width:280px}
+table{width:100%;border-collapse:collapse}
+th,td{
+ padding:13px 10px;border-bottom:1px solid #203b2e;
+ text-align:left;font-size:14px
 }
-
-.section{
-  display:none;
-}
-
-.section.active{
-  display:block;
-}
-
-.toolbar{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  margin-bottom:15px;
-}
-
-.toolbar input,
-.toolbar select,
-.field input,
-.field select,
-.field textarea{
-  background:#091710;
-  color:#fff;
-  border:
-    1px solid #2c4b3a;
-  border-radius:11px;
-  padding:11px 12px;
-  outline:none;
-}
-
-.toolbar input{
-  min-width:280px;
-}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-}
-
-th,
-td{
-  padding:13px 10px;
-  border-bottom:
-    1px solid #203b2e;
-  text-align:left;
-  font-size:14px;
-}
-
-th{
-  color:#8da99a;
-}
-
+th{color:#8da99a}
 .badge{
-  display:inline-block;
-  padding:5px 9px;
-  border-radius:999px;
-  background:#163c27;
-  color:#7cf0a7;
-  font-size:12px;
-  font-weight:800;
+ display:inline-block;padding:5px 9px;border-radius:999px;
+ background:#163c27;color:#7cf0a7;font-size:12px;font-weight:800
 }
-
-.badge.off{
-  background:#3a2323;
-  color:#ffabab;
-}
-
-.ramos{
-  display:grid;
-  grid-template-columns:
-    repeat(3,1fr);
-  gap:13px;
-}
-
-.ramo{
-  cursor:pointer;
-  transition:.15s;
-}
-
-.ramo:hover{
-  transform:
-    translateY(-2px);
-  border-color:#3f7558;
-}
-
-.ramo h3{
-  margin:0 0 8px;
-}
-
-.ramo p{
-  margin:0;
-  color:var(--muted);
-  font-size:13px;
-}
-
-.cols{
-  display:grid;
-  grid-template-columns:
-    1fr 1fr;
-  gap:16px;
-}
-
-.field{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  margin:10px 0;
-}
-
-.field label{
-  color:#a9bdb2;
-  font-size:13px;
-  font-weight:700;
-}
-
+.badge.off{background:#3a2323;color:#ffabab}
+.ramos{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
+.ramo{cursor:pointer;transition:.15s}
+.ramo:hover{transform:translateY(-2px);border-color:#3f7558}
+.ramo h3{margin:0 0 8px}
+.ramo p{margin:0;color:var(--muted);font-size:13px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.field{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+.field label{color:#a9bdb2;font-size:13px;font-weight:700}
 .slot{
-  display:flex;
-  align-items:center;
-  justify-content:
-    space-between;
-  padding:12px;
-  background:#0a1711;
-  border:
-    1px solid #244535;
-  border-radius:12px;
-  margin:8px 0;
+ display:flex;align-items:center;justify-content:space-between;
+ padding:12px;background:#0a1711;border:1px solid #244535;
+ border-radius:12px;margin:8px 0
 }
-
-.slot small{
-  color:var(--muted);
-}
-
-.products{
-  display:grid;
-  grid-template-columns:
-    repeat(3,1fr);
-  gap:8px;
-}
-
+.slot small{color:var(--muted)}
+.products{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .product{
-  padding:10px;
-  border-radius:10px;
-  background:#10251b;
-  border:
-    1px solid #2a4938;
+ padding:10px;border-radius:10px;background:#10251b;
+ border:1px solid #2a4938
 }
-
-.player{
-  max-width:720px;
-  margin:auto;
-}
-
-.player .hero{
-  text-align:center;
-  padding:20px;
-}
-
-.chips{
-  display:grid;
-  grid-template-columns:
-    repeat(3,1fr);
-  gap:9px;
-}
-
+.player{max-width:720px;margin:auto}
+.player .hero{text-align:center;padding:20px}
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
 .chip{
-  background:#153326;
-  border:
-    1px solid #31533f;
-  padding:13px;
-  border-radius:12px;
-  text-align:center;
-  font-weight:800;
+ background:#153326;border:1px solid #31533f;padding:13px;
+ border-radius:12px;text-align:center;font-weight:800
 }
-
-.price{
-  font-size:24px;
-  text-align:center;
-  width:100%;
-}
-
+.price{font-size:24px;text-align:center;width:100%}
 .notice{
-  padding:12px 14px;
-  border-radius:12px;
-  background:#13291e;
-  border:
-    1px solid #28533b;
-  color:#bff7d2;
-  margin-bottom:14px;
+ padding:12px 14px;border-radius:12px;background:#13291e;
+ border:1px solid #28533b;color:#bff7d2;margin-bottom:14px
 }
-
 .modal{
-  position:fixed;
-  inset:0;
-  background:#000a;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  padding:20px;
-  z-index:9999;
+ position:fixed;inset:0;background:#000a;display:none;
+ align-items:center;justify-content:center;padding:20px
 }
-
-.modal.show{
-  display:flex;
-}
-
-.modal .card{
-  width:min(650px,100%);
-  max-height:90vh;
-  overflow:auto;
-}
-
-hr{
-  border:0;
-  border-top:
-    1px solid var(--line);
-  margin:18px 0;
-}
+.modal.show{display:flex}
+.modal .card{width:min(650px,100%);max-height:90vh;overflow:auto}
+hr{border:0;border-top:1px solid var(--line);margin:18px 0}
 
 @media(max-width:950px){
-
-  .app{
-    grid-template-columns:1fr;
-  }
-
-  aside{
-    height:auto;
-    position:static;
-  }
-
-  .grid,
-  .ramos,
-  .cols{
-    grid-template-columns:
-      1fr 1fr;
-  }
-
-  nav{
-    display:flex;
-    overflow:auto;
-  }
-
-  nav button{
-    white-space:nowrap;
-  }
-
-  main{
-    padding:18px;
-  }
+ .app{grid-template-columns:1fr}
+ aside{height:auto;position:static}
+ .grid,.ramos,.cols{grid-template-columns:1fr 1fr}
+ nav{display:flex;overflow:auto}
+ nav button{white-space:nowrap}
+ main{padding:18px}
 }
-
 @media(max-width:600px){
-
-  .grid,
-  .ramos,
-  .cols,
-  .products,
-  .chips{
-    grid-template-columns:1fr;
-  }
-
-  .toolbar input{
-    min-width:0;
-    width:100%;
-  }
+ .grid,.ramos,.cols,.products,.chips{grid-template-columns:1fr}
+ .toolbar input{min-width:0;width:100%}
 }
 
-</style>
-<!-- PARTE 2 -->
-
-<style>
 .audio-manager{
-display:none;
-margin-top:16px;
-padding:16px;
-border:1px solid #29453a;
-border-radius:14px;
-background:#10251e
+ display:none;margin-top:16px;padding:16px;
+ border:1px solid #29453a;border-radius:14px;background:#10251e
 }
-
 .audio-manager h3{margin:0 0 6px}
-
-.audio-manager .hint{
-opacity:.72;
-font-size:12px;
-margin-bottom:12px
-}
-
+.audio-manager .hint{opacity:.72;font-size:12px;margin-bottom:12px}
 .audio-slot{
-display:grid;
-grid-template-columns:1.1fr 1.7fr .7fr auto;
-gap:8px;
-align-items:center;
-padding:10px 0;
-border-top:1px solid #29453a
+ display:grid;grid-template-columns:1.1fr 1.7fr .7fr auto;
+ gap:8px;align-items:center;padding:10px 0;border-top:1px solid #29453a
 }
-
 .audio-slot:first-of-type{border-top:0}
-
-.audio-slot input,
-.audio-slot select{
-width:100%;
-box-sizing:border-box
-}
-
-.audio-slot audio{
-width:100%;
-height:34px
-}
-
-.audio-actions{
-display:flex;
-gap:6px;
-flex-wrap:wrap
-}
-
+.audio-slot input,.audio-slot select{width:100%;box-sizing:border-box}
+.audio-slot audio{width:100%;height:34px}
+.audio-actions{display:flex;gap:6px;flex-wrap:wrap}
 .audio-actions button{white-space:nowrap}
-
 .global-box{
-margin-top:18px;
-padding:14px;
-border:1px dashed #416657;
-border-radius:12px
+ margin-top:18px;padding:14px;border:1px dashed #416657;border-radius:12px
+}
+@media(max-width:850px){
+ .audio-slot{grid-template-columns:1fr}
+ .audio-actions{justify-content:flex-start}
 }
 
 .ramo-audio-row{
-border:1px solid #24503d;
-border-radius:12px;
-padding:10px;
-margin:9px 0;
-background:#0b2118
+ border:1px solid #24503d;border-radius:12px;padding:10px;
+ margin:9px 0;background:#0b2118
 }
-
 .ramo-audio-row .rowtop{
-display:flex;
-justify-content:space-between;
-gap:10px;
-align-items:center;
-margin-bottom:8px
+ display:flex;justify-content:space-between;gap:10px;
+ align-items:center;margin-bottom:8px
 }
-
 .ramo-audio-row textarea{
-width:100%;
-min-height:66px;
-resize:vertical;
-box-sizing:border-box
+ width:100%;min-height:66px;resize:vertical;box-sizing:border-box
 }
-
 .ramo-audio-row .controls{
-display:flex;
-gap:8px;
-align-items:center;
-margin-top:8px;
-flex-wrap:wrap
+ display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap
 }
-
 .ramo-audio-row select{min-width:135px}
 
 .vig-section{
-border:1px solid #24503d;
-border-radius:14px;
-margin:12px 0;
-overflow:hidden;
-background:#0b2118
+ border:1px solid #24503d;border-radius:14px;margin:12px 0;
+ overflow:hidden;background:#0b2118
 }
-
 .vig-head{
-display:flex;
-align-items:center;
-justify-content:space-between;
-gap:12px;
-padding:12px 14px;
-background:#102b20
+ display:flex;align-items:center;justify-content:space-between;
+ gap:12px;padding:12px 14px;background:#102b20
 }
-
-.vig-head-left{
-display:flex;
-align-items:center;
-gap:10px;
-flex-wrap:wrap
-}
-
+.vig-head-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .vig-count{
-font-size:12px;
-padding:4px 8px;
-border-radius:999px;
-background:#173b2c;
-opacity:.9
+ font-size:12px;padding:4px 8px;border-radius:999px;
+ background:#173b2c;opacity:.9
 }
-
 .vig-list{padding:8px 12px}
-
-.vig-item{
-padding:10px 0;
-border-top:1px solid #234638
-}
-
+.vig-item{padding:10px 0;border-top:1px solid #234638}
 .vig-item:first-child{border-top:0}
-
 .vig-line{
-display:grid;
-grid-template-columns:auto 1fr auto;
-gap:8px;
-align-items:center
+ display:grid;grid-template-columns:auto 1fr auto;
+ gap:8px;align-items:center
 }
-
-.vig-num{
-font-weight:800;
-min-width:82px
-}
-
-.vig-line input{
-width:100%;
-box-sizing:border-box
-}
-
+.vig-num{font-weight:800;min-width:82px}
+.vig-line input{width:100%;box-sizing:border-box}
 .vig-actions{
-display:flex;
-gap:6px;
-flex-wrap:wrap;
-margin-top:8px;
-margin-left:90px
+ display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;margin-left:90px
 }
-
-.vig-empty{
-padding:12px;
-opacity:.65;
-font-size:13px
-}
-
+.vig-empty{padding:12px;opacity:.65;font-size:13px}
 @media(max-width:800px){
-.vig-line{grid-template-columns:1fr}
-.vig-actions{margin-left:0}
-.vig-num{min-width:0}
+ .vig-line{grid-template-columns:1fr}
+ .vig-actions{margin-left:0}
+ .vig-num{min-width:0}
 }
 
 .theme-grid-v11{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-gap:9px;
-margin:12px 0 18px
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+ gap:9px;margin:12px 0 18px
 }
-
 .theme-card-v11{
-border:1px solid #dce7df;
-background:#fff;
-border-radius:13px;
-padding:12px;
-text-align:left;
-cursor:pointer;
-color:#173b29
+ border:1px solid #dce7df;background:#fff;border-radius:13px;
+ padding:12px;text-align:left;cursor:pointer;color:#173b29
 }
-
 .theme-card-v11 b{display:block}
-
-.theme-card-v11 span{
-font-size:12px;
-color:#6d7d74
-}
-
-.theme-card-v11.active{
-outline:2px solid #198754;
-background:#eef9f2
-}
-
+.theme-card-v11 span{font-size:12px;color:#6d7d74}
+.theme-card-v11.active{outline:2px solid #198754;background:#eef9f2}
 .theme-select-v11{
-padding:10px;
-border:1px solid #d5dfd8;
-border-radius:10px;
-background:white;
-max-width:210px
+ padding:10px;border:1px solid #d5dfd8;border-radius:10px;
+ background:white;max-width:210px
 }
-
 .modal-v12{
-display:none;
-position:fixed;
-inset:0;
-background:#0008;
-z-index:9999;
-align-items:center;
-justify-content:center;
-padding:20px
+ display:none;position:fixed;inset:0;background:#0008;
+ z-index:9999;align-items:center;justify-content:center;padding:20px
 }
-
 .modal-v12.show{display:flex}
-
 .modalbox-v12{
-background:white;
-width:min(620px,96vw);
-max-height:90vh;
-overflow:auto;
-border-radius:18px;
-padding:24px;
-position:relative
+ background:white;width:min(620px,96vw);max-height:90vh;
+ overflow:auto;border-radius:18px;padding:24px;position:relative
 }
-
-.modalbox-v12 label{
-display:block;
-font-weight:700;
-margin:12px 0 5px
+.modalbox-v12 label{display:block;font-weight:700;margin:12px 0 5px}
+.modalbox-v12 input,.modalbox-v12 textarea{
+ width:100%;box-sizing:border-box;padding:11px;
+ border:1px solid #d7e0da;border-radius:10px
 }
-
-.modalbox-v12 input,
-.modalbox-v12 textarea{
-width:100%;
-box-sizing:border-box;
-padding:11px;
-border:1px solid #d7e0da;
-border-radius:10px
-}
-
 .close-v12{
-position:absolute;
-right:15px;
-top:12px;
-border:0;
-background:none;
-font-size:28px;
-cursor:pointer
+ position:absolute;right:15px;top:12px;border:0;
+ background:none;font-size:28px;cursor:pointer
 }
-
 .vinheta-pro-note{
-margin:10px 0 14px;
-padding:10px 12px;
-border:1px solid #e5e7eb;
-border-radius:12px;
-background:#fafafa;
-font-size:12px;
-color:#667085
+ margin:10px 0 14px;padding:10px 12px;border:1px solid #e5e7eb;
+ border-radius:12px;background:#fafafa;font-size:12px;color:#667085
 }
-
 .vinheta-pro-note b{color:#344054}
-
-.vinheta-card textarea,
-.vinheta-card input[type="text"]{
-border-radius:10px!important
-}
-
-.vinheta-card button{
-border-radius:10px!important
-}
+.vinheta-card textarea,.vinheta-card input[type="text"]{border-radius:10px!important}
+.vinheta-card button{border-radius:10px!important}
 </style>
 
 <style>
 .ac-row-v9{
-display:grid;
-grid-template-columns:34px 1fr auto;
-gap:10px;
-align-items:center;
-padding:11px;
-border-top:1px solid var(--line)
+ display:grid;grid-template-columns:34px 1fr auto;gap:10px;
+ align-items:center;padding:11px;border-top:1px solid var(--line)
 }
-
 .ac-row-v9:first-child{border-top:0}
-
 .ac-name-v9{font-weight:800}
-
-.ac-meta-v9{
-font-size:12px;
-color:var(--muted)
-}
-
-.ac-actions-v9{
-display:flex;
-gap:7px;
-flex-wrap:wrap
-}
-
-.ac-empty-v9{
-text-align:center;
-padding:34px;
-color:var(--muted)
-}
-
+.ac-meta-v9{font-size:12px;color:var(--muted)}
+.ac-actions-v9{display:flex;gap:7px;flex-wrap:wrap}
+.ac-empty-v9{text-align:center;padding:34px;color:var(--muted)}
 .pl-card-v9{
-border:1px solid var(--line);
-border-radius:14px;
-padding:14px;
-margin:10px 0;
-background:#0a1711
+ border:1px solid var(--line);border-radius:14px;padding:14px;
+ margin:10px 0;background:#0a1711
 }
-
 .pl-top-v9{
-display:flex;
-justify-content:space-between;
-gap:12px;
-align-items:center;
-flex-wrap:wrap
+ display:flex;justify-content:space-between;gap:12px;
+ align-items:center;flex-wrap:wrap
 }
-
-.pl-tags-v9{
-display:flex;
-gap:6px;
-flex-wrap:wrap;
-margin-top:8px
-}
-
+.pl-tags-v9{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 @media(max-width:800px){
-.ac-row-v9{grid-template-columns:30px 1fr}
-.ac-actions-v9{grid-column:2}
-.grid{grid-template-columns:1fr!important}
+ .ac-row-v9{grid-template-columns:30px 1fr}
+ .ac-actions-v9{grid-column:2}
+ .grid{grid-template-columns:1fr!important}
 }
 </style>
 
 <style id="vigSimpleV28Css">
-.vig-simple-v28{
-padding:0 0 18px!important
-}
-
-.vig-simple-v28 .vig-head{
-margin-bottom:10px
-}
-
+.vig-simple-v28{padding:0 0 18px!important}
+.vig-simple-v28 .vig-head{margin-bottom:10px}
 .vig-compose-v28{
-padding:12px;
-background:#0d3023;
-border:1px solid #24543f;
-border-radius:14px;
-margin-bottom:12px
+ padding:12px;background:#0d3023;border:1px solid #24543f;
+ border-radius:14px;margin-bottom:12px
 }
-
 .vig-compose-v28 textarea{
-display:block;
-width:100%;
-min-height:82px;
-box-sizing:border-box;
-resize:vertical;
-border:1px solid #b9c8c0;
-border-radius:10px;
-background:#fff;
-color:#14251d;
-padding:12px;
-font-size:16px
+ display:block;width:100%;min-height:82px;box-sizing:border-box;
+ resize:vertical;border:1px solid #b9c8c0;border-radius:10px;
+ background:#fff;color:#14251d;padding:12px;font-size:16px
 }
-
 .vig-generate-v28{
-display:block;
-width:100%;
-margin-top:9px;
-background:#35df7f!important;
-color:#062414!important;
-font-weight:900!important;
-padding:13px!important
+ display:block;width:100%;margin-top:9px;background:#35df7f!important;
+ color:#062414!important;font-weight:900!important;padding:13px!important
 }
-
-.vig-saved-v28{
-display:flex;
-flex-direction:column;
-gap:7px
-}
-
+.vig-saved-v28{display:flex;flex-direction:column;gap:7px}
 .vig-saved-row-v28{
-display:grid;
-grid-template-columns:95px 92px minmax(120px,1fr) auto auto;
-gap:8px;
-align-items:center;
-background:#103a2b;
-border:1px solid #23543f;
-border-radius:11px;
-padding:9px 10px
+ display:grid;grid-template-columns:95px 92px minmax(120px,1fr) auto auto;
+ gap:8px;align-items:center;background:#103a2b;
+ border:1px solid #23543f;border-radius:11px;padding:9px 10px
 }
-
-.vig-saved-row-v28 .vig-num{
-font-weight:900
-}
-
-.vig-voice-v28{
-font-size:13px;
-white-space:nowrap
-}
-
+.vig-saved-row-v28 .vig-num{font-weight:900}
+.vig-voice-v28{font-size:13px;white-space:nowrap}
 .vig-text-v28{
-overflow:hidden;
-text-overflow:ellipsis;
-white-space:nowrap;
-opacity:.92
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.92
 }
-
 .vig-trash-v28{
-border:0;
-background:transparent;
-color:#fff;
-font-size:18px;
-cursor:pointer;
-padding:7px
+ border:0;background:transparent;color:#fff;font-size:18px;
+ cursor:pointer;padding:7px
 }
-
 @media(max-width:800px){
-.vig-saved-row-v28{
-grid-template-columns:88px 82px 1fr auto
-}
-
-.vig-text-v28{
-grid-column:1/-1;
-grid-row:2
-}
-
-.vig-trash-v28{
-grid-column:4;
-grid-row:1
-}
+ .vig-saved-row-v28{grid-template-columns:88px 82px 1fr auto}
+ .vig-text-v28{grid-column:1/-1;grid-row:2}
+ .vig-trash-v28{grid-column:4;grid-row:1}
 }
 </style>
 
 <style id="vigThemeColorsV29">
 .vig-simple-v28[data-vig-theme="entry"]{
-border-left:5px solid #2fd875!important;
-background:linear-gradient(90deg,rgba(47,216,117,.11),transparent 32%)
+ border-left:5px solid #2fd875!important;
+ background:linear-gradient(90deg,rgba(47,216,117,.11),transparent 32%)
 }
-
 .vig-simple-v28[data-vig-theme="exit"]{
-border-left:5px solid #3ba7ff!important;
-background:linear-gradient(90deg,rgba(59,167,255,.11),transparent 32%)
+ border-left:5px solid #3ba7ff!important;
+ background:linear-gradient(90deg,rgba(59,167,255,.11),transparent 32%)
 }
-
 .vig-simple-v28[data-vig-theme="top-entry"]{
-border-left:5px solid #ff9d2e!important;
-background:linear-gradient(90deg,rgba(255,157,46,.12),transparent 32%)
+ border-left:5px solid #ff9d2e!important;
+ background:linear-gradient(90deg,rgba(255,157,46,.12),transparent 32%)
 }
-
 .vig-simple-v28[data-vig-theme="top-exit"]{
-border-left:5px solid #ad6cff!important;
-background:linear-gradient(90deg,rgba(173,108,255,.12),transparent 32%)
+ border-left:5px solid #ad6cff!important;
+ background:linear-gradient(90deg,rgba(173,108,255,.12),transparent 32%)
 }
-
-.vig-simple-v28[data-vig-theme="entry"] .vig-head b{
-color:#59e895!important
-}
-
-.vig-simple-v28[data-vig-theme="exit"] .vig-head b{
-color:#70bcff!important
-}
-
-.vig-simple-v28[data-vig-theme="top-entry"] .vig-head b{
-color:#ffb85f!important
-}
-
-.vig-simple-v28[data-vig-theme="top-exit"] .vig-head b{
-color:#c797ff!important
-}
-
+.vig-simple-v28[data-vig-theme="entry"] .vig-head b{color:#59e895!important}
+.vig-simple-v28[data-vig-theme="exit"] .vig-head b{color:#70bcff!important}
+.vig-simple-v28[data-vig-theme="top-entry"] .vig-head b{color:#ffb85f!important}
+.vig-simple-v28[data-vig-theme="top-exit"] .vig-head b{color:#c797ff!important}
 .vig-simple-v28[data-vig-theme="entry"] .vig-generate-v28{
-background:#35df7f!important;
-color:#062414!important
+ background:#35df7f!important;color:#062414!important
 }
-
 .vig-simple-v28[data-vig-theme="exit"] .vig-generate-v28{
-background:#3ba7ff!important;
-color:#071c2c!important
+ background:#3ba7ff!important;color:#071c2c!important
 }
-
 .vig-simple-v28[data-vig-theme="top-entry"] .vig-generate-v28{
-background:#ff9d2e!important;
-color:#2b1700!important
+ background:#ff9d2e!important;color:#2b1700!important
 }
-
 .vig-simple-v28[data-vig-theme="top-exit"] .vig-generate-v28{
-background:#ad6cff!important;
-color:#1e0a32!important
+ background:#ad6cff!important;color:#1e0a32!important
 }
 </style>
-
 </head>
 
 <body>
-
 <div class="app">
-
 <aside>
-
-<div class="logo">
-CAPIVARA <b>RÁDIO</b>
-<div class="sub">ADMINISTRADOR</div>
-</div>
-
-<nav>
-<button class="active" data-go="painel">▦ Painel</button>
-<button data-go="clientes">🏪 Clientes</button>
-<button data-go="player">▶ Player do Cliente</button>
-<button data-go="ramos">🧩 Ramos e Pacotes</button>
-<button data-go="acervo">♫ Acervo da Rádio</button>
-<button data-go="sistema">⚙ Configuração Geral</button>
-</nav>
-
+ <div class="logo">
+  CAPIVARA <b>RÁDIO</b>
+  <div class="sub">ADMINISTRADOR</div>
+ </div>
+ <nav>
+  <button class="active" data-go="painel">▦ Painel</button>
+  <button data-go="clientes">🏪 Clientes</button>
+  <button data-go="player">▶ Player do Cliente</button>
+  <button data-go="ramos">🧩 Ramos e Pacotes</button>
+  <button data-go="acervo">♫ Acervo da Rádio</button>
+  <button data-go="sistema">⚙ Configuração Geral</button>
+ </nav>
 </aside>
 
 <main>
 
 <section id="painel" class="section active">
+ <div class="top">
+  <div>
+   <h1>Painel</h1>
+   <div class="sub">Visão rápida da operação</div>
+  </div>
+  <button class="btn" onclick="openClient()">+ Novo cliente</button>
+ </div>
 
-<div class="top">
+ <div class="grid">
+  <div class="card metric">
+   <span>Clientes</span>
+   <strong id="mClients">1</strong>
+  </div>
+  <div class="card metric">
+   <span>Ativos</span>
+   <strong id="mActive">1</strong>
+  </div>
+  <div class="card metric">
+   <span>Ramos prontos</span>
+   <strong id="mRamos">23</strong>
+  </div>
+  <div class="card metric">
+   <span>Status das APIs</span>
+   <strong style="font-size:20px;color:var(--green)">● Configurável</strong>
+  </div>
+ </div>
 
-<div>
-<h1>Painel</h1>
-<div class="sub">Visão rápida da operação</div>
-</div>
-
-<button class="btn" onclick="openClient()">
-+ Novo cliente
-</button>
-
-</div>
-
-<div class="grid">
-
-<div class="card metric">
-<span>Clientes</span>
-<strong id="mClients">1</strong>
-</div>
-
-<div class="card metric">
-<span>Ativos</span>
-<strong id="mActive">1</strong>
-</div>
-
-<div class="card metric">
-<span>Ramos prontos</span>
-<strong id="mRamos">23</strong>
-</div>
-
-<div class="card metric">
-<span>Status das APIs</span>
-<strong style="font-size:20px;color:var(--green)">
-● Configurável
-</strong>
-</div>
-
-</div>
-
-<div class="card" style="margin-top:16px">
-
-<h3>Operação simples</h3>
-
-<p class="sub">
-Cadastre a loja → escolha o ramo → o cliente herda automaticamente produtos,
-vinhetas e regras daquele pacote → use “Player do Cliente” quando precisar operar por ele.
-</p>
-
-</div>
-
+ <div class="card" style="margin-top:16px">
+  <h3>Operação simples</h3>
+  <p class="sub">
+   Cadastre a loja → escolha o ramo → o cliente herda automaticamente
+   produtos, vinhetas e regras daquele pacote → use “Player do Cliente”
+   quando precisar operar por ele.
+  </p>
+ </div>
 </section>
 
 <section id="clientes" class="section">
+ <div class="top">
+  <div>
+   <h1>Clientes</h1>
+   <div class="sub">Cadastro, código e pacote de cada loja</div>
+  </div>
+  <button class="btn" onclick="openClient()">+ Novo cliente</button>
+ </div>
 
-<div class="top">
+ <div class="card">
+  <div class="toolbar">
+   <input id="searchClient"
+          placeholder="Buscar loja ou código..."
+          oninput="renderClients()">
+   <select id="statusFilter" onchange="renderClients()">
+    <option>Todos</option>
+    <option>Ativos</option>
+    <option>Bloqueados</option>
+   </select>
+  </div>
 
-<div>
-<h1>Clientes</h1>
-<div class="sub">Cadastro, código e pacote de cada loja</div>
-</div>
-
-<button class="btn" onclick="openClient()">
-+ Novo cliente
-</button>
-
-</div>
-
-<div class="card">
-
-<div class="toolbar">
-
-<input
-id="searchClient"
-placeholder="Buscar loja ou código..."
-oninput="renderClients()"
->
-
-<select
-id="statusFilter"
-onchange="renderClients()"
->
-<option>Todos</option>
-<option>Ativos</option>
-<option>Bloqueados</option>
-</select>
-
-</div>
-
-<table>
-
-<thead>
-<tr>
-<th>Loja</th>
-<th>Ramo</th>
-<th>Código</th>
-<th>Status</th>
-<th>Ações</th>
-</tr>
-</thead>
-
-<tbody id="clientRows"></tbody>
-
-</table>
-
-</div>
-
+  <table>
+   <thead>
+    <tr>
+     <th>Loja</th>
+     <th>Ramo</th>
+     <th>Código</th>
+     <th>Status</th>
+     <th>Ações</th>
+    </tr>
+   </thead>
+   <tbody id="clientRows"></tbody>
+  </table>
+ </div>
 </section>
 
 <section id="player" class="section">
+ <div class="top">
+  <div>
+   <h1>Player do Cliente</h1>
+   <div class="sub">Opere a rádio quando o cliente pedir ajuda</div>
+  </div>
+ </div>
 
-<div class="top">
+ <div class="toolbar">
+  <select id="playerClient" onchange="renderPlayer()"></select>
+  <span class="badge">
+   <span class="dot"></span>Suporte administrando
+  </span>
+ </div>
 
-<div>
-<h1>Player do Cliente</h1>
-<div class="sub">Opere a rádio quando o cliente pedir ajuda</div>
-</div>
+ <div class="card player">
+  <div class="hero">
+   <div class="sub">Criar anúncio para</div>
+   <h2 id="playerStore">Açougue Uberaba</h2>
+  </div>
 
-</div>
+  <div class="chips" id="playerProducts"></div>
 
-<div class="toolbar">
+  <div class="field">
+   <label>Preço (opcional)</label>
+   <input class="price" inputmode="numeric" placeholder="0,00">
+  </div>
 
-<select
-id="playerClient"
-onchange="renderPlayer()"
-></select>
+  <button class="btn" style="width:100%;font-size:17px">
+   ✨ CRIAR ANÚNCIO
+  </button>
 
-<span class="badge">
-<span class="dot"></span>
-Suporte administrando
-</span>
+  <hr>
 
-</div>
+  <button class="btn gold" style="width:100%">
+   🔥 TOP DO DIA
+  </button>
 
-<div class="card player">
-
-<div class="hero">
-<div class="sub">Criar anúncio para</div>
-<h2 id="playerStore">Açougue Uberaba</h2>
-</div>
-
-<div
-class="chips"
-id="playerProducts"
-></div>
-
-<div class="field">
-
-<label>Preço (opcional)</label>
-
-<input
-class="price"
-inputmode="numeric"
-placeholder="0,00"
->
-
-</div>
-
-<button
-class="btn"
-style="width:100%;font-size:17px"
->
-✨ CRIAR ANÚNCIO
-</button>
-
-<hr>
-
-<button
-class="btn gold"
-style="width:100%"
->
-🔥 TOP DO DIA
-</button>
-
-<div
-class="sub"
-style="text-align:center;margin-top:10px"
->
-Conta como 1 dos 15 anúncios do dia • máximo 1 TOP/dia
-</div>
-
-</div>
-
+  <div class="sub" style="text-align:center;margin-top:10px">
+   Conta como 1 dos 15 anúncios do dia • máximo 1 TOP/dia
+  </div>
+ </div>
 </section>
 
 <section id="ramos" class="section">
-
-<div class="top">
-
-<div>
-<h1>Ramos e Pacotes</h1>
-<div class="sub">Um pacote pronto para cada tipo de comércio</div>
-</div>
-
-<button
-class="btn"
-onclick="addRamo()"
->
-+ Criar ramo
-</button>
-
-</div>
-
-<div
-class="ramos"
-id="ramoGrid"
-></div>
-
+ <div class="top">
+  <div>
+   <h1>Ramos e Pacotes</h1>
+   <div class="sub">Um pacote pronto para cada tipo de comércio</div>
+  </div>
+  <button class="btn" onclick="addRamo()">+ Criar ramo</button>
+ </div>
+ <div class="ramos" id="ramoGrid"></div>
 </section>
 
 <section id="acervo" class="section">
+ <div class="top">
+  <div>
+   <h1>Acervo da Rádio</h1>
+   <div class="sub">
+    Acervo organizado em 10 temas. Cada tema já funciona como uma programação musical.
+   </div>
+  </div>
 
-<div class="top">
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+   <select id="uploadThemeV11" class="theme-select-v11"></select>
+   <label class="btn" style="cursor:pointer">
+    + ADICIONAR MÚSICAS
+    <input id="musicUploadV9"
+           hidden
+           type="file"
+           accept="audio/*"
+           multiple
+           onchange="addMusicV9(this.files)">
+   </label>
+  </div>
+ </div>
 
-<div>
-<h1>Acervo da Rádio</h1>
-<div class="sub">
-Acervo organizado em 10 temas. Cada tema já funciona como uma programação musical.
-</div>
-</div>
+ <div class="grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px">
+  <div class="card metric">
+   <span>Músicas no acervo</span>
+   <strong id="musicCountV9">0</strong>
+  </div>
+  <div class="card metric">
+   <span>Temas musicais</span>
+   <strong id="playlistCountV9">10</strong>
+  </div>
+  <div class="card metric">
+   <span>Fundos de locução</span>
+   <strong id="bgCountV9">0</strong>
+  </div>
+ </div>
 
-<div
-style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"
->
+ <div class="card">
+  <div class="toolbar" style="justify-content:space-between">
+   <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn secondary acTabV9"
+            onclick="showAcTabV9('music')">
+     🎵 MÚSICAS DO ACERVO
+    </button>
+    <button class="btn secondary acTabV9"
+            onclick="showAcTabV9('backgrounds')">
+     🎙️ FUNDOS DE LOCUÇÃO
+    </button>
+   </div>
+  </div>
 
-<select
-id="uploadThemeV11"
-class="theme-select-v11"
-></select>
+  <div id="acMusicV9">
+   <div id="themeCardsV11" class="theme-grid-v11"></div>
 
-<label
-class="btn"
-style="cursor:pointer"
->
-+ ADICIONAR MÚSICAS
+   <div class="toolbar">
+    <input id="musicSearchV9"
+           placeholder="Buscar música..."
+           oninput="renderAcervoV9()">
+    <button class="btn secondary" onclick="selectAllMusicV9()">
+     Selecionar todas
+    </button>
+    <button class="btn danger" onclick="deleteSelectedMusicV9()">
+     Excluir selecionadas
+    </button>
+   </div>
 
-<input
-id="musicUploadV9"
-hidden
-type="file"
-accept="audio/*"
-multiple
-onchange="addMusicV9(this.files)"
->
+   <div id="musicListV9"></div>
+  </div>
 
-</label>
+  <div id="acPlaylistsV9" style="display:none">
+   <div class="toolbar">
+    <button class="btn" onclick="newPlaylistV9()">
+     + CRIAR PLAYLIST
+    </button>
+   </div>
+   <div id="playlistListV9"></div>
+  </div>
 
-</div>
-
-</div>
-
-<div
-class="grid"
-style="grid-template-columns:repeat(3,1fr);margin-bottom:16px"
->
-
-<div class="card metric">
-<span>Músicas no acervo</span>
-<strong id="musicCountV9">0</strong>
-</div>
-
-<div class="card metric">
-<span>Temas musicais</span>
-<strong id="playlistCountV9">10</strong>
-</div>
-
-<div class="card metric">
-<span>Fundos de locução</span>
-<strong id="bgCountV9">0</strong>
-</div>
-
-</div>
-
-<div class="card">
-
-<div
-class="toolbar"
-style="justify-content:space-between"
->
-
-<div
-style="display:flex;gap:8px;flex-wrap:wrap"
->
-
-<button
-class="btn secondary acTabV9"
-onclick="showAcTabV9('music')"
->
-🎵 MÚSICAS DO ACERVO
-</button>
-
-<button
-class="btn secondary acTabV9"
-onclick="showAcTabV9('backgrounds')"
->
-🎙️ FUNDOS DE LOCUÇÃO
-</button>
-
-</div>
-
-</div>
-<!-- PARTE 3 -->
-
-<div id="acMusicV9">
-
-<div id="themeCardsV11" class="theme-grid-v11"></div>
-
-<div class="toolbar">
-
-<input
-id="musicSearchV9"
-placeholder="Buscar música..."
-oninput="renderAcervoV9()"
->
-
-<select
-id="musicThemeFilterV11"
-onchange="renderAcervoV9()"
->
-<option value="">Todos os temas</option>
-</select>
-
-</div>
-
-<div id="musicListV9"></div>
-
-</div>
-
-<div
-id="acBackgroundsV9"
-style="display:none"
->
-
-<div class="notice">
-Fundos instrumentais usados durante as locuções.
-</div>
-
-<label class="btn" style="cursor:pointer">
-+ ADICIONAR FUNDO
-
-<input
-id="bgUploadV9"
-hidden
-type="file"
-accept="audio/*"
-multiple
-onchange="addBackgroundV9(this.files)"
->
-
-</label>
-
-<div
-id="backgroundListV9"
-style="margin-top:14px"
-></div>
-
-</div>
-
-</div>
-
+  <div id="acBackgroundsV9" style="display:none">
+   <div class="toolbar">
+    <label class="btn">
+     + ADICIONAR FUNDO
+     <input hidden
+            type="file"
+            accept="audio/*"
+            multiple
+            onchange="addBackgroundV9(this.files)">
+    </label>
+   </div>
+   <div id="backgroundListV9"></div>
+  </div>
+ </div>
 </section>
 
 <section id="sistema" class="section">
+ <div class="top">
+  <div>
+   <h1>Configuração Geral</h1>
+   <div class="sub">APIs, vozes e regras gerais da Capivara Rádio</div>
+  </div>
+ </div>
 
-<div class="top">
+ <div class="cols">
+  <div class="card">
+   <h3>APIs de Texto</h3>
 
-<div>
-<h1>Configuração Geral</h1>
-<div class="sub">
-APIs, vozes e funcionamento geral do sistema
-</div>
-</div>
+   <div class="field">
+    <label>Chave 1</label>
+    <div style="display:flex;gap:8px">
+     <input type="checkbox" id="textKeyOn1" checked>
+     <input id="textKey1" type="password" style="flex:1">
+    </div>
+   </div>
 
-</div>
+   <div class="field">
+    <label>Chave 2</label>
+    <div style="display:flex;gap:8px">
+     <input type="checkbox" id="textKeyOn2">
+     <input id="textKey2" type="password" style="flex:1">
+    </div>
+   </div>
 
-<div class="cols">
+   <div class="field">
+    <label>Chave 3</label>
+    <div style="display:flex;gap:8px">
+     <input type="checkbox" id="textKeyOn3">
+     <input id="textKey3" type="password" style="flex:1">
+    </div>
+   </div>
 
-<div class="card">
+   <hr>
 
-<h3>Gemini — texto</h3>
+   <h3>APIs de Voz</h3>
 
-<div class="field">
-<label>Chave da API</label>
-<input
-id="geminiKey"
-type="password"
-placeholder="Cole a chave Gemini"
->
-</div>
+   <div class="field">
+    <label>Chave 1</label>
+    <div style="display:flex;gap:8px">
+     <input type="checkbox" id="voiceKeyOn1" checked>
+     <input id="voiceKey1" type="password" style="flex:1">
+    </div>
+   </div>
 
-<div class="field">
-<label>Modelo</label>
-<input
-id="geminiModel"
-value="gemini-2.5-flash"
->
-</div>
+   <div class="field">
+    <label>Chave 2</label>
+    <div style="display:flex;gap:8px">
+     <input type="checkbox" id="voiceKeyOn2">
+     <input id="voiceKey2" type="password" style="flex:1">
+    </div>
+   </div>
 
-</div>
+   <div class="field">
+    <label>Chave 3</label>
+    <div style="display:flex;gap:8px">
+     <input type="checkbox" id="voiceKeyOn3">
+     <input id="voiceKey3" type="password" style="flex:1">
+    </div>
+   </div>
+  </div>
 
-<div class="card">
+  <div class="card">
+   <h3>Vozes</h3>
 
-<h3>ElevenLabs — voz</h3>
+   <div class="field">
+    <label>Anúncio — Homem</label>
+    <input id="voiceAdMaleV34">
+   </div>
 
-<div class="field">
-<label>Chave da API</label>
-<input
-id="elevenKey"
-type="password"
-placeholder="Cole a chave ElevenLabs"
->
-</div>
+   <div class="field">
+    <label>Anúncio — Mulher</label>
+    <input id="voiceAdFemaleV34">
+   </div>
 
-<div class="field">
-<label>ID voz masculina</label>
-<input
-id="voiceMale"
-placeholder="Voice ID homem"
->
-</div>
+   <div class="field">
+    <label>Vinheta — Homem</label>
+    <input id="voiceJingleMaleV34">
+   </div>
 
-<div class="field">
-<label>ID voz feminina</label>
-<input
-id="voiceFemale"
-placeholder="Voice ID mulher"
->
-</div>
+   <div class="field">
+    <label>Vinheta — Mulher</label>
+    <input id="voiceJingleFemaleV34">
+   </div>
 
-</div>
+   <button id="saveCentralV34"
+           class="btn"
+           style="width:100%"
+           onclick="capSaveCentralV34()">
+    💾 SALVAR NO SERVIDOR
+   </button>
 
-</div>
+   <div id="centralStatusV34"
+        class="notice"
+        style="margin-top:12px">
+    Aguardando...
+   </div>
+  </div>
+ </div>
 
-<div
-class="card"
-style="margin-top:16px"
->
+ <div class="card" style="margin-top:16px">
+  <h3>Limites e programação</h3>
 
-<h3>Salvar e testar</h3>
+  <div class="cols">
+   <div class="field">
+    <label>Anúncios por bloco</label>
+    <input id="defaultAdsPerBlock"
+           type="number"
+           min="1"
+           value="3">
+   </div>
 
-<p class="sub">
-As configurações ficam salvas no navegador deste administrador.
-</p>
+   <div class="field">
+    <label>Limite diário</label>
+    <input id="dailyLimit"
+           type="number"
+           min="1"
+           value="15">
+   </div>
 
-<button
-class="btn"
-onclick="saveAndTestApis()"
->
-SALVAR E TESTAR
-</button>
+   <div class="field">
+    <label>Limite semanal</label>
+    <input id="weeklyLimit"
+           type="number"
+           min="1"
+           value="75">
+   </div>
 
-<button
-class="btn secondary"
-onclick="capivaraAdminLogout()"
-style="margin-left:8px"
->
-SAIR DO ADMIN
-</button>
-
-<div
-id="apiStatus"
-class="notice"
-style="display:none;margin-top:14px"
-></div>
-
-</div>
-
+   <div class="field">
+    <label>TOP por dia</label>
+    <input id="topDailyLimit"
+           type="number"
+           min="0"
+           value="1">
+   </div>
+  </div>
+ </div>
 </section>
 
 </main>
-
 </div>
 
-<!-- MODAL CLIENTE -->
+<div id="clientModal" class="modal">
+ <div class="card">
+  <div class="top">
+   <div>
+    <h2>Novo cliente</h2>
+    <div class="sub">Cadastre a loja e gere o código de acesso</div>
+   </div>
+   <button class="btn secondary" onclick="closeClient()">✕</button>
+  </div>
 
-<div
-id="clientModal"
-class="modal"
->
+  <div class="field">
+   <label>Nome fantasia</label>
+   <input id="newName" placeholder="Nome da loja">
+  </div>
 
-<div class="card">
+  <div class="field">
+   <label>Ramo</label>
+   <select id="newRamo"></select>
+  </div>
 
-<div
-style="display:flex;justify-content:space-between;align-items:center"
->
+  <div class="field">
+   <label>Código de acesso</label>
+   <div style="display:flex;gap:8px">
+    <input id="newCode" readonly style="flex:1">
+    <button class="btn secondary" onclick="generateCode()">
+     GERAR
+    </button>
+   </div>
+  </div>
 
-<h2 id="clientModalTitle">
-Novo cliente
-</h2>
-
-<button
-class="btn secondary"
-onclick="closeClient()"
->
-✕
-</button>
-
+  <button class="btn"
+          style="width:100%;margin-top:12px"
+          onclick="saveClient()">
+   CADASTRAR CLIENTE
+  </button>
+ </div>
 </div>
 
-<div class="field">
+<div id="ramoModal" class="modal">
+ <div class="card" style="width:min(900px,100%)">
+  <div class="top">
+   <div>
+    <h2 id="mRamo">Ramo</h2>
+    <div class="sub">Produtos, regras e vinhetas deste pacote</div>
+   </div>
+   <button class="btn secondary" onclick="closeRamo()">✕</button>
+  </div>
 
-<label>Nome fantasia</label>
+  <div id="mProducts" class="products"></div>
 
-<input
-id="cName"
-placeholder="Ex.: Açougue Uberaba"
->
+  <hr>
 
-</div>
-
-<div class="field">
-
-<label>Ramo</label>
-
-<select id="cRamo"></select>
-
-</div>
-
-<div class="field">
-
-<label>Código de acesso</label>
-
-<div style="display:flex;gap:8px">
-
-<input
-id="cCode"
-maxlength="12"
-placeholder="Código"
-style="flex:1"
->
-
-<button
-class="btn secondary"
-onclick="generateCode()"
->
-GERAR
-</button>
-
-</div>
-
-</div>
-
-<div class="field">
-
-<label>Status</label>
-
-<select id="cStatus">
-<option>Ativo</option>
-<option>Bloqueado</option>
-</select>
-
-</div>
-
-<button
-class="btn"
-style="width:100%;margin-top:10px"
-onclick="saveClient()"
->
-SALVAR CLIENTE
-</button>
-
-</div>
-
-</div>
-
-<!-- MODAL RAMO -->
-
-<div
-id="ramoModal"
-class="modal"
->
-
-<div class="card">
-
-<div
-style="display:flex;justify-content:space-between;align-items:center"
->
-
-<div>
-
-<div class="sub">
-Pacote do ramo
-</div>
-
-<h2
-id="mRamo"
-style="margin:2px 0"
-></h2>
-
-</div>
-
-<button
-class="btn secondary"
-onclick="closeRamo()"
->
-✕
-</button>
-
-</div>
-
-<hr>
-
-<h3>15 itens principais</h3>
-
-<div
-id="ramoProducts"
-class="products"
-></div>
-
-<hr>
-
-<div
-id="ramoAudioManager"
-class="audio-manager"
-style="display:block"
->
-
-<h3 id="ramoAudioHeading">
-🎧 VINHETAS
-</h3>
-
-<div class="hint">
-As vozes alternam automaticamente:
-homem → mulher → homem → mulher.
-</div>
-
-<div id="ramoVignettesV7"></div>
-
-</div>
-
-</div>
-
+  <div id="audioManagerV3" class="audio-manager" style="display:block">
+   <h3 id="audioRamoTitleV5">🎧 Áudios do Ramo</h3>
+   <div class="hint">
+    4 vinhetas próprias deste ramo. Escreva o texto, escolha a voz e gere quando a API estiver configurada.
+   </div>
+   <div id="audioSlotsV3"></div>
+  </div>
+ </div>
 </div>
 
 <script>
-
-/* =========================================================
-   SERVIDOR
-========================================================= */
-
-const SERVER =
-'https://capivara-radio-server.onrender.com';
-
-/* =========================================================
-   RAMOS
-========================================================= */
-
-const RAMOS = [
-
-'Açougue',
-'Padaria',
-'Supermercado',
-'Farmácia',
-'Loja de Roupas',
-'Calçados',
-'Pet Shop',
-'Hotel / Pousada',
-'Restaurante',
-'Lanchonete',
-'Material de Construção',
-'Autopeças',
-'Oficina / Auto Center',
-'Posto / Conveniência',
-'Cosméticos / Perfumaria',
-'Ótica',
-'Papelaria',
-'Móveis / Eletro',
-'Agropecuária / Rações',
-'Distribuidora de Bebidas',
-'Utilidades / Variedades',
-'Hortifruti',
-'Mercadinho'
-
-];
-
-/* =========================================================
-   PRODUTOS POR RAMO
-========================================================= */
-
-const PRODUCTS = {
-
-'Açougue':[
-'picanha',
-'alcatra',
-'acém',
-'carne moída',
-'frango',
-'pernil',
-'costela',
-'contrafilé',
-'patinho',
-'linguiça',
-'cupim',
-'maminha',
-'coxão mole',
-'coxão duro',
-'músculo'
+const productCatalogs={
+"Açougue":[
+"Picanha","Alcatra","Acém","Carne moída","Frango",
+"Pernil","Costela","Linguiça","Maminha","Contrafilé",
+"Patinho","Coxão mole","Coxão duro","Cupim","Fígado"
 ],
-
-'Padaria':[
-'pão francês',
-'pão de queijo',
-'bolo',
-'rosca',
-'broa',
-'café',
-'salgado',
-'sanduíche',
-'biscoito',
-'torta',
-'leite',
-'queijo',
-'presunto',
-'suco',
-'doce'
+"Supermercado":[
+"Arroz","Feijão","Açúcar","Café","Óleo",
+"Leite","Macarrão","Farinha","Biscoito","Refrigerante",
+"Sabão em pó","Papel higiênico","Detergente","Margarina","Ovos"
 ],
-
-'Supermercado':[
-'arroz',
-'feijão',
-'açúcar',
-'óleo',
-'café',
-'leite',
-'macarrão',
-'farinha',
-'detergente',
-'sabão',
-'papel higiênico',
-'refrigerante',
-'cerveja',
-'carne',
-'frango'
+"Farmácia":[
+"Analgésicos","Antitérmicos","Vitaminas","Protetor solar","Shampoo",
+"Condicionador","Sabonete","Desodorante","Fraldas","Lenços umedecidos",
+"Creme dental","Escova dental","Hidratante","Repelente","Curativos"
+],
+"Padaria":[
+"Pão francês","Pão de queijo","Bolo","Rosca","Sonho",
+"Croissant","Salgados","Torta","Pão doce","Biscoitos",
+"Café","Leite","Queijo","Presunto","Manteiga"
+],
+"Hortifruti":[
+"Banana","Maçã","Laranja","Mamão","Melancia kg",
+"Morango bandeja","Tomate","Batata","Cebola","Cenoura",
+"Alface","Couve","Abacaxi","Uva","Limão"
+],
+"Pet Shop":[
+"Ração para cães","Ração para gatos","Petiscos","Areia sanitária","Shampoo pet",
+"Antipulgas","Brinquedos","Coleiras","Guias","Camas",
+"Tapete higiênico","Sachês","Ossinhos","Comedouros","Bebedouros"
+],
+"Pizzaria":[
+"Pizza mussarela","Pizza calabresa","Pizza portuguesa","Pizza frango","Pizza marguerita",
+"Pizza quatro queijos","Pizza bacon","Pizza especial","Pizza doce","Refrigerante",
+"Suco","Água","Combo casal","Combo família","Sobremesa"
+],
+"Lanchonete":[
+"Hambúrguer","X-burguer","X-salada","X-bacon","Hot dog",
+"Misto quente","Batata frita","Porção","Salgado","Açaí",
+"Refrigerante","Suco","Vitamina","Café","Combo"
+],
+"Restaurante":[
+"Prato executivo","Prato feito","Marmitex","Self-service","Churrasco",
+"Frango","Peixe","Massas","Saladas","Sobremesas",
+"Refrigerante","Suco","Água","Café","Combo do dia"
+],
+"Hotel / Pousada":[
+"Diária casal","Diária individual","Suíte","Quarto família","Café da manhã",
+"Estacionamento","Wi-Fi","Piscina","Área de lazer","Pacote fim de semana",
+"Pacote feriado","Reserva antecipada","Check-in","Late check-out","Hospedagem"
+],
+"Roupas":[
+"Camisetas","Camisas","Calças","Bermudas","Vestidos",
+"Saias","Blusas","Jaquetas","Conjuntos","Moda infantil",
+"Moda feminina","Moda masculina","Moda fitness","Acessórios","Promoções"
+],
+"Calçados":[
+"Tênis","Sapatos","Sandálias","Chinelos","Botas",
+"Sapatilhas","Mocassins","Calçados infantis","Calçados femininos","Calçados masculinos",
+"Calçados esportivos","Meias","Palmilhas","Bolsas","Acessórios"
+],
+"Material de Construção":[
+"Cimento","Areia","Brita","Tijolos","Blocos",
+"Telhas","Tinta","Argamassa","Rejunte","Pisos",
+"Ferramentas","Tubos","Conexões","Material elétrico","Material hidráulico"
+],
+"Autopeças":[
+"Óleo de motor","Filtros","Pastilhas de freio","Discos de freio","Velas",
+"Baterias","Amortecedores","Correias","Lâmpadas","Palhetas",
+"Pneus","Aditivos","Rolamentos","Cabos","Acessórios"
+],
+"Oficina / Auto Center":[
+"Troca de óleo","Alinhamento","Balanceamento","Freios","Suspensão",
+"Revisão","Injeção eletrônica","Ar-condicionado","Pneus","Bateria",
+"Escapamento","Embreagem","Motor","Câmbio","Diagnóstico"
+],
+"Posto / Conveniência":[
+"Gasolina","Etanol","Diesel","Óleo lubrificante","Aditivos",
+"Água","Refrigerante","Energético","Cerveja sem álcool","Café",
+"Salgados","Sanduíches","Doces","Gelo","Itens de viagem"
+],
+"Cosméticos / Perfumaria":[
+"Perfumes","Desodorantes","Hidratantes","Shampoo","Condicionador",
+"Maquiagem","Batom","Base","Protetor solar","Creme facial",
+"Creme corporal","Sabonete","Esmalte","Kits presente","Acessórios"
+],
+"Ótica":[
+"Óculos de grau","Óculos de sol","Armações","Lentes","Lentes de contato",
+"Óculos infantil","Óculos feminino","Óculos masculino","Acessórios","Estojos",
+"Limpeza de lentes","Ajustes","Promoções","Lançamentos","Kits"
+],
+"Papelaria":[
+"Cadernos","Canetas","Lápis","Borrachas","Mochilas",
+"Estojos","Papel sulfite","Pastas","Colas","Tesouras",
+"Materiais escolares","Materiais escritório","Impressão","Xerox","Presentes"
+],
+"Móveis / Eletro":[
+"Sofás","Camas","Colchões","Guarda-roupas","Mesas",
+"Cadeiras","Racks","Geladeiras","Fogões","Televisores",
+"Máquinas de lavar","Micro-ondas","Ventiladores","Eletroportáteis","Celulares"
+],
+"Agropecuária / Rações":[
+"Ração bovina","Ração equina","Ração aves","Ração cães","Ração gatos",
+"Milho","Sal mineral","Sementes","Adubos","Ferramentas",
+"Medicamentos veterinários","Suplementos","Acessórios","Bebedouros","Comedouros"
+],
+"Distribuidora de Bebidas":[
+"Água","Refrigerante","Suco","Energético","Cerveja sem álcool",
+"Gelo","Água com gás","Isotônico","Chá gelado","Tônica",
+"Combo festa","Pack refrigerante","Pack água","Copos","Carvão"
+],
+"Utilidades / Variedades":[
+"Utensílios domésticos","Potes","Panelas","Copos","Pratos",
+"Talheres","Organizadores","Brinquedos","Presentes","Decoração",
+"Limpeza","Papelaria","Ferramentas","Acessórios","Promoções"
 ]
-
 };
 
-/* =========================================================
-   COMPLETA AUTOMATICAMENTE OS RAMOS
-========================================================= */
-
-RAMOS.forEach(r=>{
-
-if(!PRODUCTS[r]){
-
-PRODUCTS[r]=[
-'oferta 1',
-'oferta 2',
-'oferta 3',
-'oferta 4',
-'oferta 5',
-'oferta 6',
-'oferta 7',
-'oferta 8',
-'oferta 9',
-'oferta 10',
-'oferta 11',
-'oferta 12',
-'oferta 13',
-'oferta 14',
-'oferta 15'
-];
-
-}
-
-});
-
-/* =========================================================
-   CLIENTES
-========================================================= */
-
-const CLIENT_KEY =
-'capivara_clients_v39';
+const ramoNames=Object.keys(productCatalogs);
 
 let clients=[];
-
-let editingClient=null;
-
-function loadClients(){
-
 try{
-
-clients=
-JSON.parse(
-localStorage.getItem(CLIENT_KEY)||'[]'
-);
-
+ clients=JSON.parse(localStorage.getItem('capivara_admin_clients')||'[]');
 }catch(e){
-
-clients=[];
-
+ clients=[];
 }
 
-if(!Array.isArray(clients)){
-clients=[];
+function persist(){
+ localStorage.setItem('capivara_admin_clients',JSON.stringify(clients));
+ renderClients();
 }
 
-renderClients();
-renderPlayerClients();
-updateMetrics();
+function go(id){
+ document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+ document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
 
+ const section=document.getElementById(id);
+ if(section)section.classList.add('active');
+
+ const btn=document.querySelector(`nav button[data-go="${id}"]`);
+ if(btn)btn.classList.add('active');
+
+ if(id==='clientes')renderClients();
+ if(id==='player')renderPlayer();
+ if(id==='ramos')renderRamos();
+ if(id==='acervo'&&window.renderAcervoV9)renderAcervoV9();
 }
 
-/* =========================================================
-   SALVAR CLIENTES
-========================================================= */
-
-function persistClients(){
-
-localStorage.setItem(
-CLIENT_KEY,
-JSON.stringify(clients)
-);
-
-renderClients();
-renderPlayerClients();
-updateMetrics();
-
-}
-
-/* =========================================================
-   NAVEGAÇÃO
-========================================================= */
-
-document
-.querySelectorAll('nav button[data-go]')
-.forEach(btn=>{
-
-btn.addEventListener(
-'click',
-()=>{
-
-document
-.querySelectorAll('nav button')
-.forEach(x=>x.classList.remove('active'));
-
-btn.classList.add('active');
-
-document
-.querySelectorAll('.section')
-.forEach(x=>x.classList.remove('active'));
-
-const target=
-document.getElementById(
-btn.dataset.go
-);
-
-if(target){
-target.classList.add('active');
-}
-
-}
-);
-
+document.querySelectorAll('nav button[data-go]').forEach(btn=>{
+ btn.addEventListener('click',()=>go(btn.dataset.go));
 });
-
-/* =========================================================
-   MÉTRICAS
-========================================================= */
-
-function updateMetrics(){
-
-const total=clients.length;
-
-const ativos=
-clients.filter(
-c=>c.status!=='Bloqueado'
-).length;
-
-const a=
-document.getElementById('mClients');
-
-const b=
-document.getElementById('mActive');
-
-const c=
-document.getElementById('mRamos');
-
-if(a)a.textContent=total;
-
-if(b)b.textContent=ativos;
-
-if(c)c.textContent=RAMOS.length;
-
-}
-
-/* =========================================================
-   CLIENTES
-========================================================= */
-
-function renderClients(){
-
-const body=
-document.getElementById(
-'clientRows'
-);
-
-if(!body)return;
-
-const search=
-(
-document.getElementById(
-'searchClient'
-)?.value||''
-)
-.toLowerCase()
-.trim();
-
-const status=
-document.getElementById(
-'statusFilter'
-)?.value||'Todos';
-
-const list=
-clients.filter(c=>{
-
-const txt=
-`${c.name||''} ${c.code||''}`
-.toLowerCase();
-
-if(
-search &&
-!txt.includes(search)
-){
-return false;
-}
-
-if(
-status==='Ativos' &&
-c.status==='Bloqueado'
-){
-return false;
-}
-
-if(
-status==='Bloqueados' &&
-c.status!=='Bloqueado'
-){
-return false;
-}
-
-return true;
-
-});
-
-if(!list.length){
-
-body.innerHTML=
-`
-<tr>
-<td colspan="5">
-<div class="sub">
-Nenhum cliente cadastrado.
-</div>
-</td>
-</tr>
-`;
-
-return;
-
-}
-
-body.innerHTML=
-list.map(c=>`
-
-<tr>
-
-<td>
-<b>${escapeHtml(c.name)}</b>
-</td>
-
-<td>
-${escapeHtml(c.ramo)}
-</td>
-
-<td>
-<span class="badge">
-${escapeHtml(c.code)}
-</span>
-</td>
-
-<td>
-<span class="badge ${c.status==='Bloqueado'?'off':''}">
-${escapeHtml(c.status||'Ativo')}
-</span>
-</td>
-
-<td>
-
-<button
-class="btn secondary"
-onclick="editClient('${c.id}')"
->
-Editar
-</button>
-
-<button
-class="btn danger"
-onclick="deleteClient('${c.id}')"
->
-Excluir
-</button>
-
-</td>
-
-</tr>
-
-`).join('');
-
-}
-
-/* =========================================================
-   MODAL CLIENTE
-========================================================= */
 
 function openClient(){
+ const modal=document.getElementById('clientModal');
+ const sel=document.getElementById('newRamo');
 
-editingClient=null;
+ sel.innerHTML=ramoNames.map(r=>`<option>${r}</option>`).join('');
 
-document.getElementById(
-'clientModalTitle'
-).textContent='Novo cliente';
+ document.getElementById('newName').value='';
+ generateCode();
 
-document.getElementById(
-'cName'
-).value='';
-
-document.getElementById(
-'cStatus'
-).value='Ativo';
-
-fillRamoSelect();
-
-generateCode();
-
-document.getElementById(
-'clientModal'
-).classList.add('show');
-
+ modal.classList.add('show');
 }
 
 function closeClient(){
-
-document.getElementById(
-'clientModal'
-).classList.remove('show');
-
-}
-
-function fillRamoSelect(){
-
-const sel=
-document.getElementById(
-'cRamo'
-);
-
-sel.innerHTML=
-RAMOS.map(r=>
-`<option>${escapeHtml(r)}</option>`
-).join('');
-
+ document.getElementById('clientModal').classList.remove('show');
 }
 
 function generateCode(){
+ let code='';
+ do{
+  code=String(Math.floor(100000+Math.random()*900000));
+ }while(clients.some(c=>String(c.code)===code));
 
-let code='';
-
-for(let i=0;i<6;i++){
-code+=Math.floor(
-Math.random()*10
-);
-}
-
-document.getElementById(
-'cCode'
-).value=code;
-
+ document.getElementById('newCode').value=code;
 }
 
 function saveClient(){
+ const name=document.getElementById('newName').value.trim();
+ const ramo=document.getElementById('newRamo').value;
+ const code=document.getElementById('newCode').value.trim();
 
-const name=
-document.getElementById(
-'cName'
-).value.trim();
+ if(!name)return alert('Digite o nome da loja.');
+ if(!code)return alert('Gere o código.');
 
-const ramo=
-document.getElementById(
-'cRamo'
-).value;
+ if(clients.some(c=>String(c.code)===code)){
+  return alert('Este código já existe.');
+ }
 
-const code=
-document.getElementById(
-'cCode'
-).value.trim();
+ clients.push({
+  name,
+  ramo,
+  code,
+  active:true
+ });
 
-const status=
-document.getElementById(
-'cStatus'
-).value;
-
-if(!name){
-
-alert(
-'Digite o nome da loja.'
-);
-
-return;
-
+ persist();
+ closeClient();
 }
 
-if(!code){
-
-alert(
-'Informe o código de acesso.'
-);
-
-return;
-
+function toggleClient(code){
+ const c=clients.find(x=>String(x.code)===String(code));
+ if(!c)return;
+ c.active=!c.active;
+ persist();
 }
 
-const duplicate=
-clients.find(c=>
-c.code===code &&
-c.id!==editingClient
-);
-
-if(duplicate){
-
-alert(
-'Este código já está sendo usado por outro cliente.'
-);
-
-return;
-
+function deleteClient(code){
+ if(!confirm('Excluir este cliente?'))return;
+ clients=clients.filter(x=>String(x.code)!==String(code));
+ persist();
 }
 
-if(editingClient){
+function renderClients(){
+ const tbody=document.getElementById('clientRows');
+ if(!tbody)return;
 
-const c=
-clients.find(
-x=>x.id===editingClient
-);
+ const q=(document.getElementById('searchClient')?.value||'').toLowerCase();
+ const f=document.getElementById('statusFilter')?.value||'Todos';
 
-if(c){
+ const list=clients.filter(c=>{
+  const match=String(c.name||'').toLowerCase().includes(q) ||
+              String(c.code||'').includes(q);
 
-c.name=name;
-c.ramo=ramo;
-c.code=code;
-c.status=status;
+  const status=
+   f==='Todos' ||
+   (f==='Ativos'&&c.active) ||
+   (f==='Bloqueados'&&!c.active);
 
-}
+  return match&&status;
+ });
 
-}else{
+ tbody.innerHTML=list.length
+ ?list.map(c=>`
+ <tr>
+  <td><b>${escapeHtml(c.name)}</b></td>
+  <td>${escapeHtml(c.ramo)}</td>
+  <td><b>${escapeHtml(c.code)}</b></td>
+  <td>
+   <span class="badge ${c.active?'':'off'}">
+    ${c.active?'ATIVO':'BLOQUEADO'}
+   </span>
+  </td>
+  <td>
+   <button class="btn secondary"
+           onclick="toggleClient('${c.code}')">
+    ${c.active?'Bloquear':'Ativar'}
+   </button>
+   <button class="btn danger"
+           onclick="deleteClient('${c.code}')">
+    Excluir
+   </button>
+  </td>
+ </tr>
+ `).join('')
+ :`<tr><td colspan="5" class="sub">Nenhum cliente encontrado.</td></tr>`;
 
-clients.push({
+ const mc=document.getElementById('mClients');
+ const ma=document.getElementById('mActive');
+ if(mc)mc.textContent=clients.length;
+ if(ma)ma.textContent=clients.filter(c=>c.active).length;
 
-id:
-'cli_'+
-Date.now()+
-'_'+
-Math.random()
-.toString(36)
-.slice(2,7),
+ const sel=document.getElementById('playerClient');
+ if(sel){
+  const old=sel.value;
+  sel.innerHTML=clients.map(c=>
+   `<option value="${escapeAttr(c.code)}">${escapeHtml(c.name)} • ${escapeHtml(c.code)}</option>`
+  ).join('');
 
-name,
-ramo,
-code,
-status
-
-});
-
-}
-
-persistClients();
-
-closeClient();
-
-}
-
-/* =========================================================
-   EDITAR
-========================================================= */
-
-function editClient(id){
-
-const c=
-clients.find(
-x=>x.id===id
-);
-
-if(!c)return;
-
-editingClient=id;
-
-fillRamoSelect();
-
-document.getElementById(
-'clientModalTitle'
-).textContent='Editar cliente';
-
-document.getElementById(
-'cName'
-).value=c.name||'';
-
-document.getElementById(
-'cRamo'
-).value=c.ramo||RAMOS[0];
-
-document.getElementById(
-'cCode'
-).value=c.code||'';
-
-document.getElementById(
-'cStatus'
-).value=c.status||'Ativo';
-
-document.getElementById(
-'clientModal'
-).classList.add('show');
-
-}
-
-/* =========================================================
-   EXCLUIR
-========================================================= */
-
-function deleteClient(id){
-
-const c=
-clients.find(
-x=>x.id===id
-);
-
-if(!c)return;
-
-if(
-!confirm(
-'Excluir '+c.name+'?'
-)
-){
-return;
-}
-
-clients=
-clients.filter(
-x=>x.id!==id
-);
-
-persistClients();
-
-}
-
-/* =========================================================
-   PLAYER CLIENTES
-========================================================= */
-
-function renderPlayerClients(){
-
-const sel=
-document.getElementById(
-'playerClient'
-);
-
-if(!sel)return;
-
-if(!clients.length){
-
-sel.innerHTML=
-'<option>Nenhum cliente</option>';
-
-renderPlayer();
-
-return;
-
-}
-
-sel.innerHTML=
-clients.map(c=>
-`
-<option value="${c.id}">
-${escapeHtml(c.name)}
-</option>
-`
-).join('');
-
-renderPlayer();
-
+  if([...sel.options].some(o=>o.value===old))sel.value=old;
+ }
 }
 
 function renderPlayer(){
+ const sel=document.getElementById('playerClient');
+ const storeEl=document.getElementById('playerStore');
+ const box=document.getElementById('playerProducts');
 
-const sel=
-document.getElementById(
-'playerClient'
-);
+ if(!sel||!storeEl||!box)return;
 
-const store=
-document.getElementById(
-'playerStore'
-);
+ if(!clients.length){
+  storeEl.textContent='Nenhum cliente cadastrado';
+  box.innerHTML='';
+  return;
+ }
 
-const products=
-document.getElementById(
-'playerProducts'
-);
+ const c=clients.find(x=>String(x.code)===String(sel.value))||clients[0];
 
-if(!sel||!store||!products)return;
+ storeEl.textContent=c.name;
 
-const c=
-clients.find(
-x=>x.id===sel.value
-);
+ const products=productCatalogs[c.ramo]||[];
 
-if(!c){
-
-store.textContent=
-'Nenhum cliente';
-
-products.innerHTML='';
-
-return;
-
+ box.innerHTML=products.map(p=>
+  `<button class="chip">${escapeHtml(p)}</button>`
+ ).join('');
 }
-
-store.textContent=c.name;
-
-const arr=
-PRODUCTS[c.ramo]||[];
-
-products.innerHTML=
-arr.map(p=>
-`
-<div class="chip">
-${escapeHtml(p)}
-</div>
-`
-).join('');
-
-}
-
-/* =========================================================
-   RAMOS
-========================================================= */
 
 function renderRamos(){
+ const grid=document.getElementById('ramoGrid');
+ if(!grid)return;
 
-const grid=
-document.getElementById(
-'ramoGrid'
-);
+ grid.innerHTML=ramoNames.map(r=>`
+  <div class="card ramo" onclick="openRamo('${escapeAttr(r)}')">
+   <h3>${escapeHtml(r)}</h3>
+   <p>${(productCatalogs[r]||[]).length} produtos/serviços preparados</p>
+  </div>
+ `).join('');
 
-if(!grid)return;
-
-grid.innerHTML=
-RAMOS.map(r=>`
-
-<div
-class="card ramo"
-onclick="openRamo('${escapeJs(r)}')"
->
-
-<h3>
-${escapeHtml(r)}
-</h3>
-
-<p>
-15 itens principais • vinhetas • TOP do dia
-</p>
-
-</div>
-
-`).join('');
-
+ const mr=document.getElementById('mRamos');
+ if(mr)mr.textContent=ramoNames.length;
 }
 
-/* =========================================================
-   ABRIR RAMO
-========================================================= */
-
 function openRamo(ramo){
+ const modal=document.getElementById('ramoModal');
+ const title=document.getElementById('mRamo');
+ const products=document.getElementById('mProducts');
 
-document.getElementById(
-'mRamo'
-).textContent=ramo;
+ title.textContent=ramo;
 
-const box=
-document.getElementById(
-'ramoProducts'
-);
+ products.innerHTML=(productCatalogs[ramo]||[]).map(p=>
+  `<div class="product">${escapeHtml(p)}</div>`
+ ).join('');
 
-const arr=
-PRODUCTS[ramo]||[];
+ modal.classList.add('show');
 
-box.innerHTML=
-arr.map(
-(p,i)=>`
-
-<div class="product">
-
-<input
-value="${escapeHtml(p)}"
-onchange="changeProduct('${escapeJs(ramo)}',${i},this.value)"
-style="
-width:100%;
-background:transparent;
-border:0;
-color:#fff;
-outline:none
-"
->
-
-</div>
-
-`
-).join('');
-
-document.getElementById(
-'ramoModal'
-).classList.add('show');
-
+ if(window.renderAudioRamoV3){
+  window.renderAudioRamoV3(ramo);
+ }
 }
 
 function closeRamo(){
-
-document.getElementById(
-'ramoModal'
-).classList.remove('show');
-
+ document.getElementById('ramoModal').classList.remove('show');
 }
-
-/* =========================================================
-   PRODUTOS DO RAMO
-========================================================= */
-
-function changeProduct(
-ramo,
-index,
-value
-){
-
-PRODUCTS[ramo][index]=
-value.trim()||
-('item '+(index+1));
-
-localStorage.setItem(
-'capivara_products_v39',
-JSON.stringify(PRODUCTS)
-);
-
-renderPlayer();
-
-}
-
-/* =========================================================
-   CARREGAR PRODUTOS SALVOS
-========================================================= */
-
-function loadSavedProducts(){
-
-try{
-
-const saved=
-JSON.parse(
-localStorage.getItem(
-'capivara_products_v39'
-)||'{}'
-);
-
-Object.keys(saved)
-.forEach(r=>{
-
-if(
-Array.isArray(saved[r])
-){
-PRODUCTS[r]=saved[r];
-}
-
-});
-
-}catch(e){}
-
-}
-
-/* =========================================================
-   CRIAR RAMO
-========================================================= */
 
 function addRamo(){
-
-const name=
-prompt(
-'Nome do novo ramo:'
-);
-
-if(!name)return;
-
-const clean=name.trim();
-
-if(!clean)return;
-
-if(
-RAMOS.some(
-r=>r.toLowerCase()===
-clean.toLowerCase()
-)
-){
-
-alert(
-'Esse ramo já existe.'
-);
-
-return;
-
+ if(window.openNewRamoV12){
+  openNewRamoV12();
+ }else{
+  alert('Cadastro de novo ramo ainda não carregou.');
+ }
 }
 
-RAMOS.push(clean);
+function escapeHtml(s){
+ return String(s??'')
+  .replaceAll('&','&amp;')
+  .replaceAll('<','&lt;')
+  .replaceAll('>','&gt;')
+  .replaceAll('"','&quot;')
+  .replaceAll("'","&#039;");
+}
 
-PRODUCTS[clean]=
-Array.from(
-{length:15},
-(_,i)=>
-'item '+(i+1)
-);
+function escapeAttr(s){
+ return escapeHtml(s);
+}
+
+(function(){
+ try{
+  const c=JSON.parse(localStorage.getItem('capivara_admin_config')||'{}');
+
+  if(document.getElementById('defaultAdsPerBlock'))
+   document.getElementById('defaultAdsPerBlock').value=c.defaultAdsPerBlock||3;
+
+  if(document.getElementById('dailyLimit'))
+   document.getElementById('dailyLimit').value=c.dailyLimit||15;
+
+  if(document.getElementById('weeklyLimit'))
+   document.getElementById('weeklyLimit').value=c.weeklyLimit||75;
+
+  if(document.getElementById('topDailyLimit'))
+   document.getElementById('topDailyLimit').value=(c.topDailyLimit??1);
+ }catch(e){}
+})();
 
 renderRamos();
-fillRamoSelect();
-updateMetrics();
+renderClients();
+</script>
 
-}
+<div class="audio-manager" id="audioManagerV3">
+ <h3 id="audioRamoTitleV5">🎧 Áudios do Ramo</h3>
+ <div class="hint">
+  4 vinhetas próprias deste ramo. Escreva o texto, escolha a voz e gere quando a API estiver configurada.
+ </div>
+ <div id="audioSlotsV3"></div>
+</div>
 
-/* =========================================================
-   ESCAPES
-========================================================= */
+<script>
+(function(){
 
-function escapeHtml(v){
-
-return String(v??'')
-.replace(/&/g,'&amp;')
-.replace(/</g,'&lt;')
-.replace(/>/g,'&gt;')
-.replace(/"/g,'&quot;')
-.replace(/'/g,'&#039;');
-
-}
-
-function escapeJs(v){
-
-return String(v??'')
-.replace(/\\/g,'\\\\')
-.replace(/'/g,"\\'");
-
-}
-
-/* =========================================================
-   APIs
-========================================================= */
-
-const API_KEY_STORAGE =
-'capivara_api_settings_v39';
-
-function loadApiSettings(){
-
-try{
-
-const d=
-JSON.parse(
-localStorage.getItem(
-API_KEY_STORAGE
-)||'{}'
-);
-
-document.getElementById(
-'geminiKey'
-).value=d.geminiKey||'';
-
-document.getElementById(
-'geminiModel'
-).value=
-d.geminiModel||
-'gemini-2.5-flash';
-
-document.getElementById(
-'elevenKey'
-).value=d.elevenKey||'';
-
-document.getElementById(
-'voiceMale'
-).value=d.voiceMale||'';
-
-document.getElementById(
-'voiceFemale'
-).value=d.voiceFemale||'';
-
-}catch(e){}
-
-}
-
-/* =========================================================
-   SALVAR / TESTAR APIs
-========================================================= */
-
-async function saveAndTestApis(){
-
-const d={
-
-geminiKey:
-document.getElementById(
-'geminiKey'
-).value.trim(),
-
-geminiModel:
-document.getElementById(
-'geminiModel'
-).value.trim(),
-
-elevenKey:
-document.getElementById(
-'elevenKey'
-).value.trim(),
-
-voiceMale:
-document.getElementById(
-'voiceMale'
-).value.trim(),
-
-voiceFemale:
-document.getElementById(
-'voiceFemale'
-).value.trim()
-
+window.DEFAULT_PHRASES_V4={
+"Açougue":[
+"Prepare-se: vem aí uma seleção de ofertas fresquinhas para deixar sua compra ainda melhor!",
+"Obrigado pela atenção. Aproveite nossas ofertas e leve mais sabor e qualidade para sua mesa!",
+"Atenção! Chegou o TOP do Dia: uma oferta especial do açougue que merece sua atenção!",
+"Esse foi o TOP do Dia. Aproveite enquanto é tempo e continue curtindo nossa programação!"
+],
+"Supermercado":[
+"Atenção às ofertas! Preparamos oportunidades especiais para você economizar e encher o carrinho!",
+"Ofertas anunciadas! Continue aproveitando sua compra e fique ligado nas próximas oportunidades!",
+"Atenção! É hora do TOP do Dia: uma oferta especial para fazer valer ainda mais a sua compra!",
+"Esse foi o TOP do Dia. Aproveite a oportunidade e continue com a gente!"
+],
+"Farmácia":[
+"Fique atento: selecionamos ofertas especiais para cuidar de você e da sua família com mais economia!",
+"Obrigado pela atenção. Aproveite nossas ofertas e conte sempre com praticidade e cuidado!",
+"Atenção! Chegou o TOP do Dia: uma oportunidade especial selecionada para você!",
+"Esse foi o TOP do Dia. Aproveite a condição especial e continue acompanhando nossa programação!"
+],
+"Padaria":[
+"Tem coisa boa chegando! Confira agora ofertas especiais, fresquinhas e cheias de sabor!",
+"Gostou das ofertas? Aproveite, escolha seus favoritos e continue curtindo nossa programação!",
+"Atenção! Saiu quentinho o TOP do Dia: uma oferta especial que você não vai querer perder!",
+"Esse foi o TOP do Dia. Aproveite essa delícia e continue com a gente!"
+],
+"Hortifruti":[
+"Frescor e economia chegando! Confira agora as ofertas selecionadas do nosso hortifruti!",
+"Ofertas anunciadas! Aproveite para levar mais cor, sabor e frescor para sua casa!",
+"Atenção! Chegou o TOP do Dia: uma oportunidade fresquinha e especial para você aproveitar!",
+"Esse foi o TOP do Dia. Aproveite enquanto está fresquinho e continue nossa programação!"
+],
+"Pet Shop":[
+"Atenção, apaixonados por pets! Vêm aí ofertas especiais para cuidar ainda melhor do seu companheiro!",
+"Essas foram nossas ofertas. Aproveite para mimar seu pet e continue curtindo nossa programação!",
+"Atenção! Chegou o TOP do Dia: uma oferta especial para quem cuida do pet com carinho!",
+"Esse foi o TOP do Dia. Seu pet agradece, e nossa programação continua!"
+],
+"Pizzaria":[
+"Prepare o apetite! Vêm aí ofertas especiais para deixar seu momento ainda mais saboroso!",
+"Essas foram nossas ofertas. Escolha sua favorita, aproveite e bom apetite!",
+"Atenção! Chegou o TOP do Dia: uma oferta especial de dar água na boca!",
+"Esse foi o TOP do Dia. Aproveite a oportunidade e continue curtindo nossa programação!"
+],
+"Lanchonete":[
+"Bateu a fome? Então fique ligado nas ofertas especiais que preparamos para você!",
+"Essas foram nossas ofertas. Escolha seu lanche, aproveite e continue com a gente!",
+"Atenção! Chegou o TOP do Dia: uma oferta especial para matar a fome com muito sabor!",
+"Esse foi o TOP do Dia. Aproveite e continue curtindo nossa programação!"
+],
+"Restaurante":[
+"Abra o apetite! Confira agora nossas ofertas e sugestões especiais para uma refeição ainda melhor!",
+"Essas foram nossas ofertas. Aproveite, saboreie e tenha uma excelente refeição!",
+"Atenção! Chegou o TOP do Dia: uma escolha especial para deixar sua refeição ainda mais gostosa!",
+"Esse foi o TOP do Dia. Aproveite a oportunidade e bom apetite!"
+],
+"Hotel / Pousada":[
+"Seu conforto merece atenção especial. Confira agora nossas opções e condições selecionadas para sua estadia!",
+"Obrigado pela atenção. Aproveite nossas opções e tenha uma experiência ainda mais agradável!",
+"Atenção! Chegou o TOP do Dia: uma condição especial para tornar sua estadia ainda melhor!",
+"Esse foi o TOP do Dia. Aproveite a oportunidade e desfrute cada momento da sua estadia!"
+],
+"Roupas":[
+"Seu próximo look pode estar aqui! Confira agora as ofertas e novidades selecionadas para você!",
+"Essas foram nossas ofertas. Aproveite para renovar o visual e continue curtindo nossa programação!",
+"Atenção! Chegou o TOP do Dia: uma oportunidade especial para renovar seu estilo!",
+"Esse foi o TOP do Dia. Aproveite a oportunidade e continue com a gente!"
+],
+"Calçados":[
+"Estilo e conforto vêm aí! Confira agora as ofertas especiais selecionadas para você!",
+"Essas foram nossas ofertas. Escolha seu par favorito e continue curtindo nossa programação!",
+"Atenção! Chegou o TOP do Dia: uma oportunidade especial para você sair de calçado novo!",
+"Esse foi o TOP do Dia. Aproveite e siga com a gente!"
+],
+"Material de Construção":[
+"Vai construir ou reformar? Fique atento às ofertas especiais que preparamos para sua obra!",
+"Essas foram nossas ofertas. Aproveite para economizar na obra e continue com a gente!",
+"Atenção! Chegou o TOP do Dia: uma oferta especial para sua construção ou reforma!",
+"Esse foi o TOP do Dia. Aproveite a oportunidade e faça sua obra render mais!"
+],
+"Autopeças":[
+"Seu carro merece atenção! Confira agora ofertas especiais em peças e acessórios!",
+"Essas foram nossas ofertas. Aproveite, cuide do seu veículo e continue com a gente!",
+"Atenção! Chegou o TOP do Dia: uma oferta especial para cuidar do seu carro e do seu bolso!",
+"Esse foi o TOP do Dia. Aproveite a oportunidade e siga tranquilo!"
+],
+"Oficina / Auto Center":[
+"Hora de cuidar do seu veículo! Confira agora condições especiais em serviços para seu carro!",
+"Essas foram nossas condições especiais. Aproveite e mantenha seu veículo sempre em dia!",
+"Atenção! Chegou o TOP do Dia: uma condição especial para deixar seu carro em dia!",
+"Esse foi o TOP do Dia. Aproveite a oportunidade e boa viagem!"
+],
+"Posto / Conveniência":[
+"Enquanto você abastece, aproveite! Confira agora ofertas e oportunidades especiais para sua parada!",
+"Essas foram nossas ofertas. Aproveite sua parada e siga viagem com a gente!",
+"Atenção! Chegou o TOP do Dia: uma oportunidade especial para aproveitar agora!",
+"Esse foi o TOP do Dia. Aproveite e tenha uma ótima viagem!"
+],
+"Cosméticos / Perfumaria":[
+"Beleza, cuidado e boas oportunidades! Confira agora nossas ofertas especiais!",
+"Essas foram nossas ofertas. Aproveite para se cuidar e continue curtindo nossa programação!",
+"Atenção! Chegou o TOP do Dia: uma oferta especial para realçar ainda mais sua beleza!",
+"Esse foi o TOP do Dia. Aproveite essa oportunidade e continue com a gente!"
+],
+"Ótica":[
+"Seu estilo merece um novo olhar! Confira agora ofertas e condições especiais da nossa ótica!",
+"Essas foram nossas ofertas. Aproveite para renovar seu visual e continue com a gente!",
+"Atenção! Chegou o TOP do Dia: uma condição especial que merece o seu olhar!",
+"Esse foi o TOP do Dia. Aproveite a oportunidade e continue nossa programação!"
+],
+"Papelaria":[
+"Organização, estudo e criatividade com economia! Confira agora nossas ofertas especiais!",
+"Essas foram nossas ofertas. Aproveite para completar sua lista e continue com a gente!",
+"Atenção! Chegou o TOP do Dia: uma oferta especial para sua lista ficar ainda melhor!",
+"Esse foi o TOP do Dia. Aproveite a oportunidade e continue nossa programação!"
+],
+"Móveis / Eletro":[
+"Sua casa pode ficar ainda melhor! Confira agora ofertas especiais em móveis e eletros!",
+"Essas foram nossas ofertas. Aproveite para renovar sua casa e continue com a gente!",
+"Atenção! Chegou o TOP do Dia: uma oportunidade especial para transformar sua casa!",
+"Esse foi o TOP do Dia. Aproveite a oportunidade e continue curtindo nossa programação!"
+],
+"Agropecuária / Rações":[
+"Quem cuida bem do campo e dos animais aproveita boas oportunidades. Confira nossas ofertas especiais!",
+"Essas foram nossas ofertas. Aproveite, cuide bem do que é seu e continue com a gente!",
+"Atenção! Chegou o TOP do Dia: uma oferta especial para o campo, os animais e o seu bolso!",
+"Esse foi o TOP do Dia. Aproveite a oportunidade e continue nossa programação!"
+],
+"Distribuidora de Bebidas":[
+"Vai gelar? Então fique ligado! Confira agora ofertas especiais para abastecer sua casa, festa ou evento!",
+"Essas foram nossas ofertas. Aproveite, garanta suas bebidas e continue com a gente!",
+"Atenção! Chegou o TOP do Dia: uma oferta especial para você aproveitar bem gelada!",
+"Esse foi o TOP do Dia. Aproveite a oportunidade e continue curtindo nossa programação!"
+],
+"Utilidades / Variedades":[
+"Tem novidade e economia chegando! Confira agora ofertas especiais para facilitar o seu dia a dia!",
+"Essas foram nossas ofertas. Aproveite para encontrar o que precisa e continue com a gente!",
+"Atenção! Chegou o TOP do Dia: uma oportunidade especial entre nossas variedades!",
+"Esse foi o TOP do Dia. Aproveite a oportunidade e continue nossa programação!"
+]
 };
 
-localStorage.setItem(
-API_KEY_STORAGE,
-JSON.stringify(d)
-);
-
-const box=
-document.getElementById(
-'apiStatus'
-);
-
-box.style.display='block';
-
-box.textContent=
-'Configurações salvas. Testando...';
-
-const results=[];
-
-/* GEMINI */
-
-if(d.geminiKey){
-
-try{
-
-const r=
-await fetch(
-'https://generativelanguage.googleapis.com/v1beta/models?key='+
-encodeURIComponent(
-d.geminiKey
-)
-);
-
-if(r.ok){
-
-results.push(
-'Gemini OK'
-);
-
-}else{
-
-results.push(
-'Gemini erro '+r.status
-);
-
-}
-
-}catch(e){
-
-results.push(
-'Gemini sem conexão'
-);
-
-}
-
-}else{
-
-results.push(
-'Gemini sem chave'
-);
-
-}
-
-/* ELEVENLABS */
-
-if(d.elevenKey){
-
-try{
-
-const r=
-await fetch(
-'https://api.elevenlabs.io/v1/user',
-{
-headers:{
-'xi-api-key':
-d.elevenKey
-}
-}
-);
-
-if(r.ok){
-
-results.push(
-'ElevenLabs OK'
-);
-
-}else{
-
-results.push(
-'ElevenLabs erro '+r.status
-);
-
-}
-
-}catch(e){
-
-results.push(
-'ElevenLabs sem conexão'
-);
-
-}
-
-}else{
-
-results.push(
-'ElevenLabs sem chave'
-);
-
-}
-
-box.textContent=
-results.join(' • ');
-
-}
-
-/* =========================================================
-   ELEVENLABS
-========================================================= */
-
-window.generateElevenLabsAudio=
-async function(
-text,
-voice,
-ramo,
-categoria
-){
-
-const settings=
-JSON.parse(
-localStorage.getItem(
-API_KEY_STORAGE
-)||'{}'
-);
-
-const apiKey=
-settings.elevenKey||'';
-
-const voiceId=
-voice==='female'
-?
-settings.voiceFemale
-:
-settings.voiceMale;
-
-if(!apiKey){
-
-throw new Error(
-'Chave ElevenLabs não configurada.'
-);
-
-}
-
-if(!voiceId){
-
-throw new Error(
-voice==='female'
-?
-'ID da voz feminina não configurado.'
-:
-'ID da voz masculina não configurado.'
-);
-
-}
-
-const r=
-await fetch(
-'https://api.elevenlabs.io/v1/text-to-speech/'+
-encodeURIComponent(
-voiceId
-),
-{
-method:'POST',
-
-headers:{
-'xi-api-key':apiKey,
-'Content-Type':
-'application/json',
-'Accept':'audio/mpeg'
-},
-
-body:JSON.stringify({
-
-text:text,
-
-model_id:
-'eleven_multilingual_v2',
-
-voice_settings:{
-stability:0.45,
-similarity_boost:0.8,
-style:0.35,
-use_speaker_boost:true
-}
-
-})
-
-}
-);
-
-if(!r.ok){
-
-let msg='';
-
-try{
-
-msg=
-await r.text();
-
-}catch(e){}
-
-throw new Error(
-'ElevenLabs erro '+
-r.status+
-(msg?' — '+msg:'')
-);
-
-}
-
-return await r.blob();
-
-};
-
-/* =========================================================
-   ACERVO
-========================================================= */
-
-const MUSIC_KEY=
-'capivara_music_v39';
-
-const BG_KEY=
-'capivara_background_v39';
-
-let musics=[];
-
-let backgrounds=[];
-
-const THEMES=[
-'Jazz',
-'Sertanejo',
-'MPB',
-'Flashback',
-'Dance',
-'Moderno',
-'Antigo',
-'Pop',
-'Instrumental',
-'Variado'
+const SLOT_DEFS=[
+ ['offerOpen','Vinheta de Entrada','male'],
+ ['offerClose','Vinheta de Saída','female'],
+ ['topOpen','TOP — entrada','male'],
+ ['topClose','TOP — saída','female']
 ];
 
-function loadAcervo(){
+const K='capivara_audio_ramos_v3';
+const BG='capivara_bg_playlist_v3';
 
-try{
+const load=()=>{
+ try{
+  return JSON.parse(localStorage.getItem(K)||'{}');
+ }catch(e){
+  return {};
+ }
+};
 
-musics=
-JSON.parse(
-localStorage.getItem(
-MUSIC_KEY
-)||'[]'
-);
+const save=o=>localStorage.setItem(K,JSON.stringify(o));
 
-}catch(e){
-musics=[];
+let currentRamoV3='Açougue';
+
+function detectRamo(){
+ const e=document.getElementById('mRamo');
+ if(e&&e.textContent.trim())currentRamoV3=e.textContent.trim();
+ return currentRamoV3;
 }
 
-try{
+function renderSlots(){
+ const box=document.getElementById('audioSlotsV3');
+ if(!box)return;
+   function renderSlots(){
+   const box=document.getElementById('audioSlotsV3'); if(!box)return;
+   const ramo=detectRamo(), all=load(); all[ramo]=all[ramo]||{};
+   SLOT_DEFS.forEach((slot,i)=>{ const [id,,voice]=slot; if(!all[ramo][id]) all[ramo][id]={text:((DEFAULT_PHRASES_V4[ramo]||[])[i]||''),voice:voice,audioName:''}; });
+   save(all);
+   box.innerHTML='';
+   SLOT_DEFS.forEach(([id,label,voice])=>{
+     const defaultIndex=SLOT_DEFS.findIndex(x=>x[0]===id);
+     const d=all[ramo][id]||{text:((DEFAULT_PHRASES_V4[ramo]||[])[defaultIndex]||''),voice:voice,audioName:''};
+     const row=document.createElement('div');
+     row.className='audio-slot';
+     row.innerHTML=`
+       <b>${label}</b>
+       <input data-text="${id}" placeholder="Texto da vinheta" value="${(d.text||'').replace(/"/g,'&quot;')}">
+       <select data-voice="${id}">
+         <option value="male" ${d.voice==='male'?'selected':''}>👨 Homem</option>
+         <option value="female" ${d.voice==='female'?'selected':''}>👩 Mulher</option>
+       </select>
+       <div class="audio-actions">
+         <button type="button" data-gen="${id}">✨ Gerar áudio</button>
+         <label class="btn" style="cursor:pointer">🔄 Trocar<input data-file="${id}" type="file" accept="audio/*" hidden></label>
+         <button type="button" data-clear="${id}">🗑 Limpar</button>
+       </div>`;
+     if(d.audioName){
+       const note=document.createElement('div');
+       note.className='hint';
+       note.style.gridColumn='1/-1';
+       note.textContent='Áudio selecionado: '+d.audioName+' (arquivo local precisa ser selecionado novamente após recarregar a página).';
+       row.appendChild(note);
+     }
+     box.appendChild(row);
+   });
+ }
 
-backgrounds=
-JSON.parse(
-localStorage.getItem(
-BG_KEY
-)||'[]'
-);
+ function persistField(id,field,value){
+   const ramo=detectRamo(), all=load();
+   all[ramo]=all[ramo]||{};
+   all[ramo][id]=all[ramo][id]||{};
+   all[ramo][id][field]=value;
+   save(all);
+ }
 
-}catch(e){
-backgrounds=[];
-}
+ document.addEventListener('input',e=>{
+   if(e.target.dataset.text)
+     persistField(e.target.dataset.text,'text',e.target.value);
+ });
 
-if(!Array.isArray(musics)){
-musics=[];
-}
+ document.addEventListener('change',e=>{
+   if(e.target.dataset.voice)
+     persistField(e.target.dataset.voice,'voice',e.target.value);
 
-if(!Array.isArray(backgrounds)){
-backgrounds=[];
-}
+   if(e.target.dataset.file && e.target.files[0]){
+      const id=e.target.dataset.file, f=e.target.files[0];
+      persistField(id,'audioName',f.name);
+      const row=e.target.closest('.audio-slot');
+      let a=row.querySelector('audio');
+      if(!a){
+        a=document.createElement('audio');
+        a.controls=true;
+        a.style.gridColumn='1/-1';
+        row.appendChild(a);
+      }
+      a.src=URL.createObjectURL(f);
+      renderBgInfo();
+   }
 
-renderThemeSelectors();
-renderAcervoV9();
-renderBackgroundsV9();
-updateAcervoMetrics();
+   if(e.target.id==='bgFilesV3'){
+      const names=[...e.target.files].map(f=>f.name);
+      localStorage.setItem(BG,JSON.stringify(names));
+      renderBgInfo();
+   }
+ });
 
-}
+ document.addEventListener('click',e=>{
+   const gen=e.target.dataset.gen, clear=e.target.dataset.clear;
 
+   if(gen){
+      const ramo=detectRamo(), all=load(), d=((all[ramo]||{})[gen]||{});
+
+      if(!d.text){
+        alert('Escreva o texto da vinheta primeiro.');
+        return;
+      }
+
+      if(typeof window.generateElevenLabsAudio==='function'){
+         window.generateElevenLabsAudio(d.text,d.voice,ramo,gen).then(blob=>{
+           const row=e.target.closest('.v3row,.slot,.card')||e.target.parentElement;
+           let a=row.querySelector('audio');
+           if(!a){
+             a=document.createElement('audio');
+             a.controls=true;
+             row.appendChild(a);
+           }
+           a.src=URL.createObjectURL(blob);
+           a.play();
+           e.target.textContent='✅ ÁUDIO PRONTO';
+         }).catch(err=>{
+           const msg=String(err&&err.message||err);
+           try{navigator.clipboard.writeText(msg)}catch(_){}
+           alert(msg+'\n\nErro pronto para copiar.');
+         });
+      }else{
+         alert('Vinheta preparada. O gerador de voz será acionado aqui quando a API ElevenLabs estiver conectada no ADM.');
+      }
+   }
+
+   if(clear){
+      const ramo=detectRamo(), all=load();
+      all[ramo]=all[ramo]||{};
+      delete all[ramo][clear];
+      save(all);
+      renderSlots();
+   }
+ });
+
+ function renderBgInfo(){
+   const e=document.getElementById('bgListV3');
+   if(!e)return;
+
+   let n=[];
+   try{
+     n=JSON.parse(localStorage.getItem(BG)||'[]');
+   }catch(_){}
+
+   e.textContent=n.length
+     ?('Faixas cadastradas: '+n.join(' • '))
+     :'Nenhuma faixa de fundo selecionada.';
+ }
+
+ const observer=new MutationObserver(()=>{
+   detectRamo();
+   renderSlots();
+ });
+
+ const mr=document.getElementById('mRamo');
+ if(mr)observer.observe(mr,{
+   childList:true,
+   subtree:true,
+   characterData:true
+ });
+
+ renderSlots();
+ renderBgInfo();
+})();
+</script>
+
+<div id="acervoExtraV5" style="display:none">
+ <div class="global-box">
+  <h3>🎙️ Playlist de Fundo Geral</h3>
+  <div class="hint">
+   Músicas instrumentais usadas baixinho atrás das locuções. Esta playlist é geral para todos os ramos.
+  </div>
+  <input id="bgFilesV3" type="file" accept="audio/*" multiple>
+  <div id="bgListV3" class="hint"></div>
+ </div>
+
+ <div class="global-box">
+  <h3>🎵 Playlists da Rádio</h3>
+  <div class="hint">
+   Cadastre várias playlists. Depois, em cada ramo, escolha quais playlists ficam disponíveis para os clientes daquele ramo.
+  </div>
+ </div>
+</div>
+
+<script>
 /* =========================================================
-   TEMAS
+   VINHETAS POR RAMO
 ========================================================= */
 
-function renderThemeSelectors(){
-
-const upload=
-document.getElementById(
-'uploadThemeV11'
-);
-
-const filter=
-document.getElementById(
-'musicThemeFilterV11'
-);
-
-if(upload){
-
-upload.innerHTML=
-THEMES.map(t=>
-`<option>${t}</option>`
-).join('');
-
-}
-
-if(filter){
-
-const old=
-filter.value;
-
-filter.innerHTML=
-'<option value="">Todos os temas</option>'+
-THEMES.map(t=>
-`<option>${t}</option>`
-).join('');
-
-filter.value=old;
-
-}
-
-const cards=
-document.getElementById(
-'themeCardsV11'
-);
-
-if(cards){
-
-cards.innerHTML=
-THEMES.map(t=>{
-
-const count=
-musics.filter(
-m=>m.theme===t
-).length;
-
-return `
-
-<button
-class="theme-card-v11"
-onclick="filterThemeV11('${escapeJs(t)}')"
->
-
-<b>${escapeHtml(t)}</b>
-
-<span>
-${count} música${count===1?'':'s'}
-</span>
-
-</button>
-
-`;
-
-}).join('');
-
-}
-
-}
-
-/* =========================================================
-   FILTRAR TEMA
-========================================================= */
-
-function filterThemeV11(theme){
-
-const filter=
-document.getElementById(
-'musicThemeFilterV11'
-);
-
-if(filter){
-filter.value=theme;
-}
-
-renderAcervoV9();
-
-}
-
-/* =========================================================
-   ADICIONAR MÚSICAS
-========================================================= */
-
-function addMusicV9(files){
-
-const theme=
-document.getElementById(
-'uploadThemeV11'
-)?.value||
-'Variado';
-
-Array.from(files||[])
-.forEach(file=>{
-
-musics.push({
-
-id:
-'music_'+
-Date.now()+
-'_'+
-Math.random()
-.toString(36)
-.slice(2,8),
-
-name:file.name,
-
-theme:theme,
-
-size:file.size||0
-
-});
-
-});
-
-localStorage.setItem(
-MUSIC_KEY,
-JSON.stringify(musics)
-);
-
-renderThemeSelectors();
-renderAcervoV9();
-updateAcervoMetrics();
-
-}
-
-/* =========================================================
-   RENDER MÚSICAS
-========================================================= */
-
-function renderAcervoV9(){
-
-const host=
-document.getElementById(
-'musicListV9'
-);
-
-if(!host)return;
-
-const search=
-(
-document.getElementById(
-'musicSearchV9'
-)?.value||''
-)
-.toLowerCase();
-
-const theme=
-document.getElementById(
-'musicThemeFilterV11'
-)?.value||'';
-
-const list=
-musics.filter(m=>{
-
-if(
-search &&
-!String(m.name||'')
-.toLowerCase()
-.includes(search)
-){
-return false;
-}
-
-if(
-theme &&
-m.theme!==theme
-){
-return false;
-}
-
-return true;
-
-});
-
-if(!list.length){
-
-host.innerHTML=
-`
-<div class="ac-empty-v9">
-Nenhuma música cadastrada.
-</div>
-`;
-
-return;
-
-}
-
-host.innerHTML=
-list.map((m,i)=>`
-
-<div class="ac-row-v9">
-
-<div>🎵</div>
-
-<div>
-
-<div class="ac-name-v9">
-${escapeHtml(m.name)}
-</div>
-
-<div class="ac-meta-v9">
-${escapeHtml(m.theme||'Variado')}
-</div>
-
-</div>
-
-<div class="ac-actions-v9">
-
-<button
-class="btn danger"
-onclick="deleteMusicV9('${m.id}')"
->
-Excluir
-</button>
-
-</div>
-
-</div>
-
-`).join('');
-
-}
-
-/* =========================================================
-   EXCLUIR MÚSICA
-========================================================= */
-
-function deleteMusicV9(id){
-
-if(
-!confirm(
-'Excluir esta música do acervo?'
-)
-){
-return;
-}
-
-musics=
-musics.filter(
-m=>m.id!==id
-);
-
-localStorage.setItem(
-MUSIC_KEY,
-JSON.stringify(musics)
-);
-
-renderThemeSelectors();
-renderAcervoV9();
-updateAcervoMetrics();
-
-}
-
-/* =========================================================
-   FUNDOS
-========================================================= */
-
-function addBackgroundV9(files){
-
-Array.from(files||[])
-.forEach(file=>{
-
-backgrounds.push({
-
-id:
-'bg_'+
-Date.now()+
-'_'+
-Math.random()
-.toString(36)
-.slice(2,8),
-
-name:file.name,
-
-size:file.size||0
-
-});
-
-});
-
-localStorage.setItem(
-BG_KEY,
-JSON.stringify(backgrounds)
-);
-
-renderBackgroundsV9();
-updateAcervoMetrics();
-
-}
-
-function renderBackgroundsV9(){
-
-const host=
-document.getElementById(
-'backgroundListV9'
-);
-
-if(!host)return;
-
-if(!backgrounds.length){
-
-host.innerHTML=
-`
-<div class="ac-empty-v9">
-Nenhum fundo de locução cadastrado.
-</div>
-`;
-
-return;
-
-}
-
-host.innerHTML=
-backgrounds.map(b=>`
-
-<div class="ac-row-v9">
-
-<div>🎙️</div>
-
-<div>
-
-<div class="ac-name-v9">
-${escapeHtml(b.name)}
-</div>
-
-<div class="ac-meta-v9">
-Fundo de locução
-</div>
-
-</div>
-
-<div class="ac-actions-v9">
-
-<button
-class="btn danger"
-onclick="deleteBackgroundV9('${b.id}')"
->
-Excluir
-</button>
-
-</div>
-
-</div>
-
-`).join('');
-
-}
-
-function deleteBackgroundV9(id){
-
-if(
-!confirm(
-'Excluir este fundo?'
-)
-){
-return;
-}
-
-backgrounds=
-backgrounds.filter(
-b=>b.id!==id
-);
-
-localStorage.setItem(
-BG_KEY,
-JSON.stringify(backgrounds)
-);
-
-renderBackgroundsV9();
-updateAcervoMetrics();
-
-}
-
-/* =========================================================
-   ABAS ACERVO
-========================================================= */
-
-function showAcTabV9(tab){
-
-const music=
-document.getElementById(
-'acMusicV9'
-);
-
-const bg=
-document.getElementById(
-'acBackgroundsV9'
-);
-
-if(tab==='backgrounds'){
-
-music.style.display='none';
-bg.style.display='block';
-
-}else{
-
-music.style.display='block';
-bg.style.display='none';
-
-}
-
-}
-
-/* =========================================================
-   CONTADORES ACERVO
-========================================================= */
-
-function updateAcervoMetrics(){
-
-const a=
-document.getElementById(
-'musicCountV9'
-);
-
-const b=
-document.getElementById(
-'playlistCountV9'
-);
-
-const c=
-document.getElementById(
-'bgCountV9'
-);
-
-if(a)a.textContent=
-musics.length;
-
-if(b)b.textContent=
-THEMES.length;
-
-if(c)c.textContent=
-backgrounds.length;
-
-}
-
-/* =========================================================
-   INICIALIZAÇÃO
-========================================================= */
-
-document.addEventListener(
-'DOMContentLoaded',
-()=>{
-
-loadSavedProducts();
-
-fillRamoSelect();
-
-loadClients();
-
-renderRamos();
-
-loadApiSettings();
-
-loadAcervo();
-
-}
-);
-
+window.DEFAULT_VIGNETTES_V8={};
+
+(function(){
+ const KEY='capivara_vignettes_v8';
+ const DB='CapivaraVignettesV8';
+
+ const CATS=[
+   ['offerOpen','Vinheta de Entrada','male','👨'],
+   ['offerClose','Vinheta de Saída','female','👩'],
+   ['topOpen','🔥 TOP — entrada','male','👨'],
+   ['topClose','🔥 TOP — saída','female','👩']
+ ];
+
+ let currentRamo='Açougue';
+
+ function load(){
+   try{
+     return JSON.parse(localStorage.getItem(KEY)||'{}');
+   }catch(e){
+     return {};
+   }
+ }
+
+ function save(v){
+   localStorage.setItem(KEY,JSON.stringify(v));
+ }
+
+ function ensure(ramo){
+   const all=load();
+   all[ramo]=all[ramo]||{};
+
+   CATS.forEach(([cat,label,voice])=>{
+     if(!Array.isArray(all[ramo][cat]))
+       all[ramo][cat]=[];
+   });
+
+   save(all);
+   return all;
+ }
+
+ function db(){
+   return new Promise((ok,no)=>{
+     const r=indexedDB.open(DB,1);
+     r.onupgradeneeded=()=>{
+       if(!r.result.objectStoreNames.contains('audios'))
+         r.result.createObjectStore('audios');
+     };
+     r.onsuccess=()=>ok(r.result);
+     r.onerror=()=>no(r.error);
+   });
+ }
+
+ async function idbPut(k,v){
+   const d=await db();
+   return new Promise((ok,no)=>{
+     const t=d.transaction('audios','readwrite');
+     t.objectStore('audios').put(v,k);
+     t.oncomplete=ok;
+     t.onerror=()=>no(t.error);
+   });
+ }
+
+ async function idbGet(k){
+   const d=await db();
+   return new Promise((ok,no)=>{
+     const r=d.transaction('audios').objectStore('audios').get(k);
+     r.onsuccess=()=>ok(r.result);
+     r.onerror=()=>no(r.error);
+   });
+ }
+
+ async function idbDel(k){
+   const d=await db();
+   return new Promise((ok,no)=>{
+     const t=d.transaction('audios','readwrite');
+     t.objectStore('audios').delete(k);
+     t.oncomplete=ok;
+     t.onerror=()=>no(t.error);
+   });
+ }
+
+ function productsFor(ramo){
+   return productCatalogs[ramo]||[];
+ }
+
+ function render(){
+   const host=document.getElementById('audioSlotsV3');
+   if(!host)return;
+
+   const all=ensure(currentRamo);
+   host.innerHTML='';
+
+   CATS.forEach(([cat,label,defaultVoice,emoji])=>{
+     const list=all[currentRamo][cat]||[];
+
+     const sec=document.createElement('div');
+     sec.className='vig-section vig-simple-v28';
+
+     const theme=
+       cat==='offerOpen'?'entry':
+       cat==='offerClose'?'exit':
+       cat==='topOpen'?'top-entry':'top-exit';
+
+     sec.dataset.vigTheme=theme;
+
+     sec.innerHTML=`
+       <div class="vig-head">
+        <div class="vig-head-left">
+         <b>${label}</b>
+         <span class="vig-count">${list.length} salva${list.length===1?'':'s'}</span>
+        </div>
+       </div>
+
+       <div class="vig-compose-v28">
+        <textarea id="new_${cat}"
+                  placeholder="Digite a frase da vinheta"></textarea>
+        <button class="btn vig-generate-v28"
+                onclick="createVigV28('${cat}')">
+         ✨ GERAR E SALVAR VINHETA
+        </button>
+       </div>
+
+       <div class="vig-saved-v28">
+        ${
+          list.length
+          ?list.map((v,i)=>`
+           <div class="vig-saved-row-v28">
+            <div class="vig-num">Vinheta ${String(i+1).padStart(2,'0')}</div>
+            <div class="vig-voice-v28">${v.voice==='female'?'👩 Mulher':'👨 Homem'}</div>
+            <div class="vig-text-v28">${escapeHtml(v.text||'')}</div>
+            <button class="btn secondary"
+                    onclick="listenVigV7('${cat}',${i})">
+             ▶ Ouvir
+            </button>
+            <button class="vig-trash-v28"
+                    onclick="deleteVigV28('${cat}',${i})">
+             🗑
+            </button>
+           </div>
+          `).join('')
+          :'<div class="vig-empty">Nenhuma vinheta salva nesta categoria.</div>'
+        }
+       </div>
+     `;
+
+     host.appendChild(sec);
+   });
+ }
+
+ window.createVigV28=async function(cat){
+   const input=document.getElementById('new_'+cat);
+   const text=(input?.value||'').trim();
+
+   if(!text){
+     alert('Digite a frase da vinheta.');
+     return;
+   }
+
+   const all=ensure(currentRamo);
+   const list=all[currentRamo][cat]||[];
+
+   const voice=list.length%2===0?'male':'female';
+
+   let blob=null;
+
+   try{
+     if(typeof window.generateElevenLabsAudio==='function'){
+       blob=await window.generateElevenLabsAudio(
+         text,
+         voice,
+         currentRamo,
+         cat
+       );
+     }
+   }catch(e){
+     alert(String(e?.message||e));
+     return;
+   }
+
+   const item={
+     text,
+     voice,
+     createdAt:new Date().toISOString()
+   };
+
+   if(blob instanceof Blob){
+     const key='vig|'+currentRamo+'|'+cat+'|'+Date.now();
+     await idbPut(key,blob);
+     item.audioKey=key;
+     item.audioName='Vinheta '+String(list.length+1).padStart(2,'0')+'.mp3';
+   }
+
+   list.push(item);
+   all[currentRamo][cat]=list;
+   save(all);
+
+   input.value='';
+   render();
+ };
+
+ window.deleteVigV28=async function(cat,i){
+   const all=ensure(currentRamo);
+   const v=all[currentRamo][cat][i];
+
+   if(v?.audioKey){
+     try{
+       await idbDel(v.audioKey);
+     }catch(_){}
+   }
+
+   all[currentRamo][cat].splice(i,1);
+   save(all);
+   render();
+ };
+
+ window.listenVigV7=async function(cat,i){
+   const all=ensure(currentRamo);
+   const v=all[currentRamo][cat][i];
+
+   if(!v?.audioKey){
+     alert('Esta vinheta ainda não tem áudio.');
+     return;
+   }
+
+   const blob=await idbGet(v.audioKey);
+
+   if(!blob){
+     alert('Áudio não encontrado.');
+     return;
+   }
+
+   const url=URL.createObjectURL(blob);
+   const a=new Audio(url);
+   a.onended=()=>URL.revokeObjectURL(url);
+   a.play();
+ };
+
+ const originalOpenRamo=window.openRamo;
+
+ window.openRamo=function(r){
+   currentRamo=r;
+
+   if(typeof originalOpenRamo==='function'){
+     originalOpenRamo(r);
+   }
+
+   setTimeout(render,0);
+ };
+
+ window.renderVignettesV8=render;
+})();
 </script>
 
 <script>
-
 /* =========================================================
-   VINHETAS V28
+   ACERVO V9
 ========================================================= */
 
 (function(){
+ const META='capivara_acervo_v9';
+ const PLS='capivara_playlists_v9';
+ const BGM='capivara_backgrounds_v9';
 
-const CATS=[
+ const THEMES_V11=[
+  "Jazz & Lounge",
+  "Sertanejo",
+  "MPB & Brasilidades",
+  "Flashback",
+  "Dance & Pop",
+  "Moderno / Hits",
+  "Rock & Clássicos",
+  "Instrumental & Ambiente",
+  "Leve & Relax",
+  "Popular & Animada"
+ ];
 
-[
-'offerOpen',
-'Vinheta de Entrada'
-],
+ const jget=(k,d)=>{
+   try{
+     return JSON.parse(localStorage.getItem(k)||JSON.stringify(d));
+   }catch(e){
+     return d;
+   }
+ };
 
-[
-'offerClose',
-'Vinheta de Saída'
-],
+ const jset=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
 
-[
-'topOpen',
-'🔥 TOP — entrada'
-],
+ const esc9=x=>String(x||'')
+   .replace(/&/g,'&amp;')
+   .replace(/</g,'&lt;')
+   .replace(/"/g,'&quot;');
 
-[
-'topClose',
-'🔥 TOP — saída'
-]
+ const uid9=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 
-];
+ let tab9='music';
+ let playing9=null;
+ let selected9=new Set();
 
-const KEY=
-'capivara_vignettes_v39';
+ function db9(){
+  return new Promise((ok,no)=>{
+   const r=indexedDB.open('CapivaraAcervoV9',1);
 
-let currentRamo='';
+   r.onupgradeneeded=()=>{
+     const d=r.result;
+     if(!d.objectStoreNames.contains('files'))
+       d.createObjectStore('files');
+   };
 
-/* =========================================================
-   STORAGE
-========================================================= */
+   r.onsuccess=()=>ok(r.result);
+   r.onerror=()=>no(r.error);
+  });
+ }
 
-function load(){
+ async function put9(id,blob){
+   const d=await db9();
 
-try{
+   return new Promise((ok,no)=>{
+     const t=d.transaction('files','readwrite');
+     t.objectStore('files').put(blob,id);
+     t.oncomplete=ok;
+     t.onerror=()=>no(t.error);
+   });
+ }
 
-return JSON.parse(
-localStorage.getItem(KEY)||'{}'
-);
+ async function get9(id){
+   const d=await db9();
 
-}catch(e){
+   return new Promise((ok,no)=>{
+     const r=d.transaction('files').objectStore('files').get(id);
+     r.onsuccess=()=>ok(r.result);
+     r.onerror=()=>no(r.error);
+   });
+ }
 
-return {};
+ async function del9(id){
+   const d=await db9();
 
+   return new Promise((ok,no)=>{
+     const t=d.transaction('files','readwrite');
+     t.objectStore('files').delete(id);
+     t.oncomplete=ok;
+     t.onerror=()=>no(t.error);
+   });
+ }
+
+ function size9(n){
+   if(n<1048576)return (n/1024).toFixed(0)+' KB';
+   return (n/1048576).toFixed(1)+' MB';
+ }
+
+ window.showAcTabV9=function(t){
+   tab9=t;
+
+   document.getElementById('acMusicV9').style.display=
+     t==='music'?'block':'none';
+
+   document.getElementById('acPlaylistsV9').style.display=
+     t==='playlists'?'block':'none';
+
+   document.getElementById('acBackgroundsV9').style.display=
+     t==='backgrounds'?'block':'none';
+
+   renderAcervoV9();
+ };
+
+ function initThemesV11(){
+   const sel=document.getElementById('uploadThemeV11');
+
+   if(sel&&!sel.options.length){
+     sel.innerHTML=THEMES_V11.map(t=>`<option>${t}</option>`).join('');
+   }
+ }
+
+ window.addMusicV9=async function(files){
+   let meta=jget(META,[]);
+   const theme=document.getElementById('uploadThemeV11')?.value||THEMES_V11[0];
+
+   for(const f of [...files]){
+     const id=uid9();
+
+     await put9('music:'+id,f);
+
+     meta.push({
+       id,
+       name:f.name.replace(/\.[^.]+$/,''),
+       fileName:f.name,
+       size:f.size,
+       added:new Date().toLocaleDateString('pt-BR'),
+       theme
+     });
+   }
+
+   jset(META,meta);
+
+   const upload=document.getElementById('musicUploadV9');
+   if(upload)upload.value='';
+
+   renderAcervoV9();
+ };
+
+ window.addBackgroundV9=async function(files){
+   let bg=jget(BGM,[]);
+
+   for(const f of [...files]){
+     const id=uid9();
+
+     await put9('bg:'+id,f);
+
+     bg.push({
+       id,
+       name:f.name.replace(/\.[^.]+$/,''),
+       fileName:f.name,
+       size:f.size
+     });
+   }
+
+   jset(BGM,bg);
+   renderAcervoV9();
+ };
+
+ window.playFileV9=async function(kind,id){
+   const blob=await get9(kind+':'+id);
+
+   if(!blob){
+     alert('Arquivo não encontrado neste computador.');
+     return;
+   }
+
+   if(playing9){
+     playing9.pause();
+     playing9=null;
+   }
+
+   const u=URL.createObjectURL(blob);
+
+   playing9=new Audio(u);
+   playing9.onended=()=>URL.revokeObjectURL(u);
+   playing9.play();
+ };
+
+ window.toggleMusicV9=function(id,on){
+   on?selected9.add(id):selected9.delete(id);
+ };
+
+ window.selectAllMusicV9=function(){
+   jget(META,[]).forEach(x=>selected9.add(x.id));
+   renderAcervoV9();
+ };
+
+ window.deleteSelectedMusicV9=async function(){
+   if(!selected9.size){
+     alert('Selecione pelo menos uma música.');
+     return;
+   }
+
+   let pls=jget(PLS,[]);
+   const used=pls.filter(p=>p.musicIds.some(id=>selected9.has(id)));
+
+   if(used.length&&!confirm('Algumas músicas estão em playlists. Excluir mesmo assim?'))
+     return;
+
+   for(const id of selected9)
+     await del9('music:'+id);
+
+   jset(META,jget(META,[]).filter(x=>!selected9.has(x.id)));
+
+   pls.forEach(p=>{
+     p.musicIds=p.musicIds.filter(id=>!selected9.has(id));
+   });
+
+   jset(PLS,pls);
+   selected9.clear();
+   renderAcervoV9();
+ };
+
+ window.deleteMusicV9=async function(id){
+   selected9=new Set([id]);
+   await deleteSelectedMusicV9();
+ };
+
+ window.deleteBgV9=async function(id){
+   if(!confirm('Excluir este fundo de locução?'))return;
+
+   await del9('bg:'+id);
+
+   jset(
+     BGM,
+     jget(BGM,[]).filter(x=>x.id!==id)
+   );
+
+   renderAcervoV9();
+ };
+
+ window.newPlaylistV9=function(){
+   if(typeof openPlaylistV10==='function'){
+     openPlaylistV10(null);
+     return;
+   }
+
+   const name=prompt('Nome da nova playlist:','Nova Playlist');
+
+   if(!name||!name.trim())return;
+
+   const pls=jget(PLS,[]);
+
+   pls.push({
+     id:uid9(),
+     name:name.trim(),
+     destination:'Geral',
+     ramo:'',
+     client:'',
+     musicIds:[],
+     active:true
+   });
+
+   jset(PLS,pls);
+   renderAcervoV9();
+ };
+
+ window.duplicatePlaylistV9=function(id){
+   const pls=jget(PLS,[]);
+   const p=pls.find(x=>x.id===id);
+
+   if(!p)return;
+
+   pls.push({
+     ...p,
+     id:uid9(),
+     name:p.name+' — Cópia',
+     active:false
+   });
+
+   jset(PLS,pls);
+   renderAcervoV9();
+ };
+
+ window.deletePlaylistV9=function(id){
+   if(!confirm('Excluir esta playlist? As músicas continuarão no Acervo.'))
+     return;
+
+   jset(
+     PLS,
+     jget(PLS,[]).filter(x=>x.id!==id)
+   );
+
+   renderAcervoV9();
+ };
+
+ window.togglePlaylistV9=function(id){
+   const pls=jget(PLS,[]);
+   const p=pls.find(x=>x.id===id);
+
+   if(p)p.active=!p.active;
+
+   jset(PLS,pls);
+   renderAcervoV9();
+ };
+
+ window.testPlaylistV9=async function(id){
+   const p=jget(PLS,[]).find(x=>x.id===id);
+
+   if(!p||!p.musicIds.length){
+     alert('Essa playlist ainda não tem músicas.');
+     return;
+   }
+
+   playFileV9('music',p.musicIds[0]);
+ };
+
+ window.renderAcervoV9=function(){
+   const mus=jget(META,[]);
+   const pls=jget(PLS,[]);
+   const bg=jget(BGM,[]);
+
+   const mc=document.getElementById('musicCountV9');
+   if(!mc)return;
+
+   mc.textContent=mus.length;
+
+   const pc=document.getElementById('playlistCountV9');
+   const bc=document.getElementById('bgCountV9');
+
+   if(pc)pc.textContent=THEMES_V11.length;
+   if(bc)bc.textContent=bg.length;
+
+   const q=(document.getElementById('musicSearchV9')?.value||'').toLowerCase();
+   const activeTheme=window.activeThemeV11||'TODOS';
+
+   const filtered=mus.filter(m=>
+     m.name.toLowerCase().includes(q) &&
+     (
+       activeTheme==='TODOS' ||
+       (m.theme||THEMES_V11[0])===activeTheme
+     )
+   );
+
+   const cards=document.getElementById('themeCardsV11');
+
+   if(cards){
+     cards.innerHTML=['TODOS',...THEMES_V11].map(t=>{
+       const n=t==='TODOS'
+         ?mus.length
+         :mus.filter(m=>(m.theme||THEMES_V11[0])===t).length;
+
+       return `
+        <button class="theme-card-v11 ${activeTheme===t?'active':''}"
+                onclick="window.activeThemeV11='${t.replace("'","&#39;")}';renderAcervoV9()">
+         <b>${t==='TODOS'?'🎵 Todo o Acervo':t}</b>
+         <span>${n} música${n===1?'':'s'}</span>
+        </button>
+       `;
+     }).join('');
+   }
+
+   const list=document.getElementById('musicListV9');
+
+   if(list){
+     list.innerHTML=filtered.length
+      ?filtered.map(m=>`
+       <div class="ac-row-v9">
+        <input type="checkbox"
+               ${selected9.has(m.id)?'checked':''}
+               onchange="toggleMusicV9('${m.id}',this.checked)">
+
+        <div>
+         <div class="ac-name-v9">🎵 ${esc9(m.name)}</div>
+         <div class="ac-meta-v9">
+          ${size9(m.size)} • Tema:
+          <b>${esc9(m.theme||THEMES_V11[0])}</b>
+         </div>
+        </div>
+
+        <div class="ac-actions-v9">
+         <select class="theme-select-v11"
+                 onchange="changeMusicThemeV11('${m.id}',this.value)">
+          ${THEMES_V11.map(t=>
+           `<option ${t===(m.theme||THEMES_V11[0])?'selected':''}>${t}</option>`
+          ).join('')}
+         </select>
+
+         <button class="btn secondary"
+                 onclick="playFileV9('music','${m.id}')">
+          ▶ Ouvir
+         </button>
+
+         <button class="btn danger"
+                 onclick="deleteMusicV9('${m.id}')">
+          🗑
+         </button>
+        </div>
+       </div>
+      `).join('')
+      :`<div class="ac-empty-v9">
+         Nenhuma música no acervo.<br>
+         <b>Use “+ ADICIONAR MÚSICAS” para buscar no seu PC.</b>
+        </div>`;
+   }
+
+   const playlistList=document.getElementById('playlistListV9');
+
+   if(playlistList){
+     playlistList.innerHTML=pls.length
+      ?pls.map(p=>{
+        const dest=
+          p.destination==='Ramo'
+           ?'🏪 '+p.ramo
+           :p.destination==='Cliente'
+            ?'👤 '+p.client
+            :'🌐 Geral';
+
+        return `
+         <div class="pl-card-v9">
+          <div class="pl-top-v9">
+           <div>
+            <b style="font-size:17px">📻 ${esc9(p.name)}</b>
+
+            <div class="pl-tags-v9">
+             <span class="badge">${esc9(dest)}</span>
+             <span class="badge">${p.musicIds.length} músicas</span>
+             <span class="badge ${p.active?'':'off'}">
+              ${p.active?'ATIVA':'PAUSADA'}
+             </span>
+            </div>
+           </div>
+
+           <div class="ac-actions-v9">
+            <button class="btn secondary"
+                    onclick="testPlaylistV9('${p.id}')">
+             ▶ Testar
+            </button>
+
+            <button class="btn secondary"
+                    onclick="editPlaylistV9('${p.id}')">
+             ✏ Editar / Direcionar
+            </button>
+
+            <button class="btn secondary"
+                    onclick="duplicatePlaylistV9('${p.id}')">
+             ⧉ Duplicar
+            </button>
+
+            <button class="btn secondary"
+                    onclick="togglePlaylistV9('${p.id}')">
+             ${p.active?'⏸ Pausar':'▶ Ativar'}
+            </button>
+
+            <button class="btn danger"
+                    onclick="deletePlaylistV9('${p.id}')">
+             🗑 Excluir
+            </button>
+           </div>
+          </div>
+         </div>
+        `;
+      }).join('')
+      :`<div class="ac-empty-v9">
+         Nenhuma playlist criada.<br>
+         <b>Clique em “+ CRIAR PLAYLIST”.</b>
+        </div>`;
+   }
+
+   const bgList=document.getElementById('backgroundListV9');
+
+   if(bgList){
+     bgList.innerHTML=bg.length
+      ?bg.map(x=>`
+       <div class="ac-row-v9">
+        <span>🎙️</span>
+
+        <div>
+         <div class="ac-name-v9">${esc9(x.name)}</div>
+         <div class="ac-meta-v9">
+          ${size9(x.size)} • Fundo de locução
+         </div>
+        </div>
+
+        <div class="ac-actions-v9">
+         <button class="btn secondary"
+                 onclick="playFileV9('bg','${x.id}')">
+          ▶ Ouvir
+         </button>
+
+         <button class="btn danger"
+                 onclick="deleteBgV9('${x.id}')">
+          🗑 Excluir
+         </button>
+        </div>
+       </div>
+      `).join('')
+      :`<div class="ac-empty-v9">
+         Nenhum fundo de locução cadastrado.
+        </div>`;
+   }
+ };
+
+ window.changeMusicThemeV11=function(id,theme){
+   const mus=jget(META,[]);
+   const m=mus.find(x=>x.id===id);
+
+   if(m){
+     m.theme=theme;
+     jset(META,mus);
+     renderAcervoV9();
+   }
+ };
+
+ document.addEventListener('DOMContentLoaded',()=>{
+   initThemesV11();
+   renderAcervoV9();
+ });
+
+ setTimeout(()=>{
+   initThemesV11();
+   renderAcervoV9();
+ },100);
+})();
+</script>
+
+<div id="playlistModalV10"
+     class="modal"
+     style="display:none">
+
+ <div class="modalbox" style="max-width:820px">
+
+  <div class="modalhead">
+   <div>
+    <h2 id="plTitleV10">📻 Criar Playlist</h2>
+    <div class="sub">
+     Escolha as músicas do Acervo e onde esta playlist será usada.
+    </div>
+   </div>
+
+   <button class="x" onclick="closePlaylistV10()">×</button>
+  </div>
+
+  <div class="formgrid">
+   <label>
+    Nome da playlist
+    <input id="plNameV10" placeholder="Ex.: Farmácia 1">
+   </label>
+
+   <label>
+    Destino
+    <select id="plDestV10" onchange="destChangeV10()">
+     <option value="Geral">🌐 Geral</option>
+     <option value="Ramo">🏪 Ramo</option>
+     <option value="Cliente">👤 Cliente específico</option>
+    </select>
+   </label>
+
+   <label id="plRamoWrapV10" style="display:none">
+    Ramo
+    <select id="plRamoV10"></select>
+   </label>
+
+   <label id="plClientWrapV10" style="display:none">
+    Cliente
+    <input id="plClientV10" placeholder="Nome do cliente">
+   </label>
+  </div>
+
+  <div class="toolbar" style="margin-top:14px">
+   <input id="plSearchV10"
+          placeholder="🔎 Buscar música..."
+          oninput="renderPlaylistPickerV10()">
+
+   <button class="btn secondary"
+           onclick="selectAllPickerV10(true)">
+    ☑ Selecionar todas
+   </button>
+
+   <button class="btn secondary"
+           onclick="selectAllPickerV10(false)">
+    ☐ Limpar
+   </button>
+
+   <span class="badge" id="plSelectedCountV10">
+    0 selecionadas
+   </span>
+  </div>
+
+  <div id="plPickerV10"
+       style="max-height:390px;overflow:auto;border:1px solid var(--line);border-radius:12px">
+  </div>
+
+  <div class="toolbar"
+       style="justify-content:flex-end;margin-top:14px">
+   <button class="btn secondary"
+           onclick="closePlaylistV10()">
+    Cancelar
+   </button>
+
+   <button class="btn"
+           onclick="savePlaylistV10()">
+    💾 SALVAR PLAYLIST
+   </button>
+  </div>
+
+ </div>
+</div>
+
+<style>
+#playlistModalV10{
+ position:fixed;inset:0;background:#000a;z-index:99999;
+ align-items:center;justify-content:center;padding:20px
+}
+#playlistModalV10 .modalbox{
+ width:100%;max-height:92vh;overflow:auto;background:#0c1b13;
+ border:1px solid var(--line);border-radius:18px;padding:18px;
+ box-shadow:0 24px 80px #0008
+}
+#playlistModalV10 .modalhead{
+ display:flex;justify-content:space-between;align-items:flex-start;gap:12px
+}
+#playlistModalV10 .x{
+ background:transparent;border:0;color:#fff;font-size:30px;cursor:pointer
+}
+#playlistModalV10 .formgrid{
+ display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px
+}
+#playlistModalV10 label{
+ font-size:12px;color:var(--muted);font-weight:800
+}
+#playlistModalV10 label input,
+#playlistModalV10 label select{
+ display:block;width:100%;margin-top:6px
+}
+.pick-v10{
+ display:grid;grid-template-columns:34px 1fr auto;gap:10px;
+ align-items:center;padding:11px;border-bottom:1px solid var(--line);
+ cursor:pointer
+}
+.pick-v10:last-child{border-bottom:0}
+.pick-v10:hover{background:#10251a}
+.pick-v10 input{width:19px;height:19px}
+@media(max-width:700px){
+ #playlistModalV10 .formgrid{grid-template-columns:1fr}
+ .pick-v10{grid-template-columns:30px 1fr}
+ .pick-v10 button{grid-column:2}
+}
+</style>
+
+<script>
+let editPlV10=null;
+let pickV10=new Set();
+
+function openPlaylistV10(id){
+ const pls=JSON.parse(
+   localStorage.getItem('capivara_playlists_v9')||'[]'
+ );
+
+ const p=id?pls.find(x=>x.id===id):null;
+
+ editPlV10=id||null;
+ pickV10=new Set(p?p.musicIds:[]);
+
+ document.getElementById('plTitleV10').textContent=
+   p?'✏️ Editar Playlist':'📻 Criar Playlist';
+
+ document.getElementById('plNameV10').value=
+   p?p.name:'';
+
+ document.getElementById('plDestV10').value=
+   p?p.destination:'Geral';
+
+ document.getElementById('plClientV10').value=
+   p?p.client||'':'';
+
+ const sel=document.getElementById('plRamoV10');
+
+ sel.innerHTML=(window.ramoNames||[])
+   .map(r=>'<option>'+r+'</option>')
+   .join('');
+
+ if(p&&p.ramo)sel.value=p.ramo;
+
+ destChangeV10();
+ renderPlaylistPickerV10();
+
+ document.getElementById('playlistModalV10').style.display='flex';
 }
 
+function closePlaylistV10(){
+ document.getElementById('playlistModalV10').style.display='none';
 }
 
-function save(data){
+function destChangeV10(){
+ const d=document.getElementById('plDestV10').value;
 
-localStorage.setItem(
-KEY,
-JSON.stringify(data)
-);
+ document.getElementById('plRamoWrapV10').style.display=
+   d==='Ramo'?'block':'none';
 
+ document.getElementById('plClientWrapV10').style.display=
+   d==='Cliente'?'block':'none';
 }
 
-/* =========================================================
-   GARANTE ESTRUTURA
-========================================================= */
+function renderPlaylistPickerV10(){
+ const mus=JSON.parse(
+   localStorage.getItem('capivara_acervo_v9')||'[]'
+ );
 
-function ensure(ramo){
+ const q=(document.getElementById('plSearchV10').value||'')
+   .toLowerCase();
 
-const all=load();
+ const arr=mus.filter(m=>
+   m.name.toLowerCase().includes(q)
+ );
 
-all[ramo]=all[ramo]||{};
+ document.getElementById('plPickerV10').innerHTML=
+   arr.length
+   ?arr.map(m=>`
+    <label class="pick-v10">
+     <input type="checkbox"
+            ${pickV10.has(m.id)?'checked':''}
+            onchange="togglePickV10('${m.id}',this.checked)">
 
-CATS.forEach(cat=>{
+     <div>
+      <b>🎵 ${String(m.name).replace(/</g,'&lt;')}</b>
+      <div class="ac-meta-v9">
+       ${pickV10.has(m.id)
+         ?'Selecionada para esta playlist'
+         :'Clique para adicionar à playlist'}
+      </div>
+     </div>
 
-if(
-!Array.isArray(
-all[ramo][cat[0]]
-)
-){
+     <button type="button"
+             class="btn secondary"
+             onclick="event.preventDefault();event.stopPropagation();playFileV9('music','${m.id}')">
+      ▶ Ouvir
+     </button>
+    </label>
+   `).join('')
+   :'<div class="ac-empty-v9">Nenhuma música encontrada no Acervo.</div>';
 
-all[ramo][cat[0]]=[];
-
+ document.getElementById('plSelectedCountV10').textContent=
+   pickV10.size+' selecionada'+(pickV10.size===1?'':'s');
 }
 
-});
-
-/*
-REGRA OBRIGATÓRIA:
-homem → mulher → homem → mulher
-*/
-
-CATS.forEach(cat=>{
-
-all[ramo][cat[0]]
-.forEach((item,index)=>{
-
-item.voice=
-index%2===0
-?
-'male'
-:
-'female';
-
-});
-
-});
-
-save(all);
-
-return all;
-
+function togglePickV10(id,on){
+ on?pickV10.add(id):pickV10.delete(id);
+ renderPlaylistPickerV10();
 }
 
-/* =========================================================
-   INDEXED DB
-========================================================= */
+function selectAllPickerV10(on){
+ const mus=JSON.parse(
+   localStorage.getItem('capivara_acervo_v9')||'[]'
+ );
 
-function dbOpen(){
+ const q=(document.getElementById('plSearchV10').value||'')
+   .toLowerCase();
 
-return new Promise(
-(resolve,reject)=>{
+ mus.filter(m=>m.name.toLowerCase().includes(q))
+    .forEach(m=>
+      on?pickV10.add(m.id):pickV10.delete(m.id)
+    );
 
-const request=
-indexedDB.open(
-'CapivaraRadioAudio',
-1
-);
-
-request.onupgradeneeded=
-()=>{
-
-const db=request.result;
-
-if(
-!db.objectStoreNames
-.contains('audios')
-){
-
-db.createObjectStore(
-'audios'
-);
-
+ renderPlaylistPickerV10();
 }
 
+function savePlaylistV10(){
+ const name=document.getElementById('plNameV10').value.trim();
+
+ if(!name){
+   alert('Digite um nome para a playlist.');
+   return;
+ }
+
+ if(!pickV10.size){
+   alert('Marque pelo menos uma música.');
+   return;
+ }
+
+ const d=document.getElementById('plDestV10').value;
+
+ const ramo=
+   d==='Ramo'
+   ?document.getElementById('plRamoV10').value
+   :'';
+
+ const client=
+   d==='Cliente'
+   ?document.getElementById('plClientV10').value.trim()
+   :'';
+
+ if(d==='Cliente'&&!client){
+   alert('Informe o cliente.');
+   return;
+ }
+
+ let pls=JSON.parse(
+   localStorage.getItem('capivara_playlists_v9')||'[]'
+ );
+
+ if(editPlV10){
+   const p=pls.find(x=>x.id===editPlV10);
+
+   if(!p)return;
+
+   Object.assign(p,{
+     name,
+     destination:d,
+     ramo,
+     client,
+     musicIds:[...pickV10]
+   });
+ }else{
+   pls.push({
+     id:Date.now().toString(36)+Math.random().toString(36).slice(2,8),
+     name,
+     destination:d,
+     ramo,
+     client,
+     musicIds:[...pickV10],
+     active:true
+   });
+ }
+
+ localStorage.setItem(
+   'capivara_playlists_v9',
+   JSON.stringify(pls)
+ );
+
+ closePlaylistV10();
+
+ if(window.renderAcervoV9)
+   renderAcervoV9();
+}
+
+window.newPlaylistV9=function(){
+ openPlaylistV10(null);
 };
 
-request.onsuccess=
-()=>resolve(
-request.result
-);
-
-request.onerror=
-()=>reject(
-request.error
-);
-
-}
-);
-
-}
-
-async function idbPut(
-key,
-blob
-){
-
-const db=
-await dbOpen();
-
-return new Promise(
-(resolve,reject)=>{
-
-const tx=
-db.transaction(
-'audios',
-'readwrite'
-);
-
-tx
-.objectStore('audios')
-.put(blob,key);
-
-tx.oncomplete=
-()=>resolve();
-
-tx.onerror=
-()=>reject(
-tx.error
-);
-
-}
-);
-
-}
-
-async function idbGet(key){
-
-const db=
-await dbOpen();
-
-return new Promise(
-(resolve,reject)=>{
-
-const tx=
-db.transaction(
-'audios',
-'readonly'
-);
-
-const req=
-tx
-.objectStore('audios')
-.get(key);
-
-req.onsuccess=
-()=>resolve(
-req.result
-);
-
-req.onerror=
-()=>reject(
-req.error
-);
-
-}
-);
-
-}
-
-async function idbDelete(key){
-
-try{
-
-const db=
-await dbOpen();
-
-const tx=
-db.transaction(
-'audios',
-'readwrite'
-);
-
-tx
-.objectStore('audios')
-.delete(key);
-
-}catch(e){}
-
-}
-
-/* =========================================================
-   RENDER
-========================================================= */
-
-function render(){
-
-if(!currentRamo)return;
-
-const all=
-ensure(currentRamo);
-
-const data=
-all[currentRamo];
-
-const host=
-document.getElementById(
-'ramoVignettesV7'
-);
-
-if(!host)return;
-
-const heading=
-document.getElementById(
-'ramoAudioHeading'
-);
-
-if(heading){
-
-heading.textContent=
-'🎧 '+
-currentRamo.toUpperCase()+
-' — VINHETAS';
-
-}
-
-host.innerHTML=
-CATS.map(cat=>{
-
-const arr=
-data[cat[0]]||[];
-
-const theme=
-cat[0]==='offerOpen'
-?
-'entry'
-:
-cat[0]==='offerClose'
-?
-'exit'
-:
-cat[0]==='topOpen'
-?
-'top-entry'
-:
-'top-exit';
-
-return `
-
-<section
-class="vig-section vig-simple-v28"
-data-vig-theme="${theme}"
->
-
-<div class="vig-head">
-
-<div class="vig-head-left">
-
-<b>
-${cat[1]}
-</b>
-
-<span class="vig-count">
-${arr.length}
-${arr.length===1?'vinheta':'vinhetas'}
-salvas
-</span>
-
-</div>
-
-</div>
-
-<div class="vig-compose-v28">
-
-<textarea
-id="newVig_${cat[0]}"
-placeholder="Digite a frase da próxima vinheta"
-></textarea>
-
-<button
-class="btn vig-generate-v28"
-type="button"
-onclick="createVigV28('${cat[0]}')"
->
-✨ GERAR ÁUDIO E SALVAR
-</button>
-
-</div>
-
-<div class="vig-saved-v28">
-
-${
-arr.length
-?
-arr.map(
-(v,i)=>`
-
-<div class="vig-saved-row-v28">
-
-<span class="vig-num">
-Vinheta ${String(i+1).padStart(2,'0')}
-</span>
-
-<span class="vig-voice-v28">
-${v.voice==='female'
-?'👩 Mulher'
-:'👨 Homem'}
-</span>
-
-<span class="vig-text-v28">
-${escapeHtml(v.text)}
-</span>
-
-<button
-class="btn secondary"
-type="button"
-onclick="listenVigV7('${cat[0]}',${i})"
->
-▶ Ouvir
-</button>
-
-<button
-class="vig-trash-v28"
-type="button"
-onclick="deleteVigV7('${cat[0]}',${i})"
->
-🗑️
-</button>
-
-</div>
-
-`
-).join('')
-:
-`
-<div class="vig-empty">
-Nenhuma vinheta salva.
-</div>
-`
-}
-
-</div>
-
-</section>
-
-`;
-
-}).join('');
-
-}
-
-/* =========================================================
-   GERAR VINHETA
-========================================================= */
-
-window.createVigV28=
-async function(cat){
-
-const textarea=
-document.getElementById(
-'newVig_'+cat
-);
-
-const text=
-(textarea?.value||'')
-.trim();
-
-if(!text){
-
-alert(
-'Digite a frase da vinheta.'
-);
-
-return;
-
-}
-
-const all=
-ensure(currentRamo);
-
-const arr=
-all[currentRamo][cat];
-
-const voice=
-arr.length%2===0
-?
-'male'
-:
-'female';
-
-const btn=
-textarea.nextElementSibling;
-
-try{
-
-btn.disabled=true;
-
-btn.textContent=
-'GERANDO ÁUDIO...';
-
-const blob=
-await window
-.generateElevenLabsAudio(
-text,
-voice,
-currentRamo,
-cat
-);
-
-if(
-!(blob instanceof Blob)||
-!blob.size
-){
-
-throw new Error(
-'ElevenLabs não retornou áudio.'
-);
-
-}
-
-const key=
-'vig|'+
-currentRamo+
-'|'+
-cat+
-'|'+
-Date.now();
-
-await idbPut(
-key,
-blob
-);
-
-arr.push({
-
-text:text,
-
-voice:voice,
-
-audioKey:key,
-
-audioName:
-'Vinheta '+
-String(
-arr.length+1
-).padStart(2,'0')+
-'.mp3'
-
-});
-
-save(all);
-
-render();
-
-}catch(e){
-
-const msg=
-String(
-e&&e.message||e
-);
-
-try{
-navigator.clipboard.writeText(
-msg
-);
-}catch(_){}
-
-alert(
-msg+
-'\n\nErro pronto para copiar.'
-);
-
-}finally{
-
-btn.disabled=false;
-
-btn.textContent=
-'✨ GERAR ÁUDIO E SALVAR';
-
-}
-
+window.editPlaylistV9=function(id){
+ openPlaylistV10(id);
 };
-
-/* =========================================================
-   OUVIR
-========================================================= */
-
-window.listenVigV7=
-async function(
-cat,
-index
-){
-
-const all=
-ensure(currentRamo);
-
-const item=
-all[currentRamo][cat][index];
-
-if(
-!item||
-!item.audioKey
-){
-
-alert(
-'Áudio não encontrado.'
-);
-
-return;
-
+</script>
+    // update small emoji/name buttons/spans if present
+    [...row.querySelectorAll('button,span,b,strong,small')].forEach(el=>{
+      const t=el.textContent||'';
+      if(/homem|mulher/i.test(t)) el.textContent=female?'👩 Mulher':'👨 Homem';
+      else if((t.trim()==='👨'||t.trim()==='👩')) el.textContent=female?'👩':'👨';
+    });
+    row.dataset.capVoice=female?'female':'male';
+  });
 }
+const capAltObsV162=new MutationObserver(()=>capFixAlternatingLabelsV162());
+capAltObsV162.observe(document.documentElement,{subtree:true,childList:true});
+window.addEventListener('load',()=>setTimeout(capFixAlternatingLabelsV162,100));
+</script>
 
-try{
+<script id="cap-v23-extra-jingle-voices">
+(()=>{
+ const K='capivara_vinheta_voice_ids_v2',
+       I=['jingleMaleVoice','jingleFemaleVoice'];
 
-const blob=
-await idbGet(
-item.audioKey
-);
+ function load(){
+   let v={};
+   try{v=JSON.parse(localStorage.getItem(K)||'{}')}catch{}
+   I.forEach(i=>{
+     const e=document.getElementById(i);
+     if(e)e.value=v[i]||'';
+   });
+ }
 
-if(!blob){
+ function save(){
+   let v={};
+   I.forEach(i=>{
+     const e=document.getElementById(i);
+     if(e)v[i]=e.value.trim();
+   });
+   localStorage.setItem(K,JSON.stringify(v));
+ }
 
-throw new Error(
-'Áudio não encontrado.'
-);
+ document.addEventListener('DOMContentLoaded',()=>{
+   load();
+   I.forEach(i=>document.getElementById(i)?.addEventListener('change',save));
+   document.querySelectorAll('button').forEach(b=>{
+     /salvar/i.test(b.textContent||'')&&b.addEventListener('click',save);
+   });
+ });
+})();
+</script>
 
-}
+<script>
+/* V26 — mapa oficial de vozes por função */
+(function(){
 
-const url=
-URL.createObjectURL(
-blob
-);
+ function capVoiceMapV26(){
+   let cfg={};
+   try{
+     cfg=JSON.parse(localStorage.getItem('capivara_admin_settings')||'{}');
+   }catch(e){}
 
-const audio=
-new Audio(url);
+   let jv={};
+   try{
+     jv=JSON.parse(localStorage.getItem('capivara_vinheta_voice_ids_v2')||'{}');
+   }catch(e){}
 
-audio.onended=
-()=>URL.revokeObjectURL(
-url
-);
+   const map={
+     adMale:String(
+       document.getElementById('maleVoice')?.value ||
+       cfg.male ||
+       cfg.maleVoice ||
+       ''
+     ).trim(),
 
-await audio.play();
+     adFemale:String(
+       document.getElementById('femaleVoice')?.value ||
+       cfg.female ||
+       cfg.femaleVoice ||
+       ''
+     ).trim(),
 
-}catch(e){
+     jingleMale:String(
+       document.getElementById('jingleMaleVoice')?.value ||
+       jv.jingleMaleVoice ||
+       ''
+     ).trim(),
 
-alert(
-'Não foi possível reproduzir o áudio.'
-);
+     jingleFemale:String(
+       document.getElementById('jingleFemaleVoice')?.value ||
+       jv.jingleFemaleVoice ||
+       ''
+     ).trim()
+   };
 
-}
+   localStorage.setItem(
+     'capivara_voice_map_v26',
+     JSON.stringify(map)
+   );
 
-};
+   return map;
+ }
 
-/* =========================================================
-   EXCLUIR
-========================================================= */
+ window.capVoiceMapV26=capVoiceMapV26;
 
-window.deleteVigV7=
-async function(
-cat,
-index
-){
+ document.addEventListener('input',e=>{
+   if([
+     'maleVoice',
+     'femaleVoice',
+     'jingleMaleVoice',
+     'jingleFemaleVoice'
+   ].includes(e.target?.id)){
+     capVoiceMapV26();
+   }
+ });
 
-const all=
-ensure(currentRamo);
+ document.addEventListener('change',e=>{
+   if([
+     'maleVoice',
+     'femaleVoice',
+     'jingleMaleVoice',
+     'jingleFemaleVoice'
+   ].includes(e.target?.id)){
+     capVoiceMapV26();
+   }
+ });
 
-const arr=
-all[currentRamo][cat];
+ window.addEventListener(
+   'DOMContentLoaded',
+   ()=>setTimeout(capVoiceMapV26,100)
+ );
+})();
+</script>
 
-const item=
-arr[index];
 
-if(!item)return;
+<script id="capVoiceSaveV30">
+(function(){
 
-if(
-!confirm(
-'Excluir esta vinheta?'
-)
-){
-return;
-}
+ const MAIN='capivara_admin_settings';
+ const JKEY='capivara_vinheta_voice_ids_v2';
+ const MAP='capivara_voice_map_v26';
 
-if(item.audioKey){
+ function val(id){
+   return (document.getElementById(id)?.value||'').trim();
+ }
 
-await idbDelete(
-item.audioKey
-);
+ function persistFourVoiceIdsV30(){
 
-}
+   const adMale=
+     val('maleVoice')||
+     val('maleVoiceId')||
+     val('voiceMale');
 
-arr.splice(
-index,
-1
-);
+   const adFemale=
+     val('femaleVoice')||
+     val('femaleVoiceId')||
+     val('voiceFemale');
 
-/*
-reorganiza a alternância
-depois da exclusão
-*/
+   const jingleMale=
+     val('jingleMaleVoice');
 
-arr.forEach(
-(item,i)=>{
+   const jingleFemale=
+     val('jingleFemaleVoice');
 
-item.voice=
-i%2===0
-?
-'male'
-:
-'female';
+   let cfg={};
 
-}
-);
+   try{
+     cfg=JSON.parse(
+       localStorage.getItem(MAIN)||'{}'
+     );
+   }catch(e){}
 
-save(all);
+   if(adMale){
+     cfg.maleVoice=adMale;
+     cfg.male=adMale;
+   }
 
-render();
+   if(adFemale){
+     cfg.femaleVoice=adFemale;
+     cfg.female=adFemale;
+   }
 
-};
+   if(jingleMale){
+     cfg.jingleMaleVoice=jingleMale;
+   }
 
-/* =========================================================
-   DETECTAR RAMO ABERTO
-========================================================= */
+   if(jingleFemale){
+     cfg.jingleFemaleVoice=jingleFemale;
+   }
 
-function detectRamo(){
+   localStorage.setItem(
+     MAIN,
+     JSON.stringify(cfg)
+   );
 
-const el=
-document.getElementById(
-'mRamo'
-);
+   localStorage.setItem(
+     JKEY,
+     JSON.stringify({
+       jingleMaleVoice:jingleMale,
+       jingleFemaleVoice:jingleFemale,
+       male:jingleMale,
+       female:jingleFemale
+     })
+   );
 
-if(!el)return;
+   localStorage.setItem(
+     MAP,
+     JSON.stringify({
+       adMale:adMale,
+       adFemale:adFemale,
+       jingleMale:jingleMale,
+       jingleFemale:jingleFemale
+     })
+   );
 
-const ramo=
-el.textContent.trim();
+   return {
+     adMale,
+     adFemale,
+     jingleMale,
+     jingleFemale
+   };
+ }
 
-if(
-ramo &&
-ramo!==currentRamo
-){
+ window.capPersistFourVoiceIdsV30=
+   persistFourVoiceIdsV30;
 
-currentRamo=ramo;
+ document.addEventListener(
+   'click',
+   function(e){
 
-render();
+     const b=e.target.closest('button');
+     if(!b)return;
 
-}
+     const t=(b.textContent||'').toUpperCase();
 
-}
+     if(
+       t.includes('SALVAR') &&
+       t.includes('TESTAR')
+     ){
 
-const observer=
-new MutationObserver(
-detectRamo
-);
+       persistFourVoiceIdsV30();
 
-document.addEventListener(
-'DOMContentLoaded',
-()=>{
+       setTimeout(
+         persistFourVoiceIdsV30,
+         0
+       );
 
-const el=
-document.getElementById(
-'mRamo'
-);
+       setTimeout(function(){
 
-if(el){
+         const ids=
+           persistFourVoiceIdsV30();
 
-observer.observe(
-el,
-{
-childList:true,
-subtree:true,
-characterData:true
-}
-);
+         const out=document.querySelector(
+           '#testResult, #testOutput, .test-result, [data-test-result]'
+         );
 
-}
+         if(
+           out &&
+           ids.jingleMale &&
+           ids.jingleFemale
+         ){
 
-}
-);
+           const line=
+             '\n✅ IDs das vinhetas salvas: Homem e Mulher.';
+
+           if(
+             !String(out.textContent||'')
+               .includes('IDs das vinhetas salvas')
+           ){
+             out.textContent+=line;
+           }
+         }
+
+       },300);
+     }
+   },
+   true
+ );
+
+ document.addEventListener(
+   'DOMContentLoaded',
+   function(){
+
+     let j={};
+
+     try{
+       j=JSON.parse(
+         localStorage.getItem(JKEY)||'{}'
+       );
+     }catch(e){}
+
+     const m=
+       document.getElementById('jingleMaleVoice');
+
+     const f=
+       document.getElementById('jingleFemaleVoice');
+
+     if(m&&!m.value){
+       m.value=
+         j.jingleMaleVoice||
+         j.male||
+         '';
+     }
+
+     if(f&&!f.value){
+       f.value=
+         j.jingleFemaleVoice||
+         j.female||
+         '';
+     }
+   }
+ );
+})();
+</script>
+
+
+<script id="capivaraCentralServerV33">
+/* CAPIVARA RÁDIO ADM V33 — ponte com o servidor central.
+   O servidor passa a ser a fonte principal dos CLIENTES.
+   O localStorage fica somente como cache de segurança da interface.
+   Chaves secretas continuam no Render e NÃO são enviadas por este bloco. */
+
+(function(){
+
+  const SERVER=
+    'https://capivara-radio-server.onrender.com';
+
+  const CACHE_KEY=
+    'capivara_admin_clients';
+
+  function statusBox(){
+
+    let el=
+      document.getElementById(
+        'capServerStatusV33'
+      );
+
+    if(el)return el;
+
+    el=document.createElement('div');
+
+    el.id='capServerStatusV33';
+
+    el.style.cssText=
+      'position:fixed;right:16px;bottom:16px;z-index:10000;padding:9px 12px;border-radius:999px;font:800 12px system-ui;background:#173b2c;color:#bff7d2;border:1px solid #2f684d;box-shadow:0 8px 24px #0005';
+
+    el.textContent=
+      'SERVIDOR • CONECTANDO';
+
+    document.body.appendChild(el);
+
+    return el;
+  }
+
+  function setStatus(ok,msg){
+
+    const el=statusBox();
+
+    el.textContent=
+      msg||
+      (
+        ok
+        ?'SERVIDOR • ONLINE'
+        :'SERVIDOR • OFFLINE'
+      );
+
+    el.style.background=
+      ok?'#173b2c':'#442323';
+
+    el.style.color=
+      ok?'#bff7d2':'#ffc1c1';
+
+    el.style.borderColor=
+      ok?'#2f684d':'#754040';
+  }
+
+  async function api(path,options={}){
+
+    const controller=
+      new AbortController();
+
+    const timer=
+      setTimeout(
+        ()=>controller.abort(),
+        20000
+      );
+
+    try{
+
+      const r=await fetch(
+        SERVER+path,
+        {
+          ...options,
+          signal:controller.signal,
+          headers:{
+            'Content-Type':'application/json',
+            ...(options.headers||{})
+          }
+        }
+      );
+
+      const text=
+        await r.text();
+
+      let data=null;
+
+      try{
+        data=
+          text
+          ?JSON.parse(text)
+          :null;
+      }catch(_){
+        data=text;
+      }
+
+      if(!r.ok){
+        throw new Error(
+          'HTTP '+r.status+
+          (text?' — '+text:'')
+        );
+      }
+
+      return data;
+
+    }finally{
+      clearTimeout(timer);
+    }
+  }
+
+  function normalizeClients(data){
+
+    const list=
+      Array.isArray(data)
+      ?data
+      :Array.isArray(data?.clients)
+       ?data.clients
+       :Array.isArray(data?.data)
+        ?data.data
+        :[];
+
+    return list.map(c=>({
+
+      name:String(
+        c.name||
+        c.nome||
+        c.storeName||
+        ''
+      ).trim(),
+
+      ramo:String(
+        c.ramo||
+        c.activity||
+        c.segment||
+        ''
+      ).trim()||'Açougue',
+
+      code:String(
+        c.code||
+        c.codigo||
+        ''
+      ).trim(),
+
+      active:
+        c.active!==false &&
+        c.ativo!==false
+
+    })).filter(
+      c=>c.name&&c.code
+    );
+  }
+
+  function cacheAndRender(){
+
+    try{
+      localStorage.setItem(
+        CACHE_KEY,
+        JSON.stringify(clients)
+      );
+    }catch(_){}
+
+    if(
+      typeof renderClients==='function'
+    ){
+      renderClients();
+    }
+  }
+
+  async function loadCentralClients(){
+
+    try{
+
+      setStatus(
+        true,
+        'SERVIDOR • CARREGANDO'
+      );
+
+      const data=
+        await api(
+          '/api/admin/clients'
+        );
+
+      clients=
+        normalizeClients(data);
+
+      cacheAndRender();
+
+      setStatus(
+        true,
+        'SERVIDOR • ONLINE'
+      );
+
+      return true;
+
+    }catch(err){
+
+      console.error(
+        'Capivara Server:',
+        err
+      );
+
+      setStatus(
+        false,
+        'SERVIDOR • SEM CONEXÃO'
+      );
+
+      return false;
+    }
+  }
+
+
+  window.saveClient=
+    async function(){
+
+      const name=(
+        document.getElementById(
+          'newName'
+        )?.value||''
+      ).trim();
+
+      const ramo=(
+        document.getElementById(
+          'newRamo'
+        )?.value||''
+      ).trim();
+
+      const code=(
+        document.getElementById(
+          'newCode'
+        )?.value||''
+      ).trim();
+
+      if(!name){
+        return alert(
+          'Digite o nome da loja.'
+        );
+      }
+
+      if(!code){
+        return alert(
+          'Gere o código de acesso.'
+        );
+      }
+
+      if(
+        clients.some(
+          c=>String(c.code)===code
+        )
+      ){
+        return alert(
+          'Este código já existe. Gere outro.'
+        );
+      }
+
+      const btn=
+        document.querySelector(
+          '#clientModal button[onclick="saveClient()"]'
+        );
+
+      const old=
+        btn?.textContent;
+
+      if(btn){
+        btn.disabled=true;
+        btn.textContent=
+          'SALVANDO NO SERVIDOR...';
+      }
+
+      try{
+
+        await api(
+          '/api/admin/client',
+          {
+            method:'POST',
+            body:JSON.stringify({
+              name,
+              ramo,
+              code,
+              active:true
+            })
+          }
+        );
+
+        await loadCentralClients();
+
+        document.getElementById(
+          'newName'
+        ).value='';
+
+        if(
+          typeof closeClient==='function'
+        ){
+          closeClient();
+        }
+
+      }catch(err){
+
+        setStatus(
+          false,
+          'SERVIDOR • ERRO AO SALVAR'
+        );
+
+        alert(
+          'Não foi possível cadastrar no servidor.\n\n'+
+          err.message
+        );
+
+      }finally{
+
+        if(btn){
+          btn.disabled=false;
+          btn.textContent=
+            old||
+            'CADASTRAR CLIENTE';
+        }
+      }
+    };
+
+
+  window.toggleClient=
+    async function(code){
+
+      const c=
+        clients.find(
+          x=>
+            String(x.code)===
+            String(code)
+        );
+
+      if(!c)return;
+
+      const updated={
+        ...c,
+        active:!c.active
+      };
+
+      try{
+
+        setStatus(
+          true,
+          'SERVIDOR • SALVANDO'
+        );
+
+        await api(
+          '/api/admin/client',
+          {
+            method:'POST',
+            body:JSON.stringify(
+              updated
+            )
+          }
+        );
+
+        await loadCentralClients();
+
+      }catch(err){
+
+        setStatus(
+          false,
+          'SERVIDOR • ERRO AO SALVAR'
+        );
+
+        alert(
+          'Não foi possível alterar o cliente no servidor.\n\n'+
+          err.message
+        );
+      }
+    };
+
+
+  window.persist=function(){
+
+    try{
+      localStorage.setItem(
+        CACHE_KEY,
+        JSON.stringify(clients)
+      );
+    }catch(_){}
+
+    if(
+      typeof renderClients==='function'
+    ){
+      renderClients();
+    }
+  };
+
+
+  window.CapivaraCentralV33={
+
+    server:SERVER,
+
+    api,
+
+    reloadClients:
+      loadCentralClients,
+
+    async health(){
+
+      try{
+
+        const d=
+          await api(
+            '/health',
+            {method:'GET'}
+          );
+
+        setStatus(
+          true,
+          'SERVIDOR • ONLINE'
+        );
+
+        return d;
+
+      }catch(e){
+
+        setStatus(
+          false,
+          'SERVIDOR • OFFLINE'
+        );
+
+        throw e;
+      }
+    }
+  };
+
+
+  if(
+    document.readyState===
+    'loading'
+  ){
+
+    document.addEventListener(
+      'DOMContentLoaded',
+      loadCentralClients,
+      {once:true}
+    );
+
+  }else{
+
+    loadCentralClients();
+  }
 
 })();
+</script>
 
+
+<script>
+(function(){
+
+ const SERVER=
+   'https://capivara-radio-server.onrender.com';
+
+ const $=
+   id=>document.getElementById(id);
+
+ const val=
+   id=>($(id)?.value||'').trim();
+
+ const on=
+   id=>!!$(id)?.checked;
+
+
+ function stat(t,ok){
+
+   const e=$(
+     'centralStatusV34'
+   );
+
+   if(e){
+
+     e.textContent=t;
+
+     e.style.background=
+       ok
+       ?'#e9f8ef'
+       :'#fff3cd';
+
+     e.style.color=
+       ok
+       ?'#176b37'
+       :'#7a5b00';
+   }
+ }
+
+
+ function data(){
+
+   return {
+
+     apiPool:{
+
+       text:[1,2,3].map(
+         i=>({
+           slot:i,
+           enabled:
+             on('textKeyOn'+i),
+           key:
+             val('textKey'+i)
+         })
+       ),
+
+       voice:[1,2,3].map(
+         i=>({
+           slot:i,
+           enabled:
+             on('voiceKeyOn'+i),
+           key:
+             val('voiceKey'+i)
+         })
+       )
+     },
+
+     voices:{
+
+       adMale:
+         val('voiceAdMaleV34'),
+
+       adFemale:
+         val('voiceAdFemaleV34'),
+
+       jingleMale:
+         val('voiceJingleMaleV34'),
+
+       jingleFemale:
+         val('voiceJingleFemaleV34')
+     }
+   };
+ }
+
+
+ window.capSaveCentralV34=
+ async()=>{
+
+  const b=$(
+    'saveCentralV34'
+  );
+
+  if(b){
+    b.disabled=true;
+    b.textContent='SALVANDO...';
+  }
+
+  try{
+
+   const p=data();
+
+   if(
+     !p.apiPool.text.some(
+       x=>x.enabled&&x.key
+     )
+   ){
+     throw Error(
+       'Ative e preencha pelo menos 1 chave de texto.'
+     );
+   }
+
+   if(
+     !p.apiPool.voice.some(
+       x=>x.enabled&&x.key
+     )
+   ){
+     throw Error(
+       'Ative e preencha pelo menos 1 chave de voz.'
+     );
+   }
+
+   if(
+     Object.values(
+       p.voices
+     ).some(x=>!x)
+   ){
+     throw Error(
+       'Preencha os 4 IDs de voz.'
+     );
+   }
+
+   const r=
+     await fetch(
+       SERVER+
+       '/api/admin/settings',
+       {
+         method:'PUT',
+         headers:{
+           'Content-Type':
+             'application/json'
+         },
+         body:JSON.stringify(p)
+       }
+     );
+
+   let j={};
+
+   try{
+     j=await r.json();
+   }catch(e){}
+
+   if(!r.ok){
+     throw Error(
+       j.error||
+       ('Servidor '+r.status)
+     );
+   }
+
+   stat(
+     '🟢 Salvo no servidor',
+     true
+   );
+
+  }catch(e){
+
+   stat(
+     '⚠ '+e.message,
+     false
+   );
+
+  }finally{
+
+   if(b){
+     b.disabled=false;
+     b.textContent=
+       '💾 SALVAR NO SERVIDOR';
+   }
+  }
+ };
+
+
+ async function load(){
+
+  try{
+
+   const r=
+     await fetch(
+       SERVER+
+       '/api/admin/settings'
+     );
+
+   if(!r.ok)return;
+
+   const j=
+     await r.json();
+
+   const c=
+     j.settings||
+     j.data||
+     j||
+     {};
+
+   const t=
+     c.apiPool?.text||
+     [];
+
+   const v=
+     c.apiPool?.voice||
+     [];
+
+   const ids=
+     c.voices||
+     {};
+
+
+   t.forEach(x=>{
+
+     if(
+       $('textKeyOn'+x.slot)
+     ){
+       $('textKeyOn'+x.slot)
+         .checked=
+           !!x.enabled;
+     }
+
+     if(
+       x.key&&
+       $('textKey'+x.slot)
+     ){
+       $('textKey'+x.slot)
+         .value=
+           x.key;
+     }
+   });
+
+
+   v.forEach(x=>{
+
+     if(
+       $('voiceKeyOn'+x.slot)
+     ){
+       $('voiceKeyOn'+x.slot)
+         .checked=
+           !!x.enabled;
+     }
+
+     if(
+       x.key&&
+       $('voiceKey'+x.slot)
+     ){
+       $('voiceKey'+x.slot)
+         .value=
+           x.key;
+     }
+   });
+
+
+   if(ids.adMale){
+     $('voiceAdMaleV34').value=
+       ids.adMale;
+   }
+
+   if(ids.adFemale){
+     $('voiceAdFemaleV34').value=
+       ids.adFemale;
+   }
+
+   if(ids.jingleMale){
+     $('voiceJingleMaleV34').value=
+       ids.jingleMale;
+   }
+
+   if(ids.jingleFemale){
+     $('voiceJingleFemaleV34').value=
+       ids.jingleFemale;
+   }
+
+   stat(
+     '🟢 Servidor conectado',
+     true
+   );
+
+  }catch(e){
+
+   stat(
+     '⚠ Servidor indisponível',
+     false
+   );
+  }
+ }
+
+ window.addEventListener(
+   'DOMContentLoaded',
+   load
+ );
+
+})();
 </script>
 
 </body>
